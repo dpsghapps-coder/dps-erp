@@ -26,6 +26,11 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\StudioController;
+use App\Http\Controllers\Management\DashboardController as ManagementDashboardController;
+use App\Http\Controllers\Management\MeetingController;
+use App\Http\Controllers\Management\DecisionController;
+use App\Http\Controllers\Management\ActionItemController;
+use App\Http\Controllers\Management\ReviewController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -253,6 +258,40 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/finance/{transaction}/edit', [FinanceController::class, 'edit'])->name('finance.edit');
         Route::put('/finance/{transaction}', [FinanceController::class, 'update'])->name('finance.update');
         Route::delete('/finance/{transaction}', [FinanceController::class, 'destroy'])->name('finance.destroy');
+    });
+
+    // Decision Hub Routes
+    Route::middleware('permission:decision_hub.view')->prefix('management')->name('management.')->group(function () {
+        Route::get('/dashboard', [ManagementDashboardController::class, 'index'])->name('dashboard');
+
+        // Meetings
+        Route::get('/meetings', [MeetingController::class, 'index'])->name('meetings.index');
+        Route::get('/meetings/create', [MeetingController::class, 'create'])->name('meetings.create');
+        Route::post('/meetings', [MeetingController::class, 'store'])->name('meetings.store');
+        Route::get('/meetings/{meeting}', [MeetingController::class, 'show'])->name('meetings.show');
+        Route::get('/meetings/{meeting}/edit', [MeetingController::class, 'edit'])->name('meetings.edit');
+        Route::put('/meetings/{meeting}', [MeetingController::class, 'update'])->name('meetings.update');
+        Route::delete('/meetings/{meeting}', [MeetingController::class, 'destroy'])->name('meetings.destroy');
+
+        // Decisions
+        Route::get('/decisions', [DecisionController::class, 'index'])->name('decisions.index');
+        Route::get('/decisions/create', [DecisionController::class, 'create'])->name('decisions.create');
+        Route::post('/decisions', [DecisionController::class, 'store'])->name('decisions.store');
+        Route::get('/decisions/{decision}', [DecisionController::class, 'show'])->name('decisions.show');
+        Route::get('/decisions/{decision}/edit', [DecisionController::class, 'edit'])->name('decisions.edit');
+        Route::put('/decisions/{decision}', [DecisionController::class, 'update'])->name('decisions.update');
+        Route::delete('/decisions/{decision}', [DecisionController::class, 'destroy'])->name('decisions.destroy');
+        Route::patch('/decisions/{decision}/status', [DecisionController::class, 'updateStatus'])->name('decisions.status');
+
+        // Action Items
+        Route::post('/action-items', [ActionItemController::class, 'store'])->name('action-items.store');
+        Route::put('/action-items/{item}', [ActionItemController::class, 'update'])->name('action-items.update');
+        Route::post('/action-items/{item}/updates', [ActionItemController::class, 'addUpdate'])->name('action-items.updates');
+        Route::delete('/action-items/{item}', [ActionItemController::class, 'destroy'])->name('action-items.destroy');
+
+        // Reviews
+        Route::post('/decisions/{decision}/review', [ReviewController::class, 'store'])->name('reviews.store');
+        Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     });
 
     // Admin Routes

@@ -101,6 +101,12 @@ class PermissionSeeder extends Seeder
             ['name' => 'chat.view', 'module' => 'chat', 'description' => 'View and use chat'],
             ['name' => 'chat.create_groups', 'module' => 'chat', 'description' => 'Create group conversations'],
             ['name' => 'chat.manage_groups', 'module' => 'chat', 'description' => 'Manage group members and settings'],
+
+            // Decision Hub
+            ['name' => 'decision_hub.view', 'module' => 'decision_hub', 'description' => 'View Decision Hub'],
+            ['name' => 'decision_hub.create', 'module' => 'decision_hub', 'description' => 'Create meetings and decisions'],
+            ['name' => 'decision_hub.edit', 'module' => 'decision_hub', 'description' => 'Edit decisions'],
+            ['name' => 'decision_hub.delete', 'module' => 'decision_hub', 'description' => 'Delete decisions'],
         ];
 
         foreach ($permissions as $perm) {

@@ -23,6 +23,7 @@ class RoleSeeder extends Seeder
         $financePerms = Permission::where('module', 'finance')->pluck('id')->toArray();
         $studioPerms = Permission::where('module', 'studio')->pluck('id')->toArray();
         $adminPerms = Permission::where('module', 'admin')->pluck('id')->toArray();
+        $decisionHubPerms = Permission::where('module', 'decision_hub')->pluck('id')->toArray();
 
         $roles = [
             [
@@ -58,6 +59,7 @@ class RoleSeeder extends Seeder
                     $hrmPerms,
                     $financePerms,
                     $studioPerms,
+                    $decisionHubPerms,
                 ),
             ],
             [
@@ -71,6 +73,7 @@ class RoleSeeder extends Seeder
                     $productionPerms,
                     $procurementPerms,
                     $hrmPerms,
+                    $decisionHubPerms,
                 ),
             ],
             [

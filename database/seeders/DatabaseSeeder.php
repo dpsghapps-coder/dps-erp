@@ -162,5 +162,6 @@ class DatabaseSeeder extends Seeder
 
         $this->call(InventorySeeder::class);
         $this->call(PurchaseRequestSeeder::class);
+        $this->call(DecisionHubSeeder::class);
     }
 }

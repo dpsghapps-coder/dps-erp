@@ -33,7 +33,8 @@ import {
     TrendingUp,
     BellIcon,
     UsersIcon,
-    Plus
+    Plus,
+    ClipboardCheck
 } from 'lucide-react';
 import ChatSidebar from '@/Components/Chat/ChatSidebar';
 
@@ -102,6 +103,12 @@ const hrmSubItems: CrmSubItem[] = [
     { name: 'Noticeboard', href: '/hrm/noticeboard', icon: BellIcon },
 ];
 
+const decisionHubSubItems: CrmSubItem[] = [
+    { name: 'Dashboard', href: '/management/dashboard', icon: LayoutDashboard },
+    { name: 'Meetings', href: '/management/meetings', icon: Calendar },
+    { name: 'Decisions', href: '/management/decisions', icon: ClipboardCheck },
+];
+
 const systemNav: NavItem[] = [
     { name: 'Admin', href: '/admin', icon: Settings },
 ];
@@ -124,6 +131,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const [productsSlideUpOpen, setProductsSlideUpOpen] = useState(false);
     const [ordersDropdownOpen, setOrdersDropdownOpen] = useState(false);
     const [productionDropdownOpen, setProductionDropdownOpen] = useState(false);
+    const [decisionHubDropdownOpen, setDecisionHubDropdownOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [showResults, setShowResults] = useState(false);
@@ -172,6 +180,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const isProcurementPage = currentPath.startsWith('/procurement');
     const isFinancePage = currentPath.startsWith('/finance');
     const isStudioPage = currentPath.startsWith('/studio');
+    const isDecisionHubPage = currentPath.startsWith('/management');
     // Auto-expand dropdowns on their pages
     useEffect(() => {
         if (isCrmPage) {
@@ -192,7 +201,10 @@ export default function AppLayout({ children }: PropsWithChildren) {
         if (isProductionPage) {
             setProductionDropdownOpen(true);
         }
-    }, [isCrmPage, isInventoryPage, isHrmPage, isProductsPage, isOrdersPage, isProductionPage]);
+        if (isDecisionHubPage) {
+            setDecisionHubDropdownOpen(true);
+        }
+    }, [isCrmPage, isInventoryPage, isHrmPage, isProductsPage, isOrdersPage, isProductionPage, isDecisionHubPage]);
 
     // Search handler
     const handleSearch = async (query: string) => {
@@ -694,6 +706,43 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 )}
                             </div>
 
+                            {/* Decision Hub Dropdown */}
+                            {can('decision_hub.view') && <div className="mb-2">
+                                <button
+                                    onClick={() => setDecisionHubDropdownOpen(!decisionHubDropdownOpen)}
+                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                        isDecisionHubPage
+                                            ? 'bg-slate-900 text-white'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <ClipboardCheck className="w-5 h-5" />
+                                        Decision Hub
+                                    </div>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${decisionHubDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {decisionHubDropdownOpen && (
+                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
+                                        {decisionHubSubItems.map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                                    currentPath === item.href
+                                                        ? 'bg-slate-100 text-slate-900 font-medium'
+                                                        : 'text-slate-500 hover:bg-slate-50'
+                                                }`}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                <item.icon className="w-4 h-4" />
+                                                {item.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>}
+
                             {/* Management Nav Mapping (Remaining) */}
                             {managementNav.filter(item => item.name !== 'HRM').map((item) => (
                                 <Link
@@ -1048,7 +1097,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     </div>
                     
                     {/* MANAGEMENT Section */}
-                    {(can('hrm.view') || can('finance.view')) && <div className="px-3 mt-6 mb-2">
+                    {(can('hrm.view') || can('finance.view') || can('decision_hub.view')) && <div className="px-3 mt-6 mb-2">
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Management</span>}
                     </div>}
                     
@@ -1105,6 +1154,55 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         <DollarSign className="w-5 h-5 flex-shrink-0" />
                         {sidebarOpen && <span>Finance</span>}
                     </Link>}
+
+                    {/* Decision Hub Dropdown */}
+                    {can('decision_hub.view') && <div className="space-y-1 px-3 mb-1">
+                        {sidebarOpen ? (
+                            <button
+                                onClick={() => setDecisionHubDropdownOpen(!decisionHubDropdownOpen)}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                    isDecisionHubPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <ClipboardCheck className="w-5 h-5 flex-shrink-0" />
+                                    <span>Decision Hub</span>
+                                </div>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${decisionHubDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                        ) : (
+                            <Link
+                                href="/management/dashboard"
+                                className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors ${
+                                    isDecisionHubPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                                <ClipboardCheck className="w-5 h-5" />
+                            </Link>
+                        )}
+                        {decisionHubDropdownOpen && sidebarOpen && (
+                            <div className="mt-1 space-y-1">
+                                {decisionHubSubItems.map((item) => (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                            currentPath === item.href
+                                                ? 'bg-slate-100 text-slate-900 font-medium'
+                                                : 'text-slate-500 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <item.icon className="w-4 h-4" />
+                                        {item.name}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>}
                     
                     {/* BUSINESS Section */}
                     {can('studio.view') && <div className="px-3 mt-6 mb-2">
