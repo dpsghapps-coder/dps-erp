@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use App\Models\Department;
+use App\Models\Employee;
 use App\Models\Permission;
 use App\Models\ProductCategory;
 use App\Models\Role;
@@ -18,6 +19,8 @@ class AdminController extends Controller
         $stats = [
             'total_users' => User::count(),
             'active_users' => User::where('is_active', true)->count(),
+            'total_roles' => Role::count(),
+            'total_departments' => Department::count(),
             'recent_activity' => AuditLog::orderBy('created_at', 'desc')->limit(10)->get(),
         ];
 
@@ -26,7 +29,7 @@ class AdminController extends Controller
 
     public function users()
     {
-        $users = User::with('role', 'departmentManager')->orderBy('created_at', 'desc')->paginate(25);
+        $users = User::with('role', 'departmentManager', 'employee')->orderBy('created_at', 'desc')->paginate(25);
         $departments = Department::where('is_active', true)->orderBy('name')->get();
 
         return inertia('Admin/Users/Index', ['users' => $users, 'departments' => $departments]);
@@ -39,8 +42,14 @@ class AdminController extends Controller
             ->orderBy('name')
             ->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $employees = Employee::whereNull('user_id')->orderBy('first_name')->get();
 
-        return inertia('Admin/Users/Create', ['roles' => $roles, 'managers' => $managers, 'departments' => $departments]);
+        return inertia('Admin/Users/Create', [
+            'roles' => $roles,
+            'managers' => $managers,
+            'departments' => $departments,
+            'employees' => $employees,
+        ]);
     }
 
     public function userStore(Request $request)
@@ -56,9 +65,29 @@ class AdminController extends Controller
             'is_active' => 'boolean',
             'department' => 'nullable|string|'.$deptValidation,
             'department_manager_id' => 'nullable|exists:users,id',
+            'employee_id' => 'nullable|exists:employees,id',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
-        User::create($validated);
+        if ($request->hasFile('avatar')) {
+            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        unset($validated['avatar']);
+
+        $employeeId = $validated['employee_id'] ?? null;
+        unset($validated['employee_id']);
+
+        $user = User::create($validated);
+
+        if ($employeeId) {
+            $user->update(['employee_id' => $employeeId]);
+            Employee::where('id', $employeeId)->update(['user_id' => $user->id]);
+        }
+
+        if ($request->hasFile('avatar')) {
+            $user->update(['avatar' => $request->file('avatar')->store('avatars', 'public')]);
+        }
 
         return redirect()->route('admin.users')->with('success', 'User created successfully');
     }
@@ -70,8 +99,15 @@ class AdminController extends Controller
             ->orderBy('name')
             ->get();
         $departments = Department::where('is_active', true)->orderBy('name')->get();
+        $employees = Employee::whereNull('user_id')->orWhere('user_id', $user->id)->orderBy('first_name')->get();
 
-        return inertia('Admin/Users/Edit', ['user' => $user, 'roles' => $roles, 'managers' => $managers, 'departments' => $departments]);
+        return inertia('Admin/Users/Edit', [
+            'user' => $user,
+            'roles' => $roles,
+            'managers' => $managers,
+            'departments' => $departments,
+            'employees' => $employees,
+        ]);
     }
 
     public function userUpdate(Request $request, User $user)
@@ -86,13 +122,36 @@ class AdminController extends Controller
             'is_active' => 'boolean',
             'department' => 'nullable|string|'.$deptValidation,
             'department_manager_id' => 'nullable|exists:users,id',
+            'employee_id' => 'nullable|exists:employees,id',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
         if ($request->filled('password')) {
             $validated['password'] = $request->password;
         }
 
+        $employeeId = $validated['employee_id'] ?? null;
+        unset($validated['employee_id']);
+
+        if ($request->hasFile('avatar')) {
+            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        $oldEmployeeId = $user->employee_id;
+
         $user->update($validated);
+
+        if ($employeeId != $oldEmployeeId) {
+            if ($oldEmployeeId) {
+                Employee::where('id', $oldEmployeeId)->update(['user_id' => null]);
+            }
+            if ($employeeId) {
+                $user->update(['employee_id' => $employeeId]);
+                Employee::where('id', $employeeId)->update(['user_id' => $user->id]);
+            } else {
+                $user->update(['employee_id' => null]);
+            }
+        }
 
         return redirect()->route('admin.users')->with('success', 'User updated successfully');
     }

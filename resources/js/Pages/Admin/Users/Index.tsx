@@ -113,6 +113,7 @@ export default function UsersIndex() {
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Role</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Department</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Manager</th>
+                                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Employee</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Status</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Created</th>
                                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Actions</th>
@@ -124,9 +125,13 @@ export default function UsersIndex() {
                                     <tr key={user.id} className="border-b border-white/5 hover:bg-white/5">
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-sm">
-                                                    {user.name?.charAt(0)}
-                                                </div>
+                                                {user.avatar ? (
+                                                    <img src={`/storage/${user.avatar}`} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                                                ) : (
+                                                    <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-sm">
+                                                        {user.name?.charAt(0)}
+                                                    </div>
+                                                )}
                                                 <p className="font-medium">{user.name}</p>
                                             </div>
                                         </td>
@@ -153,6 +158,15 @@ export default function UsersIndex() {
                                         <td className="py-3 px-4 text-slate-400 text-sm">
                                             {user.department_manager?.name || '-'}
                                         </td>
+                                        <td className="py-3 px-4 text-slate-400 text-sm">
+                                            {user.employee ? (
+                                                <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-cyan-500/20 text-cyan-400">
+                                                    {user.employee.first_name} {user.employee.last_name}
+                                                </span>
+                                            ) : (
+                                                <span className="text-slate-500">-</span>
+                                            )}
+                                        </td>
                                         <td className="py-3 px-4">
                                             <span className={`text-xs px-2 py-1 rounded-full ${user.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
                                                 {user.is_active ? 'Active' : 'Inactive'}
@@ -170,7 +184,7 @@ export default function UsersIndex() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={8} className="py-8">
+                                    <td colSpan={9} className="py-8">
                                         <EmptyState icon={User} title="No users found" />
                                     </td>
                                 </tr>

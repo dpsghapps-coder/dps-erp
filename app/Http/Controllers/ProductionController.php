@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\JobStatusHistory;
 use App\Models\ProductionJob;
 use App\Models\User;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ProductionController extends Controller
@@ -99,7 +98,7 @@ class ProductionController extends Controller
         return redirect()->route('production.show', $job->id)->with('success', 'Job updated successfully');
     }
 
-    public function updateStatus(Request $request, ProductionJob $job): JsonResponse
+    public function updateStatus(Request $request, ProductionJob $job)
     {
         $validated = $request->validate([
             'status' => 'required|in:'.implode(',', ProductionJob::ALL_STATUSES),
@@ -110,7 +109,7 @@ class ProductionController extends Controller
         $newStatus = $validated['status'];
 
         if ($oldStatus === $newStatus) {
-            return response()->json(['message' => 'Status unchanged'], 200);
+            return back()->with('success', 'Status unchanged');
         }
 
         $updates = ['status' => $newStatus];
@@ -133,12 +132,7 @@ class ProductionController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
 
-        $job->load(['assignedTo', 'order']);
-
-        return response()->json([
-            'message' => 'Status updated',
-            'job' => $job,
-        ]);
+        return back()->with('success', 'Status updated');
     }
 
     public function destroy(ProductionJob $job)

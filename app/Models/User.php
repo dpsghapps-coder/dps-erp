@@ -21,6 +21,7 @@ class User extends Authenticatable
         'is_active',
         'department',
         'department_manager_id',
+        'employee_id',
     ];
 
     protected $hidden = [
@@ -45,6 +46,11 @@ class User extends Authenticatable
     public function departmentManager(): BelongsTo
     {
         return $this->belongsTo(User::class, 'department_manager_id');
+    }
+
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
     }
 
     public function departmentStaff(): HasMany

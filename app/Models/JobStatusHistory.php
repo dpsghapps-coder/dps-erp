@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class JobStatusHistory extends Model
 {
+    protected $table = 'job_status_history';
+
     public $timestamps = false;
 
     protected $fillable = [
