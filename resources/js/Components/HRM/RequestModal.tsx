@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Calendar, Clock } from 'lucide-react';
+import { X, Calendar } from 'lucide-react';
 import Modal from '@/Components/Modal';
 
 interface RequestModalProps {
@@ -7,13 +7,14 @@ interface RequestModalProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
   employees: any[];
+  leaveTypes?: any[];
   defaultEmployeeId?: number;
 }
 
-export function RequestModal({ isOpen, onClose, onSubmit, employees, defaultEmployeeId }: RequestModalProps) {
+export function RequestModal({ isOpen, onClose, onSubmit, employees, leaveTypes = [], defaultEmployeeId }: RequestModalProps) {
   const [formData, setFormData] = useState({
     employee_id: defaultEmployeeId || '',
-    leave_type: 'annual',
+    leave_type: leaveTypes[0]?.name?.toLowerCase() || 'annual',
     start_date: '',
     end_date: '',
     reason: '',
@@ -30,7 +31,7 @@ export function RequestModal({ isOpen, onClose, onSubmit, employees, defaultEmpl
     // Reset form and close
     setFormData({
       employee_id: defaultEmployeeId || '',
-      leave_type: 'annual',
+      leave_type: leaveTypes[0]?.name?.toLowerCase() || 'annual',
       start_date: '',
       end_date: '',
       reason: '',
@@ -79,11 +80,15 @@ export function RequestModal({ isOpen, onClose, onSubmit, employees, defaultEmpl
               className="glass-input w-full"
               required
             >
-              <option value="annual">Annual Leave</option>
-              <option value="sick">Sick Leave</option>
-              <option value="unpaid">Unpaid Leave</option>
-              <option value="maternity">Maternity</option>
-              <option value="paternity">Paternity</option>
+              {leaveTypes.map((lt: any) => (
+                <option key={lt.id} value={lt.name.toLowerCase()}>{lt.name} ({lt.days_per_year} days/yr)</option>
+              ))}
+              {leaveTypes.length === 0 && (
+                <>
+                  <option value="annual">Annual Leave</option>
+                  <option value="sick">Sick Leave</option>
+                </>
+              )}
             </select>
           </div>
 

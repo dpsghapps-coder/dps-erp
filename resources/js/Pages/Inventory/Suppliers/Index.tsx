@@ -1,10 +1,11 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import GPSMapPicker from '@/Components/GPSMapPicker';
 import InventoryTabs from '@/Components/InventoryTabs';
 import { Head, usePage, useForm, router } from '@inertiajs/react';
 import { Plus, Search, Pencil, Trash2, User, Building2, Mail, MapPin, Smartphone, Map, X } from 'lucide-react';
 import { useState } from 'react';
+import WhatsAppLink from '@/Components/WhatsAppLink';
 
 export default function SuppliersIndex() {
     const { suppliers } = usePage().props as any;
@@ -126,7 +127,7 @@ export default function SuppliersIndex() {
                                             <p className="font-medium text-slate-800 mb-1.5">{b.name}</p>
                                             <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                                                 {b.contact_name && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {b.contact_name}</span>}
-                                                {b.mobile && <span className="flex items-center gap-1"><Smartphone className="w-3 h-3" /> {b.mobile}</span>}
+                                                {b.mobile && <span className="flex items-center gap-1"><Smartphone className="w-3 h-3" /> <WhatsAppLink phone={b.mobile} className="text-green-600 hover:underline">{b.mobile}</WhatsAppLink></span>}
                                                 {b.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {b.email}</span>}
                                             </div>
                                             {b.address && <p className="text-xs text-slate-500 mt-1 flex items-start gap-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" /> {b.address}</p>}
@@ -165,6 +166,7 @@ export default function SuppliersIndex() {
                     </div>
                 )}
             </div>
+            <Pagination meta={suppliers} />
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">

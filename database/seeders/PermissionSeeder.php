@@ -90,6 +90,12 @@ class PermissionSeeder extends Seeder
             ['name' => 'studio.view', 'module' => 'studio', 'description' => 'View studio'],
             ['name' => 'studio.manage_bookings', 'module' => 'studio', 'description' => 'Manage bookings'],
 
+            // Marketing
+            ['name' => 'marketing.view', 'module' => 'marketing', 'description' => 'View marketing module'],
+            ['name' => 'marketing.create', 'module' => 'marketing', 'description' => 'Create campaigns'],
+            ['name' => 'marketing.edit', 'module' => 'marketing', 'description' => 'Edit campaigns'],
+            ['name' => 'marketing.delete', 'module' => 'marketing', 'description' => 'Delete campaigns'],
+
             // Admin
             ['name' => 'admin.view_dashboard', 'module' => 'admin', 'description' => 'View admin dashboard'],
             ['name' => 'admin.manage_users', 'module' => 'admin', 'description' => 'Manage users'],

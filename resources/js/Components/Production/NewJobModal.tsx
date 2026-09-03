@@ -63,9 +63,9 @@ export default function NewJobModal({ open, onClose, users, defaultStatus = 'new
                             leaveTo="opacity-0 scale-95"
                         >
                             <DialogPanel className="glass-card w-full max-w-lg">
-                                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/10">
                                     <h2 className="text-lg font-semibold">New Job</h2>
-                                    <button onClick={handleClose} className="p-1 rounded hover:bg-white/10 text-slate-400">
+                                    <button onClick={handleClose} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400">
                                         <X className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -147,7 +147,7 @@ export default function NewJobModal({ open, onClose, users, defaultStatus = 'new
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
                                         <button type="button" onClick={handleClose} className="glass-button-secondary">
                                             Cancel
                                         </button>

@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { ArrowLeft, Save } from 'lucide-react';
+import { useCurrencySymbol } from '@/Utils/currency';
 
 interface Props {
     categories: any[];
@@ -18,6 +19,7 @@ export default function DecisionCreate({ categories, employees }: Props) {
         budget: '',
         approved_by: '',
     });
+    const currencySymbol = useCurrencySymbol();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -118,7 +120,7 @@ export default function DecisionCreate({ categories, employees }: Props) {
                                 <div>
                                     <label className="block text-sm font-medium mb-1.5 text-slate-500 dark:text-slate-400">Budget</label>
                                     <div className="relative">
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 dark:text-slate-400">GH₵</span>
+                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-slate-500 dark:text-slate-400">{currencySymbol}</span>
                                         <input
                                             type="number"
                                             min="0"

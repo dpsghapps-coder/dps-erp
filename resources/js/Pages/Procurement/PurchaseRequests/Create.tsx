@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, LoadingSpinner } from '@/Components/ui';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { ArrowLeft, Save, Plus, X, Upload } from 'lucide-react';
+import { useCurrency } from '@/Utils/currency';
 
 interface Props {
     products: any[];
@@ -73,6 +74,7 @@ export default function PurchaseRequestCreate({ products, suppliers, users, depa
     };
 
     const totalEstimated = data.items.reduce((sum, item) => sum + (item.estimated_cost * item.qty_requested), 0);
+    const formatCurrency = useCurrency();
 
     return (
         <AppLayout>
@@ -280,7 +282,7 @@ export default function PurchaseRequestCreate({ products, suppliers, users, depa
                                     <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white">
                                         <span>Estimated Total</span>
                                         <span className="text-indigo-600 dark:text-indigo-400">
-                                            ${totalEstimated.toFixed(2)}
+                                            {formatCurrency(totalEstimated)}
                                         </span>
                                     </div>
                                 </div>

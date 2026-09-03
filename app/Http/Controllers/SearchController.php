@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductionJob;
 use App\Models\StudioBooking;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class SearchController extends Controller
@@ -18,6 +19,23 @@ class SearchController extends Controller
 
         if (! $query || strlen($query) < 2) {
             return response()->json(['results' => []]);
+        }
+
+        $type = $request->input('type');
+        $dbQuery = '%'.$query.'%';
+
+        if ($type === 'users') {
+            $currentUser = $request->user();
+            $users = User::where('is_active', true)
+                ->where('id', '!=', $currentUser->id)
+                ->where(function ($q) use ($dbQuery) {
+                    $q->where('name', 'like', $dbQuery)
+                      ->orWhere('email', 'like', $dbQuery);
+                })
+                ->limit(15)
+                ->get(['id', 'name', 'email', 'avatar', 'department']);
+
+            return response()->json(['users' => $users]);
         }
 
         $query = '%'.$query.'%';

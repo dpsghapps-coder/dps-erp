@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\InventoryProduct;
+use App\Models\MaterialPrice;
 use App\Models\MaterialSupplierPrice;
 use App\Models\ProductCategory;
 use App\Models\Setting;
 use App\Models\Supplier;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -19,7 +21,7 @@ class ProductCatalogController extends Controller
         $status = $request->get('status', 'all');
         $category = $request->get('category', 'all');
 
-        $products = InventoryProduct::with(['supplier', 'supplierPrices.supplier', 'approvedRequisitions', 'stocks'])
+        $products = InventoryProduct::with(['supplierPrices.supplier', 'approvedRequisitions', 'stocks'])
             ->when($search, function ($query) use ($search) {
                 $query->where('item_name', 'like', "%{$search}%")
                     ->orWhere('material_id', 'like', "%{$search}%");
@@ -77,12 +79,9 @@ class ProductCatalogController extends Controller
         // Save supplier prices if provided
         if ($request->has('supplier_prices')) {
             foreach ($request->input('supplier_prices', []) as $priceData) {
-                if (! empty($priceData['supplier_id']) && ! empty($priceData['price'])) {
+                if (! empty($priceData['supplier_id'])) {
                     $product->supplierPrices()->create([
                         'supplier_id' => $priceData['supplier_id'],
-                        'price' => $priceData['price'],
-                        'suppliers_item_name' => $priceData['suppliers_item_name'] ?? null,
-                        'collection' => $priceData['collection'] ?? null,
                         'date_created' => $priceData['date_created'] ?? now(),
                         'created_by' => auth()->id(),
                     ]);
@@ -125,12 +124,9 @@ class ProductCatalogController extends Controller
         if ($request->has('supplier_prices')) {
             $product->supplierPrices()->delete();
             foreach ($request->input('supplier_prices', []) as $priceData) {
-                if (! empty($priceData['supplier_id']) && ! empty($priceData['price'])) {
+                if (! empty($priceData['supplier_id'])) {
                     $product->supplierPrices()->create([
                         'supplier_id' => $priceData['supplier_id'],
-                        'price' => $priceData['price'],
-                        'suppliers_item_name' => $priceData['suppliers_item_name'] ?? null,
-                        'collection' => $priceData['collection'] ?? null,
                         'date_created' => $priceData['date_created'] ?? now(),
                         'created_by' => auth()->id(),
                     ]);
@@ -161,9 +157,10 @@ class ProductCatalogController extends Controller
 
     public function show(InventoryProduct $product)
     {
-        $product->load(['supplierPrices.supplier.branches', 'supplierPrices.createdBy', 'approvedRequisitions', 'stocks']);
+        $product->load(['supplierPrices.supplier.branches', 'supplierPrices.createdBy', 'prices.supplier', 'prices.collectedBy', 'prices.addedBy', 'approvedRequisitions', 'stocks']);
 
         $suppliers = Supplier::with('branches')->where('is_active', true)->orderBy('company_name')->get();
+        $users = User::orderBy('name')->get(['id', 'name']);
         $categories = ProductCategory::with('attributes')->orderBy('name')->get(['id', 'name']);
         $uoms = Setting::where('key', 'like', 'uom_%')->pluck('value');
         $attributes = Setting::where('key', 'like', 'attr_%')->pluck('value');
@@ -174,6 +171,7 @@ class ProductCatalogController extends Controller
         return inertia('Inventory/ProductCatalog/Show', [
             'product' => $product,
             'suppliers' => $suppliers,
+            'users' => $users,
             'categories' => $categories,
             'uoms' => $uoms,
             'attributes' => $attributes,
@@ -212,6 +210,52 @@ class ProductCatalogController extends Controller
         $supplierPrice->delete();
 
         return back()->with('success', 'Supplier removed successfully');
+    }
+
+    public function storePrice(Request $request, InventoryProduct $product)
+    {
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'price' => 'required|numeric|min:0',
+            'collected_by' => 'nullable|exists:users,id',
+            'collection_date' => 'required|date',
+        ]);
+
+        $exists = $product->prices()
+            ->where('supplier_id', $validated['supplier_id'])
+            ->whereDate('collection_date', $validated['collection_date'])
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['supplier_id' => 'A price for this supplier on this collection date already exists.'])->withInput();
+        }
+
+        $product->prices()->create(array_merge($validated, [
+            'added_by' => auth()->id(),
+        ]));
+
+        return back()->with('success', 'Price added successfully');
+    }
+
+    public function updatePrice(Request $request, MaterialPrice $price)
+    {
+        $validated = $request->validate([
+            'supplier_id' => 'required|exists:suppliers,id',
+            'price' => 'required|numeric|min:0',
+            'collected_by' => 'nullable|exists:users,id',
+            'collection_date' => 'required|date',
+        ]);
+
+        $price->update($validated);
+
+        return back()->with('success', 'Price updated successfully');
+    }
+
+    public function destroyPrice(MaterialPrice $price)
+    {
+        $price->delete();
+
+        return back()->with('success', 'Price deleted successfully');
     }
 
     public function edit(InventoryProduct $product)

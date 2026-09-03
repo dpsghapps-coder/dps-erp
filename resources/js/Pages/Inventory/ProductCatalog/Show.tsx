@@ -1,11 +1,12 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Calendar, Tag, Ruler, Plus, X, Trash2, Building2, User, Mail, Smartphone, MapPin, Map, AlertTriangle, CheckCircle, Package, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Pencil, Calendar, Tag, Ruler, Plus, X, Trash2, Building2, User, Mail, Smartphone, MapPin, Map, AlertTriangle, CheckCircle, Package, ImageIcon, DollarSign, Edit2 } from 'lucide-react';
 import { useState } from 'react';
+import WhatsAppLink from '@/Components/WhatsAppLink';
 
 export default function ProductCatalogShow() {
-    const { product, suppliers, categories, uoms, attributes, categoryAttributes } = usePage().props as any;
+    const { product, suppliers, users, categories, uoms, attributes, categoryAttributes } = usePage().props as any;
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -20,6 +21,16 @@ export default function ProductCatalogShow() {
 
     const { data, setData, post, processing, reset } = useForm({
         supplier_id: '',
+    });
+
+    const [showPriceModal, setShowPriceModal] = useState(false);
+    const [editingPrice, setEditingPrice] = useState<any>(null);
+    const [deletePriceTarget, setDeletePriceTarget] = useState<any>(null);
+    const { data: priceData, setData: setPriceData, post: postPrice, put: putPrice, processing: priceProcessing, reset: resetPrice } = useForm({
+        supplier_id: '',
+        price: '',
+        collected_by: '',
+        collection_date: '',
     });
 
     const openAdd = () => {
@@ -46,6 +57,36 @@ export default function ProductCatalogShow() {
         setEditAttributeValues(product.attributes || {});
         setEditPicture(null);
         setShowEditPanel(true);
+    };
+
+    const openAddPrice = () => {
+        resetPrice();
+        setEditingPrice(null);
+        setShowPriceModal(true);
+    };
+
+    const openEditPrice = (price: any) => {
+        setEditingPrice(price);
+        setPriceData({
+            supplier_id: price.supplier_id,
+            price: price.price,
+            collected_by: price.collected_by || '',
+            collection_date: price.collection_date ? new Date(price.collection_date).toISOString().split('T')[0] : '',
+        });
+        setShowPriceModal(true);
+    };
+
+    const handlePriceSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingPrice) {
+            putPrice(`/inventory/materials/prices/${editingPrice.id}`, {
+                onSuccess: () => { setShowPriceModal(false); setEditingPrice(null); resetPrice(); },
+            });
+        } else {
+            postPrice(`/inventory/materials/${product.id}/prices`, {
+                onSuccess: () => { setShowPriceModal(false); resetPrice(); },
+            });
+        }
     };
 
     const handleEditSubmit = (e: React.FormEvent) => {
@@ -127,6 +168,12 @@ export default function ProductCatalogShow() {
                                         <Ruler className="w-3 h-3" /> UOM
                                     </p>
                                     <p>{product.uom}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-500 mb-1 flex items-center gap-1">
+                                        <Building2 className="w-3 h-3" /> Primary Supplier
+                                    </p>
+                                    <p>{product.primary_supplier?.company_name || '-'}</p>
                                 </div>
                             </div>
                             <div>
@@ -247,6 +294,157 @@ export default function ProductCatalogShow() {
                 )}
             </GlassCard>
 
+            {/* Prices Section */}
+            <GlassCard className="mt-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold flex items-center gap-2">
+                        <DollarSign className="w-5 h-5 text-slate-500" /> Prices
+                    </h2>
+                    <button onClick={openAddPrice} className="glass-button text-sm py-1.5 px-3 flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Add Price
+                    </button>
+                </div>
+                {product.prices && product.prices.length > 0 ? (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr className="border-b border-slate-200">
+                                    <th className="text-left py-2 font-medium text-slate-500">ID</th>
+                                    <th className="text-left py-2 font-medium text-slate-500">Supplier</th>
+                                    <th className="text-right py-2 font-medium text-slate-500">Price</th>
+                                    <th className="text-left py-2 font-medium text-slate-500">Collected By</th>
+                                    <th className="text-left py-2 font-medium text-slate-500">Collection Date</th>
+                                    <th className="text-left py-2 font-medium text-slate-500">Date Added</th>
+                                    <th className="text-left py-2 font-medium text-slate-500">Added By</th>
+                                    <th className="text-right py-2 font-medium text-slate-500">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {product.prices.map((p: any) => (
+                                    <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
+                                        <td className="py-2 font-mono text-xs">#{p.id}</td>
+                                        <td className="py-2">{p.supplier?.company_name || '-'}</td>
+                                        <td className="py-2 text-right font-medium">GH₵ {Number(p.price).toFixed(2)}</td>
+                                        <td className="py-2 text-slate-600">{p.collected_by?.name || '-'}</td>
+                                        <td className="py-2 text-slate-600">{p.collection_date ? new Date(p.collection_date).toLocaleDateString() : '-'}</td>
+                                        <td className="py-2 text-slate-600">{new Date(p.created_at).toLocaleDateString()}</td>
+                                        <td className="py-2 text-slate-600">{p.added_by?.name || '-'}</td>
+                                        <td className="py-2 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button onClick={() => openEditPrice(p)} className="text-blue-500 hover:text-blue-700">
+                                                    <Edit2 className="w-4 h-4" />
+                                                </button>
+                                                <button onClick={() => setDeletePriceTarget(p.id)} className="text-red-500 hover:text-red-700">
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <div className="text-center py-8">
+                        <DollarSign className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                        <p className="text-slate-500 text-sm mb-4">No prices recorded for this material</p>
+                        <button onClick={openAddPrice} className="glass-button text-sm py-1.5 px-3 inline-flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> Add Price
+                        </button>
+                    </div>
+                )}
+            </GlassCard>
+
+            {/* Price Modal */}
+            {showPriceModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold">{editingPrice ? 'Edit Price' : 'Add Price'}</h2>
+                            <button onClick={() => { setShowPriceModal(false); setEditingPrice(null); }} className="p-1 hover:bg-slate-100 rounded">
+                                <X className="w-5 h-5 text-slate-400" />
+                            </button>
+                        </div>
+                        <form onSubmit={handlePriceSubmit}>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Supplier *</label>
+                                    <select
+                                        value={priceData.supplier_id}
+                                        onChange={(e) => setPriceData('supplier_id', e.target.value)}
+                                        className="glass-input w-full"
+                                        required
+                                    >
+                                        <option value="">Select supplier</option>
+                                        {supplierPrices.map((sp: any) => (
+                                            <option key={sp.supplier?.id} value={sp.supplier?.id}>{sp.supplier?.company_name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Price (GH₵) *</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={priceData.price}
+                                        onChange={(e) => setPriceData('price', e.target.value)}
+                                        className="glass-input w-full"
+                                        placeholder="0.00"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Collected By</label>
+                                    <select
+                                        value={priceData.collected_by}
+                                        onChange={(e) => setPriceData('collected_by', e.target.value)}
+                                        className="glass-input w-full"
+                                    >
+                                        <option value="">Select user</option>
+                                        {(users || []).map((u: any) => (
+                                            <option key={u.id} value={u.id}>{u.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Collection Date *</label>
+                                    <input
+                                        type="date"
+                                        value={priceData.collection_date}
+                                        onChange={(e) => setPriceData('collection_date', e.target.value)}
+                                        className="glass-input w-full"
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-3 mt-6">
+                                <button type="button" onClick={() => { setShowPriceModal(false); setEditingPrice(null); }} className="flex-1 glass-button-secondary text-sm py-1.5 px-3">
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={priceProcessing} className="flex-1 glass-button text-sm py-1.5 px-3 flex items-center justify-center gap-2">
+                                    {priceProcessing ? 'Saving...' : editingPrice ? 'Update' : 'Add'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Price Confirmation */}
+            {deletePriceTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
+                        <h3 className="text-lg font-semibold mb-2">Delete Price</h3>
+                        <p className="text-sm text-slate-600 mb-6">Are you sure you want to delete this price record?</p>
+                        <div className="flex gap-3">
+                            <button onClick={() => setDeletePriceTarget(null)} className="flex-1 glass-button-secondary">Cancel</button>
+                            <button onClick={() => { router.delete(`/inventory/materials/prices/${deletePriceTarget}`); setDeletePriceTarget(null); }} className="flex-1 glass-button bg-red-600 hover:bg-red-700">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
                     <div className="bg-white rounded-2xl p-6 w-full max-w-md">
@@ -314,7 +512,7 @@ export default function ProductCatalogShow() {
                                         <p className="font-medium text-slate-800 text-sm mb-1.5">{b.name}</p>
                                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                                             {b.contact_name && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {b.contact_name}</span>}
-                                            {b.mobile && <span className="flex items-center gap-1"><Smartphone className="w-3 h-3" /> {b.mobile}</span>}
+                                            {b.mobile && <span className="flex items-center gap-1"><Smartphone className="w-3 h-3" /> <WhatsAppLink phone={b.mobile} className="text-green-600 hover:underline">{b.mobile}</WhatsAppLink></span>}
                                             {b.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {b.email}</span>}
                                         </div>
                                         {b.address && <p className="text-xs text-slate-500 mt-1 flex items-start gap-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" /> {b.address}</p>}

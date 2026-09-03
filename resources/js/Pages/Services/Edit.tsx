@@ -2,52 +2,48 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
-import { useState, useEffect } from 'react';
 
 export default function ServiceEdit() {
-    const { service } = usePage().props;
-    
-    const { data, setData, put, processing, errors } = useForm({
+    const { service, categories, uoms } = usePage().props as any;
+
+    const { data, setData, put, transform, processing, errors } = useForm({
         code: service.code || '',
         name: service.name || '',
         description: service.description || '',
-        category: service.category || '',
-        unit: service.unit || 'pcs',
+        category_id: service.category_id || '',
+        unit: service.unit || '',
         is_active: service.is_active ?? true,
-        prices: service.prices || [],
+        prices: service.prices?.length > 0
+            ? service.prices.map((p: any) => ({ min_qty: p.min_qty, max_qty: p.max_qty || '', unit_price: p.unit_price }))
+            : [{ min_qty: 1, max_qty: '', unit_price: 0 }],
     });
 
-    const [prices, setPrices] = useState(service.prices?.length > 0 
-        ? service.prices.map((p: any) => ({ min_qty: p.min_qty, max_qty: p.max_qty || '', unit_price: p.unit_price }))
-        : [{ min_qty: 1, max_qty: '', unit_price: 0 }]
-    );
-
     const addPriceTier = () => {
-        setPrices([...prices, { min_qty: 1, max_qty: '', unit_price: 0 }]);
+        setData('prices', [...data.prices, { min_qty: 1, max_qty: '', unit_price: 0 }]);
     };
 
     const removePriceTier = (index: number) => {
-        if (prices.length > 1) {
-            setPrices(prices.filter((_, i) => i !== index));
+        if (data.prices.length > 1) {
+            setData('prices', data.prices.filter((_: any, i: number) => i !== index));
         }
     };
 
     const updatePriceTier = (index: number, field: string, value: any) => {
-        const newPrices = [...prices];
-        newPrices[index] = { ...newPrices[index], [field]: value };
-        setPrices(newPrices);
+        const newPrices = data.prices.map((p: any, i: number) => i === index ? { ...p, [field]: value } : p);
+        setData('prices', newPrices);
     };
+
+    transform((formData: any) => ({
+        ...formData,
+        prices: formData.prices.map((p: any) => ({
+            min_qty: parseInt(p.min_qty) || 1,
+            max_qty: p.max_qty !== '' && p.max_qty !== null ? parseInt(p.max_qty) : null,
+            unit_price: parseFloat(p.unit_price) || 0,
+        })),
+    }));
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        const formattedPrices = prices.map((p: any) => ({
-            min_qty: parseInt(p.min_qty) || 1,
-            max_qty: p.max_qty ? parseInt(p.max_qty) : null,
-            unit_price: parseFloat(p.unit_price) || 0,
-        }));
-
-        setData('prices', formattedPrices);
         put(`/services/${service.id}`);
     };
 
@@ -56,7 +52,7 @@ export default function ServiceEdit() {
             <Head title="Edit Service" />
 
             <div className="mb-6">
-                <Link href="/services" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/services" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Services
                 </Link>
             </div>
@@ -67,15 +63,15 @@ export default function ServiceEdit() {
                 <GlassCard>
                     <div className="grid md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium mb-2">Code *</label>
-                            <input 
+                            <label className="block text-sm font-medium mb-2">Code</label>
+                            <input
                                 type="text"
                                 value={data.code}
-                                onChange={(e) => setData('code', e.target.value)}
-                                className="glass-input w-full"
-                                placeholder="e.g., LFP-SAV"
+                                readOnly
+                                disabled
+                                className="glass-input w-full opacity-60 cursor-not-allowed"
                             />
-                            {errors.code && <p className="text-red-400 text-sm mt-1">{errors.code}</p>}
+                            <p className="text-xs text-slate-500 mt-1">Auto-generated, not editable</p>
                         </div>
 
                         <div>
@@ -102,24 +98,30 @@ export default function ServiceEdit() {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Category</label>
-                            <input 
-                                type="text"
-                                value={data.category}
-                                onChange={(e) => setData('category', e.target.value)}
+                            <select
+                                value={data.category_id}
+                                onChange={(e) => setData('category_id', e.target.value)}
                                 className="glass-input w-full"
-                                placeholder="e.g., Printing, Design"
-                            />
+                            >
+                                <option value="">Select Category</option>
+                                {(categories || []).map((c: any) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Unit *</label>
-                            <input 
-                                type="text"
+                            <select
                                 value={data.unit}
                                 onChange={(e) => setData('unit', e.target.value)}
                                 className="glass-input w-full"
-                                placeholder="pcs, sqm, hr"
-                            />
+                            >
+                                <option value="">Select Unit</option>
+                                {(uoms || []).map((u: string) => (
+                                    <option key={u} value={u}>{u}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div>
@@ -129,7 +131,7 @@ export default function ServiceEdit() {
                                     type="checkbox"
                                     checked={data.is_active}
                                     onChange={(e) => setData('is_active', e.target.checked)}
-                                    className="w-5 h-5 rounded bg-white/10 border-white/20"
+                                    className="w-5 h-5 rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20"
                                 />
                                 <span>Active</span>
                             </label>
@@ -137,7 +139,7 @@ export default function ServiceEdit() {
                     </div>
 
                     {/* Tiered Pricing Section */}
-                    <div className="mt-8 pt-6 border-t border-white/10">
+                    <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-medium">Tiered Pricing</h3>
                             <button 
@@ -150,7 +152,7 @@ export default function ServiceEdit() {
                         </div>
 
                         <div className="space-y-3">
-                            {prices.map((price: any, index: number) => (
+                            {data.prices.map((price: any, index: number) => (
                                 <div key={index} className="flex items-center gap-3">
                                     <div className="flex-1">
                                         <input 
@@ -185,8 +187,8 @@ export default function ServiceEdit() {
                                     <button 
                                         type="button"
                                         onClick={() => removePriceTier(index)}
-                                        disabled={prices.length === 1}
-                                        className="p-2 text-red-400 hover:bg-white/10 rounded disabled:opacity-50"
+                                        disabled={data.prices.length === 1}
+                                        className="p-2 text-red-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded disabled:opacity-50"
                                     >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
@@ -195,7 +197,7 @@ export default function ServiceEdit() {
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-4 mt-6 pt-6 border-t border-white/10">
+                    <div className="flex justify-end gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-white/10">
                         <Link href="/services" className="glass-button">Cancel</Link>
                         <button type="submit" disabled={processing} className="glass-button">
                             {processing ? 'Saving...' : 'Update Service'}

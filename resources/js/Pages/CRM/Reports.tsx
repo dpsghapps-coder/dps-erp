@@ -1,19 +1,34 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { Head, usePage, Link } from '@inertiajs/react';
-import { Users, TrendingUp, UserCheck, UserX, Target, BarChart3, ArrowRight } from 'lucide-react';
+import { Users, TrendingUp, UserCheck, UserX, Target, BarChart3, ArrowRight, DollarSign, Trophy } from 'lucide-react';
+import { useCurrency } from '@/Utils/currency';
+
+const STAGE_LABELS: Record<string, string> = {
+    new_lead: 'New Lead',
+    contacted: 'Contacted',
+    meeting_scheduled: 'Meeting Scheduled',
+    proposal_sent: 'Proposal Sent',
+    negotiating: 'Negotiating',
+    converted: 'Converted',
+    lost: 'Lost',
+};
 
 export default function Reports() {
-    const { stats, conversionRate, monthlyClients, sources, industries, recentClients } = usePage().props as any;
+    const { stats, conversionRate, won, lost, pipelineFunnel, pipelineValue, wonValue, lostReasons, monthlyClients, sources, industries, recentClients } = usePage().props as any;
+    const formatCurrency = useCurrency();
 
     const statCards = [
-        { label: 'Total Clients', value: stats.total_clients, icon: Users, color: 'bg-slate-100 text-slate-600' },
-        { label: 'Active', value: stats.active, icon: UserCheck, color: 'bg-green-100 text-green-600' },
-        { label: 'Inactive', value: stats.inactive, icon: UserX, color: 'bg-red-100 text-red-600' },
-        { label: 'Conversion Rate', value: `${conversionRate}%`, icon: TrendingUp, color: 'bg-indigo-100 text-indigo-600' },
+        { label: 'Total Clients', value: stats.total_clients, icon: Users, color: 'bg-slate-500/20 text-slate-400' },
+        { label: 'Active', value: stats.active, icon: UserCheck, color: 'bg-green-500/20 text-green-400' },
+        { label: 'Inactive', value: stats.inactive, icon: UserX, color: 'bg-red-500/20 text-red-400' },
+        { label: 'Win Rate', value: `${conversionRate}%`, icon: TrendingUp, color: 'bg-indigo-500/20 text-indigo-400' },
+        { label: 'Pipeline Value', value: formatCurrency(pipelineValue || 0), icon: DollarSign, color: 'bg-emerald-500/20 text-emerald-400' },
+        { label: 'Won Revenue', value: formatCurrency(wonValue || 0), icon: Trophy, color: 'bg-amber-500/20 text-amber-400' },
     ];
 
     const maxCount = Math.max(...monthlyClients.map((m: any) => m.count), 1);
+    const maxFunnel = Math.max(...Object.values(pipelineFunnel || {}).map((v: any) => v as number), 1);
 
     return (
         <AppLayout>
@@ -25,7 +40,7 @@ export default function Reports() {
             />
 
             {/* Overview Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
                 {statCards.map((stat, i) => (
                     <GlassCard key={i}>
                         <div className="flex items-center gap-3">
@@ -54,12 +69,12 @@ export default function Reports() {
                         {monthlyClients.map((month: any, i: number) => (
                             <div key={i} className="flex items-center gap-3">
                                 <span className="text-sm text-slate-500 w-16">{month.month}</span>
-                                <div className="flex-1 bg-slate-100 rounded-full h-6 relative overflow-hidden">
-                                    <div 
+                                <div className="flex-1 bg-slate-100 dark:bg-white/10 rounded-full h-6 relative overflow-hidden">
+                                    <div
                                         className="bg-indigo-500 h-full rounded-full transition-all"
                                         style={{ width: `${(month.count / maxCount) * 100}%` }}
                                     />
-                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium">
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-900 dark:text-white">
                                         {month.count}
                                     </span>
                                 </div>
@@ -72,35 +87,78 @@ export default function Reports() {
                 <GlassCard>
                     <h2 className="text-lg font-semibold mb-4">Status Breakdown</h2>
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-blue-500/10 rounded-lg">
                             <div className="flex items-center gap-3">
-                                <Target className="w-5 h-5 text-blue-600" />
+                                <Target className="w-5 h-5 text-blue-400" />
                                 <span className="font-medium">Leads</span>
                             </div>
-                            <span className="text-xl font-semibold text-blue-600">{stats.leads}</span>
+                            <span className="text-xl font-semibold text-blue-400">{stats.leads}</span>
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-yellow-500/10 rounded-lg">
                             <div className="flex items-center gap-3">
-                                <TrendingUp className="w-5 h-5 text-yellow-600" />
+                                <TrendingUp className="w-5 h-5 text-yellow-400" />
                                 <span className="font-medium">Prospects</span>
                             </div>
-                            <span className="text-xl font-semibold text-yellow-600">{stats.prospects}</span>
+                            <span className="text-xl font-semibold text-yellow-400">{stats.prospects}</span>
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
                             <div className="flex items-center gap-3">
-                                <UserCheck className="w-5 h-5 text-green-600" />
+                                <UserCheck className="w-5 h-5 text-green-400" />
                                 <span className="font-medium">Active</span>
                             </div>
-                            <span className="text-xl font-semibold text-green-600">{stats.active}</span>
+                            <span className="text-xl font-semibold text-green-400">{stats.active}</span>
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg">
                             <div className="flex items-center gap-3">
-                                <UserX className="w-5 h-5 text-red-600" />
+                                <UserX className="w-5 h-5 text-red-400" />
                                 <span className="font-medium">Inactive</span>
                             </div>
-                            <span className="text-xl font-semibold text-red-600">{stats.inactive}</span>
+                            <span className="text-xl font-semibold text-red-400">{stats.inactive}</span>
                         </div>
                     </div>
+                </GlassCard>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6 mb-6">
+                {/* Sales Funnel */}
+                <GlassCard>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-lg font-semibold">Sales Funnel</h2>
+                        <span className="text-sm text-slate-500">{won} won · {lost} lost</span>
+                    </div>
+                    <div className="space-y-2">
+                        {Object.entries(pipelineFunnel || {}).map(([stage, count]) => (
+                            <div key={stage} className="flex items-center gap-3">
+                                <span className="text-sm text-slate-500 w-36 truncate">{STAGE_LABELS[stage] || stage}</span>
+                                <div className="flex-1 bg-slate-100 dark:bg-white/10 rounded-full h-6 relative overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all ${stage === 'lost' ? 'bg-red-500' : stage === 'converted' ? 'bg-green-500' : 'bg-indigo-500'}`}
+                                        style={{ width: `${((count as number) / maxFunnel) * 100}%` }}
+                                    />
+                                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-900 dark:text-white">
+                                        {count as number}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </GlassCard>
+
+                {/* Lost Reasons */}
+                <GlassCard>
+                    <h2 className="text-lg font-semibold mb-4">Lost Reasons</h2>
+                    {Object.keys(lostReasons || {}).length > 0 ? (
+                        <div className="space-y-3">
+                            {Object.entries(lostReasons).map(([reason, count]) => (
+                                <div key={reason} className="flex items-center justify-between">
+                                    <span className="text-slate-400">{reason}</span>
+                                    <span className="font-medium">{count as number}</span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-slate-400 text-center py-4">No lost deals recorded yet</p>
+                    )}
                 </GlassCard>
             </div>
 
@@ -112,7 +170,7 @@ export default function Reports() {
                         <div className="space-y-3">
                             {Object.entries(sources).map(([source, count]) => (
                                 <div key={source} className="flex items-center justify-between">
-                                    <span className="text-slate-600">{source}</span>
+                                    <span className="text-slate-400">{source}</span>
                                     <span className="font-medium">{count as number}</span>
                                 </div>
                             ))}
@@ -129,7 +187,7 @@ export default function Reports() {
                         <div className="space-y-3">
                             {Object.entries(industries).map(([industry, count]) => (
                                 <div key={industry} className="flex items-center justify-between">
-                                    <span className="text-slate-600">{industry}</span>
+                                    <span className="text-slate-400">{industry}</span>
                                     <span className="font-medium">{count as number}</span>
                                 </div>
                             ))}
@@ -144,14 +202,14 @@ export default function Reports() {
             <GlassCard className="mt-6">
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold">Recent Clients</h2>
-                    <Link href="/crm" className="text-sm text-indigo-600 hover:underline flex items-center gap-1">
+                    <Link href="/crm" className="text-sm text-indigo-400 hover:underline flex items-center gap-1">
                         View All <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-slate-200">
+                            <tr className="border-b border-slate-200 dark:border-white/10">
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Company</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Status</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Added</th>
@@ -159,9 +217,9 @@ export default function Reports() {
                         </thead>
                         <tbody>
                             {recentClients.map((client: any) => (
-                                <tr key={client.id} className="border-b border-slate-100 hover:bg-slate-50">
+                                <tr key={client.id} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
                                     <td className="py-3 px-4">
-                                        <Link href={`/crm/${client.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
+                                        <Link href={`/crm/${client.id}`} className="font-medium text-slate-900 dark:text-white hover:text-indigo-400">
                                             {client.company_name}
                                         </Link>
                                     </td>

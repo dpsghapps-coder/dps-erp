@@ -1,4 +1,5 @@
 import { PropsWithChildren } from 'react';
+import { Link } from '@inertiajs/react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -97,13 +98,48 @@ export function StatusBadge({
   };
 
   return (
-    <span className={`status-badge ${statusClasses[status] || 'bg-white/10'} ${className || ''}`}>
+    <span className={`status-badge ${statusClasses[status] || 'bg-slate-100 dark:bg-white/10'} ${className || ''}`}>
       {status.replace(/_/g, ' ')}
     </span>
   );
 }
 
-export function EmptyState({ 
+export function Pagination({ meta }: { meta: any }) {
+  if (!meta || !meta.links || meta.last_page <= 1) return null;
+
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3 px-1 pt-4">
+      <p className="text-sm text-slate-500 dark:text-slate-400">
+        Showing {meta.from ?? 0}–{meta.to ?? 0} of {meta.total ?? 0}
+      </p>
+      <div className="flex items-center gap-1">
+        {meta.links.map((link: any, i: number) => (
+          link.url ? (
+            <Link
+              key={i}
+              href={link.url}
+              preserveScroll
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                link.active
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20'
+              }`}
+              dangerouslySetInnerHTML={{ __html: link.label }}
+            />
+          ) : (
+            <span
+              key={i}
+              className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 dark:text-slate-600 cursor-default"
+              dangerouslySetInnerHTML={{ __html: link.label }}
+            />
+          )
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function EmptyState({
   icon: Icon,
   title,
   description,

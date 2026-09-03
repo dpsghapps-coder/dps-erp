@@ -20,13 +20,14 @@ class InventoryController extends Controller
         $activeMaterials = InventoryProduct::where('item_status', 'Active')->count();
         $disabledMaterials = InventoryProduct::where('item_status', 'Disabled')->count();
 
-        $stockOnHand = Stock::sum('qty_purchased');
+        $materialsWithStock = InventoryProduct::with(['stocks', 'approvedRequisitions'])->get();
+
+        $stockOnHand = $materialsWithStock->sum('available_stock');
 
         $pendingRequisitions = Requisition::where('status', 'pending')->count();
         $categoriesCount = ProductCategory::count();
 
-        $lowStockCount = InventoryProduct::with(['stocks', 'approvedRequisitions'])
-            ->get()
+        $lowStockCount = $materialsWithStock
             ->filter(fn ($p) => $p->restock_threshold > 0 && $p->available_stock <= $p->restock_threshold)
             ->count();
 

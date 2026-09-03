@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
-import { usePage, useForm } from '@inertiajs/react';
+import { useState } from 'react';
+import { usePage, router, Head, Link } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { DonutChart } from '@/Components/HRM';
-import { Head, Link } from '@inertiajs/react';
 import { 
     Users, 
     CheckCircle2, 
@@ -54,24 +53,15 @@ const PAYROLL_MOCK = {
 };
 
 export default function HrmDashboard() {
-    const { props } = usePage();
+    const { props, url } = usePage() as any;
     const stats = (props as any)?.stats || STATS_MOCK;
     const attendanceData = (props as any)?.attendanceData || ATTENDANCE_MOCK;
     const pendingLeaves = (props as any)?.pendingLeaves || PENDING_LEAVES_MOCK;
     const departments = (props as any)?.departments || DEPARTMENTS_MOCK;
     const payrollStatus = (props as any)?.payrollStatus || PAYROLL_MOCK;
 
-    const [activePage, setActivePage] = useState('dashboard');
+    const activePage = url?.split('/hrm/')[1]?.split('?')[0] || 'dashboard';
     const [rejectingId, setRejectingId] = useState<number | null>(null);
-
-    useEffect(() => {
-        const saved = localStorage.getItem('hrmActivePage');
-        if (saved) setActivePage(saved);
-    }, []);
-
-    useEffect(() => {
-        localStorage.setItem('hrmActivePage', activePage);
-    }, [activePage]);
 
     const attendanceChartData = [
         { name: 'Present', value: attendanceData.present, color: '#22c55e' },
@@ -79,20 +69,12 @@ export default function HrmDashboard() {
         { name: 'On Leave', value: attendanceData.onLeave, color: '#3b82f6' },
     ];
 
-    const handleApprove = async (id: number) => {
-        try {
-            await fetch(`/hrm/leaves/${id}/approve`, { method: 'POST' });
-        } catch (e) {
-            console.log('Mock approve');
-        }
+    const handleApprove = (id: number) => {
+        router.post(`/hrm/leaves/${id}/approve`);
     };
 
-    const handleReject = async (id: number) => {
-        try {
-            await fetch(`/hrm/leaves/${id}/reject`, { method: 'POST' });
-        } catch (e) {
-            console.log('Mock reject');
-        }
+    const handleReject = (id: number) => {
+        router.post(`/hrm/leaves/${id}/reject`);
     };
 
     const leaveTypeLabels: Record<string, string> = {
@@ -123,7 +105,6 @@ export default function HrmDashboard() {
                     <Link
                         key={item.name}
                         href={item.href}
-                        onClick={() => setActivePage(item.name.toLowerCase())}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                             item.active
                                 ? 'bg-indigo-600 text-white'

@@ -171,18 +171,18 @@ export default function KanbanBoard({ jobs, users }: KanbanBoardProps) {
                 <button
                     onClick={() => setActiveTab('active')}
                     className={'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' +
-                        (activeTab === 'active' ? 'bg-white/15 text-white' : 'text-slate-400 hover:bg-white/5')}
+                        (activeTab === 'active' ? 'bg-slate-100 dark:bg-white/15 text-slate-900 dark:text-white' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5')}
                 >
                     Active Workflow
-                    <span className="ml-2 text-xs bg-white/10 px-2 py-0.5 rounded-full">{tabCounts.active}</span>
+                    <span className="ml-2 text-xs bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-full">{tabCounts.active}</span>
                 </button>
                 <button
                     onClick={() => setActiveTab('paused')}
                     className={'px-4 py-2 rounded-lg text-sm font-medium transition-colors ' +
-                        (activeTab === 'paused' ? 'bg-white/15 text-white' : 'text-slate-400 hover:bg-white/5')}
+                        (activeTab === 'paused' ? 'bg-slate-100 dark:bg-white/15 text-slate-900 dark:text-white' : 'text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5')}
                 >
                     Paused / Cancelled
-                    <span className="ml-2 text-xs bg-white/10 px-2 py-0.5 rounded-full">{tabCounts.paused}</span>
+                    <span className="ml-2 text-xs bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-full">{tabCounts.paused}</span>
                 </button>
             </div>
 

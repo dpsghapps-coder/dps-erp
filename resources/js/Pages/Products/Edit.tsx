@@ -3,10 +3,12 @@ import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, usePage, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2, Package, Wrench } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useCurrency } from '@/Utils/currency';
 
 export default function ProductEdit() {
-    const { product, categories, inventoryProducts, services } = usePage().props;
-    const { data, setData, put, processing, errors } = useForm({
+    const { product, categories, inventoryProducts, services, uoms } = usePage().props;
+    const formatCurrency = useCurrency();
+    const { data, setData, put, transform, processing, errors } = useForm({
         sku: product?.sku || '',
         name: product?.name || '',
         description: product?.description || '',
@@ -25,9 +27,10 @@ export default function ProductEdit() {
             setComponents(product.components.map((c: any) => ({
                 component_id: c.component_id,
                 component_type: c.component_type,
-                component_name: c.component?.description || c.component?.name,
+                component_name: c.component?.item_name || c.component?.name,
                 component_sku: c.component?.material_id || c.component?.code,
                 quantity: c.quantity,
+                unit_price: c.unit_price || 0,
                 type: c.component_type === 'App\\Models\\InventoryProduct' ? 'material' : 'service',
             })));
         }
@@ -37,8 +40,9 @@ export default function ProductEdit() {
         const newComponent = {
             component_id: material.id,
             component_type: 'App\\Models\\InventoryProduct',
-            component_name: material.description,
+            component_name: material.item_name,
             component_sku: material.material_id,
+            unit_price: material.default_price || 0,
             quantity: 1,
             type: 'material',
         };
@@ -52,6 +56,7 @@ export default function ProductEdit() {
             component_type: 'App\\Models\\Service',
             component_name: service.name,
             component_sku: service.code,
+            unit_price: service.default_price || 0,
             quantity: 1,
             type: 'service',
         };
@@ -69,16 +74,24 @@ export default function ProductEdit() {
         setComponents(newComponents);
     };
 
+    const updateUnitPrice = (index: number, price: number) => {
+        const newComponents = [...components];
+        newComponents[index].unit_price = price;
+        setComponents(newComponents);
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        const formattedComponents = components.map(c => ({
-            component_id: c.component_id,
-            component_type: c.component_type,
-            quantity: c.quantity,
-        }));
 
-        setData('components', formattedComponents as any);
+        transform((formData: any) => ({
+            ...formData,
+            components: components.map(c => ({
+                component_id: c.component_id,
+                component_type: c.component_type,
+                quantity: c.quantity,
+                unit_price: c.unit_price || 0,
+            })),
+        }));
         put(`/products/${product?.id}`);
     };
 
@@ -87,7 +100,7 @@ export default function ProductEdit() {
             <Head title="Edit Product" />
 
             <div className="mb-6">
-                <Link href="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/products" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Products
                 </Link>
             </div>
@@ -98,14 +111,15 @@ export default function ProductEdit() {
                 <GlassCard>
                     <div className="grid md:grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium mb-2">SKU *</label>
-                            <input 
+                            <label className="block text-sm font-medium mb-2">SKU</label>
+                            <input
                                 type="text"
                                 value={data.sku}
-                                onChange={(e) => setData('sku', e.target.value)}
-                                className="glass-input w-full"
+                                readOnly
+                                disabled
+                                className="glass-input w-full opacity-60 cursor-not-allowed"
                             />
-                            {errors.sku && <p className="text-red-400 text-sm mt-1">{errors.sku}</p>}
+                            <p className="text-xs text-slate-500 mt-1">Auto-generated, not editable</p>
                         </div>
 
                         <div>
@@ -157,12 +171,16 @@ export default function ProductEdit() {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Unit *</label>
-                            <input 
-                                type="text"
+                            <select
                                 value={data.unit}
                                 onChange={(e) => setData('unit', e.target.value)}
                                 className="glass-input w-full"
-                            />
+                            >
+                                <option value="">Select Unit</option>
+                                {(uoms || []).map((u: string) => (
+                                    <option key={u} value={u}>{u}</option>
+                                ))}
+                            </select>
                         </div>
 
                         <div>
@@ -172,7 +190,7 @@ export default function ProductEdit() {
                                     type="checkbox"
                                     checked={data.is_active}
                                     onChange={(e) => setData('is_active', e.target.checked)}
-                                    className="w-5 h-5 rounded bg-white/10 border-white/20"
+                                    className="w-5 h-5 rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20"
                                 />
                                 <span>Active</span>
                             </label>
@@ -180,7 +198,7 @@ export default function ProductEdit() {
                     </div>
 
                     {/* Components Section */}
-                    <div className="mt-8 pt-6 border-t border-white/10">
+                    <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-medium">Product Components</h3>
                             <div className="flex items-center gap-2">
@@ -204,7 +222,7 @@ export default function ProductEdit() {
                         {components.length > 0 ? (
                             <div className="space-y-3">
                                 {components.map((component: any, index: number) => (
-                                    <div key={index} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                                    <div key={index} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
                                         <div className="flex-1">
                                             <div className="flex items-center gap-2">
                                                 {component.type === 'material' ? (
@@ -226,15 +244,35 @@ export default function ProductEdit() {
                                                 step="0.01"
                                             />
                                         </div>
-                                        <button 
+                                        <div className="w-28">
+                                            <input
+                                                type="number"
+                                                value={component.unit_price}
+                                                onChange={(e) => updateUnitPrice(index, parseFloat(e.target.value) || 0)}
+                                                className="glass-input w-full"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="Price"
+                                            />
+                                        </div>
+                                        <div className="w-24 text-sm text-emerald-400 text-right shrink-0">
+                                            {formatCurrency((component.unit_price || 0) * (component.quantity || 0))}
+                                        </div>
+                                        <button
                                             type="button"
                                             onClick={() => removeComponent(index)}
-                                            className="p-2 text-red-400 hover:bg-white/10 rounded"
+                                            className="p-2 text-red-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                 ))}
+                                <div className="flex justify-end items-center gap-2 pt-2 text-sm">
+                                    <span className="text-slate-400">Estimated Total Cost:</span>
+                                    <span className="font-semibold text-emerald-400">
+                                        {formatCurrency(components.reduce((sum, c) => sum + (c.unit_price || 0) * (c.quantity || 0), 0))}
+                                    </span>
+                                </div>
                             </div>
                         ) : (
                             <div className="text-center py-8 text-slate-400">
@@ -243,7 +281,7 @@ export default function ProductEdit() {
                         )}
                     </div>
 
-                    <div className="flex justify-end gap-4 mt-6 pt-6 border-t border-white/10">
+                    <div className="flex justify-end gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-white/10">
                         <Link href="/products" className="glass-button">Cancel</Link>
                         <button type="submit" disabled={processing} className="glass-button">
                             {processing ? 'Updating...' : 'Update Product'}
@@ -260,7 +298,7 @@ export default function ProductEdit() {
                             <h3 className="text-lg font-medium">Select Material</h3>
                             <button 
                                 onClick={() => setShowMaterialModal(false)}
-                                className="text-slate-400 hover:text-white"
+                                className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
                             >
                                 ✕
                             </button>
@@ -270,11 +308,11 @@ export default function ProductEdit() {
                                 <button
                                     key={material.id}
                                     onClick={() => addMaterial(material)}
-                                    className="w-full text-left p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                                    className="w-full text-left p-3 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                                 >
-                                    <div className="font-medium">{material.description}</div>
+                                    <div className="font-medium">{material.item_name}</div>
                                     <div className="text-sm text-slate-400">
-                                        {material.material_id} • ${material.unit_price}
+                                        {material.material_id} • {formatCurrency(material.default_price)} • {material.available_stock} {material.uom} in stock
                                     </div>
                                 </button>
                             ))}
@@ -291,7 +329,7 @@ export default function ProductEdit() {
                             <h3 className="text-lg font-medium">Select Service</h3>
                             <button 
                                 onClick={() => setShowServiceModal(false)}
-                                className="text-slate-400 hover:text-white"
+                                className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
                             >
                                 ✕
                             </button>
@@ -301,11 +339,11 @@ export default function ProductEdit() {
                                 <button
                                     key={service.id}
                                     onClick={() => addService(service)}
-                                    className="w-full text-left p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                                    className="w-full text-left p-3 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                                 >
                                     <div className="font-medium">{service.name}</div>
                                     <div className="text-sm text-slate-400">
-                                        {service.code} • ${service.default_price}
+                                        {service.code} • {formatCurrency(service.default_price)}
                                     </div>
                                 </button>
                             ))}

@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class PurchaseOrderItem extends Model
 {
     protected $fillable = [
         'purchase_order_id',
         'product_id',
+        'product_type',
         'description',
         'qty',
         'unit_cost',
@@ -33,10 +35,8 @@ class PurchaseOrderItem extends Model
         return $this->belongsTo(PurchaseOrder::class);
     }
 
-    public function product(): BelongsTo
+    public function product(): MorphTo
     {
-        // Note: Controller uses products table, but inventory system uses inventory_products.
-        // I will link it to InventoryProduct as it's more appropriate for procurement.
-        return $this->belongsTo(InventoryProduct::class, 'product_id');
+        return $this->morphTo();
     }
 }

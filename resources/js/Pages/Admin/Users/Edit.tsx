@@ -1,24 +1,21 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 export default function UserEdit() {
-    const { user, roles, managers, departments, employees } = usePage().props as any;
+    const { user, roles, employees } = usePage().props as any;
     const { data, setData, put, processing, errors } = useForm({
-        name: user?.name || '',
         email: user?.email || '',
         password: '',
         role_id: user?.role_id || '',
         is_active: user?.is_active ?? true,
-        department: user?.department || '',
-        department_manager_id: user?.department_manager_id || '',
         employee_id: user?.employee_id || '',
         avatar: null as File | null,
     });
     const [avatarPreview, setAvatarPreview] = useState<string | null>(
-        user?.avatar ? `/storage/${user.avatar}` : null
+        user?.employee?.avatar ? `/storage/${user.employee.avatar}` : null
     );
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -32,34 +29,28 @@ export default function UserEdit() {
         }
     };
 
+    const displayName = user?.employee
+        ? `${user.employee.first_name} ${user.employee.last_name}`
+        : user?.name || '-';
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const formData = new FormData();
-        formData.append('name', data.name);
-        formData.append('email', data.email);
-        if (data.password) formData.append('password', data.password);
-        if (data.role_id) formData.append('role_id', String(data.role_id));
-        formData.append('is_active', data.is_active ? '1' : '0');
-        if (data.department) formData.append('department', data.department);
-        if (data.department_manager_id) formData.append('department_manager_id', String(data.department_manager_id));
-        if (data.employee_id) formData.append('employee_id', String(data.employee_id));
-        if (data.avatar) formData.append('avatar', data.avatar);
-        put(`/admin/users/${user?.id}`, { forceFormData: true });
+        router.put(`/admin/users/${user?.id}`, data, { forceFormData: true });
     };
 
     return (
         <AppLayout>
-            <Head title={`Edit ${user?.name}`} />
+            <Head title={`Edit ${displayName}`} />
 
             <div className="mb-6">
-                <Link href="/admin/users" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/admin/users" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Users
                 </Link>
             </div>
 
             <PageHeader
                 title="Edit User"
-                subtitle={`Editing ${user?.name}`}
+                subtitle={`Editing ${displayName}`}
             />
 
             <div className="max-w-2xl">
@@ -95,31 +86,37 @@ export default function UserEdit() {
                             {/* Employee Link */}
                             <div>
                                 <label className="block text-sm font-medium mb-2">Link to Employee (HRM)</label>
-                                <select
-                                    value={data.employee_id}
-                                    onChange={(e) => setData('employee_id', e.target.value)}
-                                    className="glass-input w-full"
-                                >
-                                    <option value="">No Employee</option>
-                                    {(employees || []).map((emp: any) => (
-                                        <option key={emp.id} value={emp.id}>
-                                            {emp.first_name} {emp.last_name} ({emp.employee_number})
-                                        </option>
-                                    ))}
-                                </select>
+                                {user?.employee ? (
+                                    <div className="glass-input w-full bg-slate-50 dark:bg-white/5 cursor-not-allowed opacity-70">
+                                        {user.employee.first_name} {user.employee.last_name} ({user.employee.employee_number})
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={data.employee_id}
+                                        onChange={(e) => {
+                                            const empId = e.target.value;
+                                            setData('employee_id', empId);
+                                            if (empId) {
+                                                const emp = employees?.find((em: any) => String(em.id) === String(empId));
+                                                if (emp) {
+                                                    setData('email', emp.email || '');
+                                                }
+                                            }
+                                        }}
+                                        className="glass-input w-full"
+                                    >
+                                        <option value="">No Employee</option>
+                                        {(employees || []).map((emp: any) => (
+                                            <option key={emp.id} value={emp.id}>
+                                                {emp.first_name} {emp.last_name} ({emp.employee_number})
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+                                {user?.employee && (
+                                    <p className="text-xs text-slate-500 mt-1">Employee already linked. Cannot be changed.</p>
+                                )}
                                 {errors.employee_id && <p className="text-red-400 text-sm mt-1">{errors.employee_id}</p>}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Name</label>
-                                <input
-                                    type="text"
-                                    value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
-                                    className="glass-input w-full"
-                                    placeholder="Full name"
-                                />
-                                {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
                             </div>
 
                             <div>
@@ -162,36 +159,6 @@ export default function UserEdit() {
                                 {errors.role_id && <p className="text-red-400 text-sm mt-1">{errors.role_id}</p>}
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Department</label>
-                                <select
-                                    value={data.department}
-                                    onChange={(e) => setData('department', e.target.value)}
-                                    className="glass-input w-full"
-                                >
-                                    <option value="">No Department</option>
-                                    {(departments || []).map((dept: any) => (
-                                        <option key={dept.id} value={dept.name}>{dept.name}</option>
-                                    ))}
-                                </select>
-                                {errors.department && <p className="text-red-400 text-sm mt-1">{errors.department}</p>}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Department Manager</label>
-                                <select
-                                    value={data.department_manager_id}
-                                    onChange={(e) => setData('department_manager_id', e.target.value)}
-                                    className="glass-input w-full"
-                                >
-                                    <option value="">No Manager</option>
-                                    {(managers || []).map((manager: any) => (
-                                        <option key={manager.id} value={manager.id}>{manager.name}</option>
-                                    ))}
-                                </select>
-                                {errors.department_manager_id && <p className="text-red-400 text-sm mt-1">{errors.department_manager_id}</p>}
-                            </div>
-
                             <div className="flex items-center gap-3">
                                 <input
                                     type="checkbox"
@@ -204,7 +171,7 @@ export default function UserEdit() {
                             </div>
                         </div>
 
-                        <div className="flex gap-3 mt-6 pt-4 border-t border-white/10">
+                        <div className="flex gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-white/10">
                             <button type="submit" className="glass-button" disabled={processing}>
                                 Save Changes
                             </button>

@@ -67,14 +67,14 @@ export default function JobDetailModal({ open, onClose, job }: JobDetailModalPro
                             leaveTo="opacity-0 scale-95"
                         >
                             <DialogPanel className="glass-card w-full max-w-lg p-0 overflow-hidden">
-                                <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+                                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-white/10">
                                     <div className="flex items-center gap-3">
                                         <span className="font-mono text-sm text-slate-400">{job.job_number}</span>
                                         <span className={'text-xs px-2 py-0.5 rounded ' + (statusColors[job.status] || '')}>
                                             {statusLabels[job.status] || job.status}
                                         </span>
                                     </div>
-                                    <button onClick={onClose} className="p-1 rounded hover:bg-white/10 text-slate-400">
+                                    <button onClick={onClose} className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400">
                                         <X className="w-5 h-5" />
                                     </button>
                                 </div>

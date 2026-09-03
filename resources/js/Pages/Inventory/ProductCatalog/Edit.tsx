@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ProductCatalogEdit() {
-    const { product, suppliers, categories, uoms, attributes, categoryAttributes } = usePage().props as any;
+    const { product, suppliers, categories, uoms, categoryAttributes } = usePage().props as any;
 
     const productAttributes = product.attributes || {};
     const [attributeValues, setAttributeValues] = useState<Record<string, string>>(productAttributes);

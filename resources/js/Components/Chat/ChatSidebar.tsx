@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { usePage } from '@inertiajs/react';
-import { X, MessageSquare, Bell, Search, Plus, Settings } from 'lucide-react';
+import { X, MessageSquare, Bell, Search, Plus } from 'lucide-react';
+import axios from 'axios';
 import ConversationList from './ConversationList';
 import MessageList from './MessageList';
 import ActivityTab from './ActivityTab';
@@ -14,6 +15,11 @@ interface ChatSidebarProps {
 
 type TabType = 'messages' | 'activity';
 
+interface OnlineUser {
+    id: number;
+    is_online: boolean;
+}
+
 export default function ChatSidebar({ isOpen, onClose, mode = 'overlay' }: ChatSidebarProps) {
     const { auth } = usePage().props;
     const [activeTab, setActiveTab] = useState<TabType>('messages');
@@ -22,29 +28,75 @@ export default function ChatSidebar({ isOpen, onClose, mode = 'overlay' }: ChatS
     const [unreadMessages, setUnreadMessages] = useState(0);
     const [unreadNotifications, setUnreadNotifications] = useState(0);
     const [searchQuery, setSearchQuery] = useState('');
+    const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+    const prevUnreadRef = useRef(unreadMessages);
+    const soundEnabledRef = useRef(true);
+
+    const playNotificationSound = useCallback(() => {
+        if (!soundEnabledRef.current) return;
+        try {
+            const audio = new Audio('/sounds/message.mp3');
+            audio.volume = 0.5;
+            audio.play().catch(() => {});
+        } catch {}
+    }, []);
+
+    const showBrowserNotification = useCallback((count: number) => {
+        if (count <= 0) return;
+        if (document.visibilityState === 'visible') return;
+        if (!('Notification' in window)) return;
+        if (Notification.permission !== 'granted') return;
+        new Notification('New Messages', {
+            body: `You have ${count} new message${count > 1 ? 's' : ''}`,
+            icon: '/favicon.ico',
+        });
+    }, []);
 
     const fetchUnreadCounts = useCallback(async () => {
         try {
             const [messagesRes, notificationsRes] = await Promise.all([
-                fetch('/chat/unread'),
-                fetch('/notifications/unread-count'),
+                axios.get('/chat/unread'),
+                axios.get('/notifications/unread-count'),
             ]);
-            const messagesData = await messagesRes.json();
-            const notificationsData = await notificationsRes.json();
-            setUnreadMessages(messagesData.unread_count || 0);
-            setUnreadNotifications(notificationsData.unread_count || 0);
+            const newCount = messagesRes.data.unread_count || 0;
+            if (newCount > prevUnreadRef.current) {
+                playNotificationSound();
+                showBrowserNotification(newCount - prevUnreadRef.current);
+            }
+            prevUnreadRef.current = newCount;
+            setUnreadMessages(newCount);
+            setUnreadNotifications(notificationsRes.data.unread_count || 0);
         } catch (error) {
             console.error('Failed to fetch unread counts:', error);
+        }
+    }, [playNotificationSound, showBrowserNotification]);
+
+    const fetchOnlineUsers = useCallback(async () => {
+        try {
+            const { data } = await axios.get('/chat/presence');
+            setOnlineUsers(data);
+        } catch (error) {
+            console.error('Failed to fetch online status:', error);
         }
     }, []);
 
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !selectedConversation) {
             fetchUnreadCounts();
-            const interval = setInterval(fetchUnreadCounts, 5000);
+            fetchOnlineUsers();
+            const interval = setInterval(() => {
+                fetchUnreadCounts();
+                fetchOnlineUsers();
+            }, 15000);
             return () => clearInterval(interval);
         }
-    }, [isOpen, fetchUnreadCounts]);
+    }, [isOpen, selectedConversation, fetchUnreadCounts, fetchOnlineUsers]);
+
+    useEffect(() => {
+        if (isOpen && 'Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    }, [isOpen]);
 
     const handleConversationSelect = (conversationId: number) => {
         setSelectedConversation(conversationId);
@@ -137,6 +189,7 @@ export default function ChatSidebar({ isOpen, onClose, mode = 'overlay' }: ChatS
                     searchQuery={searchQuery}
                     onSearchChange={setSearchQuery}
                     currentUserId={auth.user.id}
+                    onlineUsers={onlineUsers}
                 />
             ) : (
                 <ActivityTab currentUserId={auth.user.id} />

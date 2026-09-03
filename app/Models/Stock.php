@@ -4,12 +4,24 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Str;
 
 class Stock extends Model
 {
     protected $keyType = 'string';
 
     public $incrementing = false;
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (Stock $stock) {
+            if (empty($stock->id)) {
+                $stock->id = (string) Str::uuid();
+            }
+        });
+    }
 
     protected $fillable = [
         'id',

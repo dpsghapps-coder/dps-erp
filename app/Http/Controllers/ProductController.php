@@ -6,15 +6,20 @@ use App\Models\InventoryProduct;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Service;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
     public function index()
     {
-        $products = Product::with('category')
+        $products = Product::with(['category', 'components.component'])
             ->orderBy('created_at', 'desc')
             ->paginate(25);
+
+        $products->getCollection()->each(function (Product $product) {
+            $product->total_value = $product->calculateCost();
+        });
 
         $categories = ProductCategory::all();
 
@@ -24,20 +29,27 @@ class ProductController extends Controller
         ]);
     }
 
+    private function inStockMaterials()
+    {
+        return InventoryProduct::where('item_status', 'Active')
+            ->orderBy('item_name')
+            ->get()
+            ->filter(fn (InventoryProduct $item) => $item->available_stock > 0)
+            ->values();
+    }
+
     public function create()
     {
         $categories = ProductCategory::all();
-        $inventoryProducts = InventoryProduct::where('item_status', 'Active')
-            ->orderBy('description')
-            ->get();
         $services = Service::where('is_active', true)
             ->orderBy('name')
             ->get();
 
         return inertia('Products/Create', [
             'categories' => $categories,
-            'inventoryProducts' => $inventoryProducts,
+            'inventoryProducts' => $this->inStockMaterials(),
             'services' => $services,
+            'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
             'nextSku' => Product::generateSku(),
         ]);
     }
@@ -45,7 +57,6 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'sku' => 'required|string|unique:products|max:50',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:physical,service,digital',
@@ -53,13 +64,14 @@ class ProductController extends Controller
             'unit' => 'required|string|max:30',
             'is_active' => 'boolean',
             'components' => 'nullable|array',
-            'components.*.component_id' => 'required|integer',
+            'components.*.component_id' => 'required',
             'components.*.component_type' => 'required|in:App\Models\InventoryProduct,App\Models\Service',
             'components.*.quantity' => 'required|numeric|min:0.01',
+            'components.*.unit_price' => 'required|numeric|min:0',
         ]);
 
         $product = Product::create([
-            'sku' => $validated['sku'],
+            'sku' => Product::generateSku(),
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'type' => $validated['type'],
@@ -74,6 +86,7 @@ class ProductController extends Controller
                     'component_id' => $component['component_id'],
                     'component_type' => $component['component_type'],
                     'quantity' => $component['quantity'],
+                    'unit_price' => $component['unit_price'],
                 ]);
             }
         }
@@ -81,14 +94,21 @@ class ProductController extends Controller
         return redirect()->route('products.index')->with('success', 'Product created successfully');
     }
 
+    public function show(Product $product)
+    {
+        $product->load(['category', 'components.component']);
+
+        return inertia('Products/Show', [
+            'product' => $product,
+            'totalCost' => $product->calculateCost(),
+        ]);
+    }
+
     public function edit(Product $product)
     {
         $categories = ProductCategory::all();
         $product->load('components.component');
 
-        $inventoryProducts = InventoryProduct::where('item_status', 'Active')
-            ->orderBy('description')
-            ->get();
         $services = Service::where('is_active', true)
             ->orderBy('name')
             ->get();
@@ -96,15 +116,15 @@ class ProductController extends Controller
         return inertia('Products/Edit', [
             'product' => $product,
             'categories' => $categories,
-            'inventoryProducts' => $inventoryProducts,
+            'inventoryProducts' => $this->inStockMaterials(),
             'services' => $services,
+            'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
         ]);
     }
 
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'sku' => 'required|string|unique:products,sku,'.$product->id,
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:physical,service,digital',
@@ -112,13 +132,13 @@ class ProductController extends Controller
             'unit' => 'required|string|max:30',
             'is_active' => 'boolean',
             'components' => 'nullable|array',
-            'components.*.component_id' => 'required|integer',
+            'components.*.component_id' => 'required',
             'components.*.component_type' => 'required|in:App\Models\InventoryProduct,App\Models\Service',
             'components.*.quantity' => 'required|numeric|min:0.01',
+            'components.*.unit_price' => 'required|numeric|min:0',
         ]);
 
         $product->update([
-            'sku' => $validated['sku'],
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'type' => $validated['type'],
@@ -134,6 +154,7 @@ class ProductController extends Controller
                     'component_id' => $component['component_id'],
                     'component_type' => $component['component_type'],
                     'quantity' => $component['quantity'],
+                    'unit_price' => $component['unit_price'],
                 ]);
             }
         }
@@ -146,5 +167,10 @@ class ProductController extends Controller
         $product->delete();
 
         return redirect()->route('products.index')->with('success', 'Product deleted successfully');
+    }
+
+    public function calculators()
+    {
+        return inertia('Products/Calculators');
     }
 }

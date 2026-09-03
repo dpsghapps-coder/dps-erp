@@ -28,6 +28,9 @@ class NotificationController extends Controller
                 if (! $preferences->hrm) {
                     $query->where('type', 'not like', '%Hrm%');
                 }
+                if (! $preferences->marketing) {
+                    $query->where('type', 'not like', '%Campaign%');
+                }
             })
             ->orderBy('created_at', 'desc')
             ->limit(50)
@@ -74,6 +77,7 @@ class NotificationController extends Controller
             'inventory' => 'sometimes|boolean',
             'hrm' => 'sometimes|boolean',
             'chat_messages' => 'sometimes|boolean',
+            'marketing' => 'sometimes|boolean',
         ]);
 
         $preferences = UserNotificationPreference::getForUser($user->id);

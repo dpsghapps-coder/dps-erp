@@ -12,7 +12,7 @@ class Service extends Model
         'name',
         'code',
         'description',
-        'category',
+        'category_id',
         'unit',
         'is_active',
     ];
@@ -20,6 +20,33 @@ class Service extends Model
     protected $casts = [
         'is_active' => 'boolean',
     ];
+
+    protected $appends = ['default_price'];
+
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        static::creating(function (Service $service) {
+            if (empty($service->code)) {
+                $service->code = static::generateCode();
+            }
+        });
+    }
+
+    public static function generateCode(): string
+    {
+        $prefix = 'SRV';
+        $latest = static::orderBy('id', 'desc')->first();
+        $nextNumber = $latest ? $latest->id + 1 : 1;
+
+        return $prefix.'-'.str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(ProductCategory::class);
+    }
 
     public function prices(): HasMany
     {

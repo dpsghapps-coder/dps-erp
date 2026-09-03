@@ -3,8 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveType extends Model
 {
-    protected $fillable = ['name', 'level_id', 'days_per_year'];
+    protected $fillable = ['name', 'staff_level_id', 'days_per_year'];
+
+    public function staffLevel(): BelongsTo
+    {
+        return $this->belongsTo(StaffLevel::class);
+    }
 }

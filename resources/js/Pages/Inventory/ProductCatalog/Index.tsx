@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import InventoryTabs from '@/Components/InventoryTabs';
 import { Head, Link, usePage, useForm, router } from '@inertiajs/react';
 import { Plus, Search, Package, Pencil, Trash2, X, ArrowLeft, AlertTriangle, CheckCircle } from 'lucide-react';
@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { useState } from 'react';
 
 export default function ProductCatalogIndex() {
-    const { products, categories, uoms, attributes, categoryAttributes } = usePage().props as any;
+    const { products, categories, uoms, categoryAttributes } = usePage().props as any;
     const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -145,6 +145,7 @@ export default function ProductCatalogIndex() {
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Name</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Description</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Category</th>
+                                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Supplier</th>
                                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Stock Level</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Attributes</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">UOM</th>
@@ -161,6 +162,7 @@ export default function ProductCatalogIndex() {
                                         <td className="py-3 px-4 font-medium text-slate-900">{product.item_name}</td>
                                         <td className="py-3 px-4 text-slate-600">{product.item_description || '-'}</td>
                                         <td className="py-3 px-4 text-slate-600">{product.item_category || '-'}</td>
+                                        <td className="py-3 px-4 text-slate-600">{product.primary_supplier?.company_name || '-'}</td>
                                         <td className="py-3 px-4 text-right">
                                             {(() => {
                                                 const low = product.restock_threshold > 0 && product.available_stock <= product.restock_threshold;
@@ -199,7 +201,7 @@ export default function ProductCatalogIndex() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={8} className="py-8">
+                                    <td colSpan={9} className="py-8">
                                         <EmptyState
                                             icon={Package}
                                             title="No products found"
@@ -253,6 +255,9 @@ export default function ProductCatalogIndex() {
                                             <span>{product.item_category}</span>
                                         )}
                                         <span>{product.uom}</span>
+                                        {product.primary_supplier?.company_name && (
+                                            <span>{product.primary_supplier.company_name}</span>
+                                        )}
                                         <span>
                                             {(() => {
                                                 const low = product.restock_threshold > 0 && product.available_stock <= product.restock_threshold;
@@ -282,6 +287,7 @@ export default function ProductCatalogIndex() {
                     )}
                 </div>
             </GlassCard>
+            <Pagination meta={products} />
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">

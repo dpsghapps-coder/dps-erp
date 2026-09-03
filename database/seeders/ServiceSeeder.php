@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ProductCategory;
 use App\Models\Service;
 use Illuminate\Database\Seeder;
 
@@ -158,6 +159,9 @@ class ServiceSeeder extends Seeder
         foreach ($services as $serviceData) {
             $prices = $serviceData['prices'];
             unset($serviceData['prices']);
+
+            $serviceData['category_id'] = ProductCategory::firstOrCreate(['name' => $serviceData['category']])->id;
+            unset($serviceData['category']);
 
             $service = Service::create($serviceData);
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +43,22 @@ class ChatController extends Controller
             ->get();
 
         return response()->json($conversations);
+    }
+
+    public function getConversation(Request $request, int $conversationId): JsonResponse
+    {
+        $user = $request->user();
+
+        $conversation = Conversation::where('id', $conversationId)
+            ->whereHas('participants', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->with(['participants' => function ($q) {
+                $q->with('user:id,name,avatar');
+            }])
+            ->firstOrFail();
+
+        return response()->json($conversation);
     }
 
     public function getMessages(Request $request, int $conversationId): JsonResponse
@@ -331,5 +348,65 @@ class ChatController extends Controller
             ->sum();
 
         return response()->json(['unread_count' => $conversations]);
+    }
+
+    public function getPresence(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $conversationIds = ConversationParticipant::where('user_id', $user->id)
+            ->pluck('conversation_id');
+
+        $participantUserIds = ConversationParticipant::whereIn('conversation_id', $conversationIds)
+            ->where('user_id', '!=', $user->id)
+            ->pluck('user_id')
+            ->unique();
+
+        $users = User::whereIn('id', $participantUserIds)
+            ->select('id', 'name', 'avatar', 'last_active_at')
+            ->get()
+            ->map(fn ($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'avatar' => $u->avatar,
+                'is_online' => $u->last_active_at && $u->last_active_at->diffInSeconds(now()) < 120,
+            ]);
+
+        return response()->json($users);
+    }
+
+    public function pinMessage(Request $request, int $conversationId, int $messageId): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasPermission('admin.manage_users')) {
+            return response()->json(['error' => 'Only managers+ can pin messages'], 403);
+        }
+
+        $message = Message::where('conversation_id', $conversationId)
+            ->where('id', $messageId)
+            ->where('is_deleted', false)
+            ->firstOrFail();
+
+        $message->update(['is_pinned' => true, 'pinned_at' => now()]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function unpinMessage(Request $request, int $conversationId, int $messageId): JsonResponse
+    {
+        $user = $request->user();
+
+        if (! $user->hasPermission('admin.manage_users')) {
+            return response()->json(['error' => 'Only managers+ can unpin messages'], 403);
+        }
+
+        $message = Message::where('conversation_id', $conversationId)
+            ->where('id', $messageId)
+            ->firstOrFail();
+
+        $message->update(['is_pinned' => false, 'pinned_at' => null]);
+
+        return response()->json(['success' => true]);
     }
 }

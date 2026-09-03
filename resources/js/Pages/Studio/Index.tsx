@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusBadge, EmptyState } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusBadge, EmptyState, Pagination } from '@/Components/ui';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Plus, Search, Calendar as CalendarIcon, Camera } from 'lucide-react';
 import { useState } from 'react';
@@ -51,29 +51,39 @@ export default function StudioIndex() {
                                 className="glass-input w-full pl-10"
                             />
                         </div>
-                        <select 
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="glass-input"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="tentative">Tentative</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                { value: 'all', label: 'All Status' },
+                                { value: 'tentative', label: 'Tentative' },
+                                { value: 'confirmed', label: 'Confirmed' },
+                                { value: 'in_progress', label: 'In Progress' },
+                                { value: 'completed', label: 'Completed' },
+                                { value: 'cancelled', label: 'Cancelled' },
+                            ].map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => setStatusFilter(opt.value)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                        statusFilter === opt.value
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={() => setView('calendar')}
-                            className={`p-2 rounded-lg transition-colors ${view === 'calendar' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                            className={`p-2 rounded-lg transition-colors ${view === 'calendar' ? 'bg-slate-200 dark:bg-white/20' : 'hover:bg-slate-100 dark:hover:bg-white/10'}`}
                         >
                             <CalendarIcon className="w-5 h-5" />
                         </button>
                         <button 
                             onClick={() => setView('list')}
-                            className={`p-2 rounded-lg transition-colors ${view === 'list' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                            className={`p-2 rounded-lg transition-colors ${view === 'list' ? 'bg-slate-200 dark:bg-white/20' : 'hover:bg-slate-100 dark:hover:bg-white/10'}`}
                         >
                             <Camera className="w-5 h-5" />
                         </button>
@@ -108,7 +118,7 @@ export default function StudioIndex() {
                                         <p>to {new Date(booking.end_datetime).toLocaleString()}</p>
                                     </div>
                                     {booking.resources?.length > 0 && (
-                                        <div className="mt-3 pt-3 border-t border-white/10">
+                                        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
                                             <p className="text-xs text-slate-400">
                                                 {booking.resources.length} resource(s)
                                             </p>
@@ -134,6 +144,7 @@ export default function StudioIndex() {
                     )}
                 </div>
             )}
+            <Pagination meta={bookings} />
         </AppLayout>
     );
 }

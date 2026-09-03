@@ -3,6 +3,7 @@ import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { Head, usePage, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useCurrency } from '@/Utils/currency';
 
 interface LineItem {
     product_id: string;
@@ -14,6 +15,7 @@ interface LineItem {
 
 export default function OrderCreate() {
     const { clients } = usePage().props;
+    const formatCurrency = useCurrency();
     const { data, setData, post, processing, errors } = useForm({
         client_id: '',
         contact_id: '',
@@ -76,7 +78,7 @@ export default function OrderCreate() {
             <Head title="Create Order" />
 
             <div className="mb-6">
-                <Link href="/orders" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/orders" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Orders
                 </Link>
             </div>
@@ -138,7 +140,7 @@ export default function OrderCreate() {
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="border-b border-white/10">
+                                        <tr className="border-b border-slate-200 dark:border-white/10">
                                             <th className="text-left py-2 px-2 text-sm font-medium text-slate-400">Product</th>
                                             <th className="text-left py-2 px-2 text-sm font-medium text-slate-400">Description</th>
                                             <th className="text-right py-2 px-2 text-sm font-medium text-slate-400 w-20">Qty</th>
@@ -150,7 +152,7 @@ export default function OrderCreate() {
                                     </thead>
                                     <tbody>
                                         {data.items.map((item, index) => (
-                                            <tr key={index} className="border-b border-white/5">
+                                            <tr key={index} className="border-b border-slate-100 dark:border-white/5">
                                                 <td className="py-2 px-2">
                                                     <select 
                                                         value={item.product_id}
@@ -203,14 +205,14 @@ export default function OrderCreate() {
                                                     />
                                                 </td>
                                                 <td className="py-2 px-2 text-right font-medium">
-                                                    ${calculateLineTotal(item).toFixed(2)}
+                                                    {formatCurrency(calculateLineTotal(item))}
                                                 </td>
                                                 <td className="py-2 px-2">
                                                     <button 
                                                         type="button"
                                                         onClick={() => removeItem(index)}
                                                         disabled={data.items.length === 1}
-                                                        className="p-1 hover:bg-white/10 rounded disabled:opacity-50"
+                                                        className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded disabled:opacity-50"
                                                     >
                                                         <Trash2 className="w-4 h-4 text-red-400" />
                                                     </button>
@@ -230,19 +232,19 @@ export default function OrderCreate() {
                             <div className="space-y-3">
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Subtotal</span>
-                                    <span>${subtotal.toFixed(2)}</span>
+                                    <span>{formatCurrency(subtotal)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Discount</span>
-                                    <span>-${discount.toFixed(2)}</span>
+                                    <span>-{formatCurrency(discount)}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Tax</span>
-                                    <span>${tax.toFixed(2)}</span>
+                                    <span>{formatCurrency(tax)}</span>
                                 </div>
-                                <div className="flex justify-between pt-3 border-t border-white/10 text-lg font-semibold">
+                                <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-white/10 text-lg font-semibold">
                                     <span>Total</span>
-                                    <span>${grandTotal.toFixed(2)}</span>
+                                    <span>{formatCurrency(grandTotal)}</span>
                                 </div>
                             </div>
 

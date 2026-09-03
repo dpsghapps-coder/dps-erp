@@ -40,7 +40,7 @@ export default function MeetingsIndex() {
                         <div className="hidden md:block overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    <tr className="border-b border-slate-200 dark:border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
                                         <th className="py-3 px-4">Number</th>
                                         <th className="py-3 px-4">Title</th>
                                         <th className="py-3 px-4">Date</th>
@@ -50,9 +50,9 @@ export default function MeetingsIndex() {
                                         <th className="py-3 px-4 text-right">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-white/5">
+                                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                     {meetings.data.map((meeting: any) => (
-                                        <tr key={meeting.id} className="hover:bg-white/5 transition-colors">
+                                        <tr key={meeting.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                             <td className="py-3 px-4 text-sm font-mono text-slate-700 dark:text-slate-300">
                                                 {meeting.number}
                                             </td>
@@ -89,12 +89,12 @@ export default function MeetingsIndex() {
                             </table>
                         </div>
 
-                        <div className="md:hidden divide-y divide-white/5">
+                        <div className="md:hidden divide-y divide-slate-100 dark:divide-white/5">
                             {meetings.data.map((meeting: any) => (
                                 <Link
                                     key={meeting.id}
                                     href={`/management/meetings/${meeting.id}`}
-                                    className="block p-4 hover:bg-white/5 transition-colors"
+                                    className="block p-4 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
                                 >
                                     <div className="flex justify-between items-start mb-2">
                                         <div>
@@ -116,7 +116,7 @@ export default function MeetingsIndex() {
                         </div>
 
                         {meetings.last_page > 1 && (
-                            <div className="flex items-center justify-between px-4 py-3 border-t border-white/10">
+                            <div className="flex items-center justify-between px-4 py-3 border-t border-slate-200 dark:border-white/10">
                                 <div className="text-sm text-slate-500">
                                     Showing {meetings.from} to {meetings.to} of {meetings.total} meetings
                                 </div>

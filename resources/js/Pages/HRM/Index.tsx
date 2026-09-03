@@ -23,9 +23,10 @@ export default function HrmIndex() {
     });
 
     const employmentTypeColors: Record<string, string> = {
-        full_time: 'bg-green-500/20 text-green-400',
-        part_time: 'bg-blue-500/20 text-blue-400',
-        contract: 'bg-purple-500/20 text-purple-400',
+        'Full-time': 'bg-green-500/20 text-green-400',
+        'Part-time': 'bg-blue-500/20 text-blue-400',
+        'Contract': 'bg-purple-500/20 text-purple-400',
+        'Intern': 'bg-amber-500/20 text-amber-400',
     };
 
     return (
@@ -65,26 +66,36 @@ export default function HrmIndex() {
                                 <option key={d.id} value={d.id}>{d.name}</option>
                             ))}
                         </select>
-                        <select 
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="glass-input"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="terminated">Terminated</option>
-                        </select>
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                { value: 'all', label: 'All Status' },
+                                { value: 'active', label: 'Active' },
+                                { value: 'terminated', label: 'Terminated' },
+                            ].map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => setStatusFilter(opt.value)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                        statusFilter === opt.value
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                     <div className="flex items-center gap-2">
                         <button 
                             onClick={() => setView('grid')}
-                            className={`p-2 rounded-lg transition-colors ${view === 'grid' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                            className={`p-2 rounded-lg transition-colors ${view === 'grid' ? 'bg-slate-200 dark:bg-white/20' : 'hover:bg-slate-100 dark:hover:bg-white/10'}`}
                         >
                             <Grid className="w-5 h-5" />
                         </button>
                         <button 
                             onClick={() => setView('list')}
-                            className={`p-2 rounded-lg transition-colors ${view === 'list' ? 'bg-white/20' : 'hover:bg-white/10'}`}
+                            className={`p-2 rounded-lg transition-colors ${view === 'list' ? 'bg-slate-200 dark:bg-white/20' : 'hover:bg-slate-100 dark:hover:bg-white/10'}`}
                         >
                             <ListIcon className="w-5 h-5" />
                         </button>
@@ -98,7 +109,7 @@ export default function HrmIndex() {
                         filteredEmployees.map((employee: any) => (
                             <Link key={employee.id} href={`/hrm/${employee.id}`}>
                                 <GlassCard variant="interactive" className="h-full text-center">
-                                    <div className="w-16 h-16 mx-auto mb-3 bg-white/10 rounded-full flex items-center justify-center">
+                                    <div className="w-16 h-16 mx-auto mb-3 bg-slate-100 dark:bg-white/10 rounded-full flex items-center justify-center">
                                         <span className="text-2xl font-semibold">
                                             {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
                                         </span>
@@ -108,9 +119,9 @@ export default function HrmIndex() {
                                     {employee.department && (
                                         <p className="text-sm text-blue-400 mt-1">{employee.department.name}</p>
                                     )}
-                                    <div className="mt-3 pt-3 border-t border-white/10">
-                                        <span className={`text-xs px-2 py-1 rounded-full ${employmentTypeColors[employee.employment_type] || 'bg-white/10'}`}>
-                                            {employee.employment_type?.replace('_', ' ')}
+                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                                        <span className={`text-xs px-2 py-1 rounded-full ${employmentTypeColors[employee.employment_type?.name] || 'bg-slate-100 dark:bg-white/10'}`}>
+                                            {employee.employment_type?.name || '-'}
                                         </span>
                                     </div>
                                     {employee.date_terminated && (
@@ -140,7 +151,7 @@ export default function HrmIndex() {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-white/10">
+                                <tr className="border-b border-slate-200 dark:border-white/10">
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Employee</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">ID</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Department</th>
@@ -152,10 +163,10 @@ export default function HrmIndex() {
                             <tbody>
                                 {filteredEmployees.length > 0 ? (
                                     filteredEmployees.map((employee: any) => (
-                                        <tr key={employee.id} className="border-b border-white/5 hover:bg-white/5">
+                                        <tr key={employee.id} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
                                             <td className="py-3 px-4">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-sm">
+                                                    <div className="w-8 h-8 bg-slate-100 dark:bg-white/10 rounded-full flex items-center justify-center text-sm">
                                                         {employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}
                                                     </div>
                                                     <div>
@@ -167,8 +178,8 @@ export default function HrmIndex() {
                                             <td className="py-3 px-4 font-mono text-sm">{employee.employee_number}</td>
                                             <td className="py-3 px-4 text-slate-400">{employee.department?.name || '-'}</td>
                                             <td className="py-3 px-4">
-                                                <span className={`text-xs px-2 py-1 rounded-full ${employmentTypeColors[employee.employment_type] || 'bg-white/10'}`}>
-                                                    {employee.employment_type?.replace('_', ' ')}
+                                                <span className={`text-xs px-2 py-1 rounded-full ${employmentTypeColors[employee.employment_type?.name] || 'bg-slate-100 dark:bg-white/10'}`}>
+                                                    {employee.employment_type?.name || '-'}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-slate-400">

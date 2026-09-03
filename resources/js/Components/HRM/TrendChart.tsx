@@ -1,4 +1,5 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { useCurrencySymbol } from '@/Utils/currency';
 
 interface TrendChartProps {
   data: { month: string; value: number }[];
@@ -13,6 +14,7 @@ export function TrendChart({
   color = '#6366f1',
   height = 250 
 }: TrendChartProps) {
+  const symbol = useCurrencySymbol();
   return (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -33,7 +35,7 @@ export function TrendChart({
           tick={{ fontSize: 11, fill: '#64748b' }}
           axisLine={{ stroke: '#e2e8f0' }}
           tickLine={{ stroke: '#e2e8f0' }}
-          tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+          tickFormatter={(value) => `${symbol}${(value / 1000).toFixed(0)}k`}
         />
         <Tooltip
           contentStyle={{
@@ -42,7 +44,7 @@ export function TrendChart({
             borderRadius: '8px',
             fontSize: '12px',
           }}
-          formatter={(value: number) => [`$${value.toLocaleString()}`, 'Amount']}
+          formatter={(value: number) => [`${symbol}${value.toLocaleString()}`, 'Amount']}
         />
         <Area
           type="monotone"

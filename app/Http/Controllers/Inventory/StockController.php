@@ -74,6 +74,7 @@ class StockController extends Controller
     {
         $validated = $request->validate([
             'product_id' => 'required|exists:inventory_products,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
             'qty_purchased' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
             'date_purchased' => 'required|date',

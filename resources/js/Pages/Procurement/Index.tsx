@@ -3,9 +3,11 @@ import { GlassCard, StatusBadge } from '@/Components/ui';
 import ProcurementTabs from '@/Components/ProcurementTabs';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { FileText, ShoppingCart, Truck, AlertTriangle, Clock, CheckCircle, Pause, Eye, ArrowRight, Package } from 'lucide-react';
+import { useCurrency } from '@/Utils/currency';
 
 export default function ProcurementIndex() {
     const { totalPrs, pendingPrs, deptApprovedPrs, financeApprovedPrs, poCreatedPrs, heldPrs, totalPos, draftPos, activePos, closedPos, totalSuppliers, recentPrs, recentPos } = usePage().props as any;
+    const formatCurrency = useCurrency();
 
     const prCards = [
         { label: 'Total PRs', value: totalPrs, icon: FileText, href: '/procurement/purchase-requests', color: 'text-blue-600 bg-blue-50' },
@@ -131,7 +133,7 @@ export default function ProcurementIndex() {
                                     <div>
                                         <p className="font-medium text-slate-900 text-sm font-mono">{po.po_number}</p>
                                         <p className="text-xs text-slate-500">
-                                            {po.supplier?.company_name || 'No supplier'} &middot; ${parseFloat(po.total_amount || 0).toFixed(2)}
+                                            {po.supplier?.company_name || 'No supplier'} &middot; {formatCurrency(po.total_amount || 0)}
                                         </p>
                                     </div>
                                     <StatusBadge status={po.status} />

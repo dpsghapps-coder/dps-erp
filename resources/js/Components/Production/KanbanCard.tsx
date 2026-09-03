@@ -47,7 +47,7 @@ export default function KanbanCard({
             style={style}
             {...listeners}
             {...attributes}
-            className="glass-card p-3 cursor-grab active:cursor-grabbing hover:bg-white/10 transition-colors group"
+            className="glass-card p-3 cursor-grab active:cursor-grabbing hover:bg-slate-100 dark:hover:bg-white/10 transition-colors group"
         >
             <div className="flex items-start justify-between mb-2">
                 <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${priority.className}`}>
@@ -87,7 +87,7 @@ export default function KanbanCard({
                 )}
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="flex items-center gap-1">
                     {canMoveBackward && (
                         <button
@@ -95,7 +95,7 @@ export default function KanbanCard({
                                 e.stopPropagation();
                                 onMoveBackward();
                             }}
-                            className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                             title="Move backward"
                         >
                             <ArrowLeft className="w-3 h-3" />
@@ -107,7 +107,7 @@ export default function KanbanCard({
                                 e.stopPropagation();
                                 onMoveForward();
                             }}
-                            className="p-1 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                             title="Move forward"
                         >
                             <ArrowRight className="w-3 h-3" />

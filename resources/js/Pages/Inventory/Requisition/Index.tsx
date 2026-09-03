@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import InventoryTabs from '@/Components/InventoryTabs';
 import { Head, usePage, useForm, router } from '@inertiajs/react';
 import { Plus, Search, ClipboardList, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react';
@@ -296,6 +296,7 @@ export default function RequisitionIndex() {
                     )}
                 </div>
             </GlassCard>
+            <Pagination meta={requisitions} />
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">

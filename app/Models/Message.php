@@ -17,11 +17,15 @@ class Message extends Model
         'content',
         'type',
         'is_deleted',
+        'is_pinned',
+        'pinned_at',
         'read_at',
     ];
 
     protected $casts = [
         'is_deleted' => 'boolean',
+        'is_pinned' => 'boolean',
+        'pinned_at' => 'datetime',
         'read_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',

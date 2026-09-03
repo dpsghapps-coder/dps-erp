@@ -3,6 +3,7 @@ import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Calendar, Tag, Ruler, Plus, X, Trash2, Building2, User, Mail, Smartphone, MapPin, Map } from 'lucide-react';
 import { useState } from 'react';
+import WhatsAppLink from '@/Components/WhatsAppLink';
 
 export default function GoodsShow() {
     const { good, suppliers, categories, uoms, attributes, categoryAttributes } = usePage().props as any;
@@ -260,7 +261,7 @@ export default function GoodsShow() {
                                         <p className="font-medium text-slate-800 text-sm mb-1.5">{b.name}</p>
                                         <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                                             {b.contact_name && <span className="flex items-center gap-1"><User className="w-3 h-3" /> {b.contact_name}</span>}
-                                            {b.mobile && <span className="flex items-center gap-1"><Smartphone className="w-3 h-3" /> {b.mobile}</span>}
+                                            {b.mobile && <span className="flex items-center gap-1"><Smartphone className="w-3 h-3" /> <WhatsAppLink phone={b.mobile} className="text-green-600 hover:underline">{b.mobile}</WhatsAppLink></span>}
                                             {b.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" /> {b.email}</span>}
                                         </div>
                                         {b.address && <p className="text-xs text-slate-500 mt-1 flex items-start gap-1"><MapPin className="w-3 h-3 mt-0.5 shrink-0" /> {b.address}</p>}

@@ -34,7 +34,10 @@ import {
     BellIcon,
     UsersIcon,
     Plus,
-    ClipboardCheck
+    ClipboardCheck,
+    User as UserIcon,
+    Globe,
+    Calculator
 } from 'lucide-react';
 import ChatSidebar from '@/Components/Chat/ChatSidebar';
 
@@ -52,13 +55,14 @@ interface CrmSubItem {
 
 const enterpriseNav: NavItem[] = [
     { name: 'CRM', href: '/crm', icon: Users },
+    { name: 'Marketing', href: '/marketing', icon: Globe },
     { name: 'Orders', href: '/orders', icon: ShoppingCart },
     { name: 'Production', href: '/production', icon: Factory },
     { name: 'Procurement', href: '/procurement', icon: ShoppingBag },
 ];
 
 const crmSubItems: CrmSubItem[] = [
-    { name: 'Client Management', href: '/crm', icon: Users },
+    { name: 'Clients & Accounts', href: '/crm', icon: Users },
     { name: 'Lead Management', href: '/crm/leads', icon: UserPlus },
     { name: 'Reports', href: '/crm/reports', icon: BarChart3 },
 ];
@@ -74,6 +78,7 @@ const inventorySubItems: CrmSubItem[] = [
 const productsSubItemsFull: CrmSubItem[] = [
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Services', href: '/services', icon: Wrench },
+    { name: 'Calculators', href: '/calculators', icon: Calculator },
 ];
 
 const ordersSubItems: CrmSubItem[] = [
@@ -88,8 +93,8 @@ const productionSubItems: CrmSubItem[] = [
 ];
 
 const managementNav: NavItem[] = [
-    { name: 'HRM', href: '/hrm', icon: UserCog },
     { name: 'Finance', href: '/finance', icon: DollarSign },
+    { name: 'HRM', href: '/hrm', icon: UserCog },
 ];
 const hrmSubItems: CrmSubItem[] = [
     { name: 'Dashboard', href: '/hrm/dashboard', icon: LayoutDashboard },
@@ -110,14 +115,15 @@ const decisionHubSubItems: CrmSubItem[] = [
 ];
 
 const systemNav: NavItem[] = [
-    { name: 'Admin', href: '/admin', icon: Settings },
+    { name: 'Admin & Settings', href: '/admin', icon: Settings },
 ];
 
 export default function AppLayout({ children }: PropsWithChildren) {
-    const user = usePage().props.auth?.user;
+    const user = usePage().props.auth?.user as any;
     const permissions = (usePage().props as any).auth?.permissions as string[] || [];
     const isAdmin = user?.role?.name === 'admin';
     const can = (perm: string) => isAdmin || permissions.includes('*') || permissions.includes(perm);
+    const hasModulePermission = (module: string) => isAdmin || permissions.includes('*') || permissions.some(p => p.startsWith(module + '.'));
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [rightDrawerOpen, setRightDrawerOpen] = useState(false);
@@ -136,6 +142,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const [showResults, setShowResults] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const searchRef = useRef<HTMLDivElement>(null);
     const searchTimeoutRef = useRef<NodeJS.Timeout>();
@@ -181,6 +188,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const isFinancePage = currentPath.startsWith('/finance');
     const isStudioPage = currentPath.startsWith('/studio');
     const isDecisionHubPage = currentPath.startsWith('/management');
+    const isMarketingPage = currentPath.startsWith('/marketing');
     // Auto-expand dropdowns on their pages
     useEffect(() => {
         if (isCrmPage) {
@@ -258,6 +266,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
         const handleClickOutside = (e: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
                 setShowResults(false);
+            }
+            if (!(e.target as HTMLElement).closest('.user-menu-container')) {
+                setUserMenuOpen(false);
             }
         };
 
@@ -447,7 +458,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </button>
                         </div>
                         <nav className="flex-1 overflow-y-auto scrollbar-thin p-4 pb-24 space-y-1">
-                            {/* CRM Dropdown */}
+                            {hasModulePermission('crm') && (
                             <div className="mb-2">
                                 <button
                                     onClick={() => setCrmDropdownOpen(!crmDropdownOpen)}
@@ -483,7 +494,22 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                 )}
                             </div>
-                            {/* Inventory Dropdown */}
+                            )}
+                            {hasModulePermission('marketing') && (
+                            <Link
+                                href="/marketing"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    isMarketingPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <Globe className="w-5 h-5" />
+                                Marketing
+                            </Link>
+                            )}
+                            {hasModulePermission('inventory') && (
                             <div className="mb-2">
                                 <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
                                     isInventoryPage
@@ -526,8 +552,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                 )}
                             </div>
-                            
-                            {/* OPERATIONS Section */}
+                            )}
+
                             <div className="px-3 mt-2 mb-2">
                                 <span className="text-xs text-slate-400 uppercase font-medium">Operations</span>
                             </div>
@@ -536,7 +562,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 Dashboard
                             </Link>
 
-                            {/* Prices Dropdown */}
+                            {hasModulePermission('products') && (
                             <div className="mb-2">
                                 <button
                                     onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
@@ -572,8 +598,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                 )}
                             </div>
+                            )}
 
-                            {/* Orders Dropdown */}
+                            {hasModulePermission('orders') && (
                             <div className="mb-2">
                                 <button
                                     onClick={() => setOrdersDropdownOpen(!ordersDropdownOpen)}
@@ -609,8 +636,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                 )}
                             </div>
+                            )}
 
-                            {/* Production Dropdown */}
+                            {hasModulePermission('production') && (
                             <div className="mb-2">
                                 <button
                                     onClick={() => setProductionDropdownOpen(!productionDropdownOpen)}
@@ -646,30 +674,45 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                 )}
                             </div>
+                            )}
 
-                            {/* Enterprise Nav Mapping (Remaining) */}
-                            {enterpriseNav.filter(item => !['Orders', 'Production'].includes(item.name)).map((item) => (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                                        currentPath === item.href
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    <item.icon className="w-5 h-5" />
-                                    {item.name}
-                                </Link>
-                            ))}
-                            
-                            {/* MANAGEMENT Section */}
+                            {hasModulePermission('procurement') && (
+                            <Link
+                                href="/procurement"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                                    isProcurementPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <ShoppingBag className="w-5 h-5" />
+                                Procurement
+                            </Link>
+                            )}
+
+                            {(hasModulePermission('hrm') || hasModulePermission('finance') || hasModulePermission('decision_hub')) && (
                             <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
                                 <span className="text-xs text-slate-400 uppercase font-medium">Management</span>
                             </div>
+                            )}
 
-                            {/* HRM Dropdown */}
+                            {hasModulePermission('finance') && (
+                            <Link
+                                href="/finance"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    isFinancePage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <DollarSign className="w-5 h-5" />
+                                Finance
+                            </Link>
+                            )}
+
+                            {hasModulePermission('hrm') && (
                             <div className="mb-2">
                                 <button
                                     onClick={() => setHrmDropdownOpen(!hrmDropdownOpen)}
@@ -705,9 +748,10 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                 )}
                             </div>
+                            )}
 
-                            {/* Decision Hub Dropdown */}
-                            {can('decision_hub.view') && <div className="mb-2">
+                            {hasModulePermission('decision_hub') && (
+                            <div className="mb-2">
                                 <button
                                     onClick={() => setDecisionHubDropdownOpen(!decisionHubDropdownOpen)}
                                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
@@ -741,54 +785,43 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                         ))}
                                     </div>
                                 )}
-                            </div>}
+                            </div>
+                            )}
 
-                            {/* Management Nav Mapping (Remaining) */}
-                            {managementNav.filter(item => item.name !== 'HRM').map((item) => (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                                        (item.name === 'Procurement' && isProcurementPage) ||
-                                        (item.name === 'Finance' && isFinancePage)
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    <item.icon className="w-5 h-5" />
-                                    {item.name}
+                            {hasModulePermission('studio') && (
+                            <>
+                                <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
+                                    <span className="text-xs text-slate-400 uppercase font-medium">Business</span>
+                                </div>
+                                <Link href="/studio" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isStudioPage ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`} onClick={() => setMobileMenuOpen(false)}>
+                                    <Camera className="w-5 h-5" />
+                                    Studio
                                 </Link>
-                            ))}
-                            
-                            {/* BUSINESS Section */}
-                            <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
-                                <span className="text-xs text-slate-400 uppercase font-medium">Business</span>
-                            </div>
-                            <Link href="/studio" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isStudioPage ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`} onClick={() => setMobileMenuOpen(false)}>
-                                <Camera className="w-5 h-5" />
-                                Studio
-                            </Link>
-                            
-                            {/* SYSTEM Section */}
-                            <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
-                                <span className="text-xs text-slate-400 uppercase font-medium">System</span>
-                            </div>
-                            {systemNav.map((item) => (
-                                <Link
-                                    key={item.name}
-                                    href={item.href}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                                        currentPath === item.href
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    <item.icon className="w-5 h-5" />
-                                    {item.name}
-                                </Link>
-                            ))}
+                            </>
+                            )}
+
+                            {(can('admin.manage_users') || can('admin.manage_roles') || can('admin.manage_settings')) && (
+                            <>
+                                <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
+                                    <span className="text-xs text-slate-400 uppercase font-medium">System</span>
+                                </div>
+                                {systemNav.map((item) => (
+                                    <Link
+                                        key={item.name}
+                                        href={item.href}
+                                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                                            currentPath === item.href
+                                                ? 'bg-slate-900 text-white'
+                                                : 'text-slate-600 hover:bg-slate-100'
+                                        }`}
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        <item.icon className="w-5 h-5" />
+                                        {item.name}
+                                    </Link>
+                                ))}
+                            </>
+                            )}
                         </nav>
                     </div>
                 </div>
@@ -820,7 +853,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Enterprise</span>}
                     </div>
                     {/* CRM Dropdown */}
-                    {can('crm.view') && <div className="px-3 mb-1">
+                    {hasModulePermission('crm') && <div className="px-3 mb-1">
                         {sidebarOpen ? (
                             <button
                                 onClick={() => setCrmDropdownOpen(!crmDropdownOpen)}
@@ -868,8 +901,23 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         )}
                     </div>
                     }
+                    {/* Marketing Link */}
+                    {hasModulePermission('marketing') && <div className="px-3 mb-1">
+                        <Link
+                            href="/marketing"
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                                isMarketingPage
+                                    ? 'bg-slate-900 text-white'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                            }`}
+                        >
+                            <Globe className="w-5 h-5 flex-shrink-0" />
+                            {sidebarOpen && <span>Marketing</span>}
+                        </Link>
+                    </div>}
+
                     {/* Inventory Dropdown */}
-                    {can('inventory.view') && <div className="px-3 mb-1">
+                    {hasModulePermission('inventory') && <div className="px-3 mb-1">
                         {sidebarOpen ? (
                             <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
                                 isInventoryPage
@@ -924,7 +972,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     </div>}
 
                     {/* Procurement Link */}
-                    {can('procurement.view') && <div className="px-3 mb-1">
+                    {hasModulePermission('procurement') && <div className="px-3 mb-1">
                         <Link
                             href="/procurement/purchase-requests"
                             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
@@ -949,7 +997,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </Link>
                         
                         {/* Prices Dropdown */}
-                        {can('products.view') && <div className="space-y-1">
+                        {hasModulePermission('products') && <div className="space-y-1">
                             {sidebarOpen ? (
                                 <button
                                     onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
@@ -998,7 +1046,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </div>}
                         
                         {/* Orders Dropdown */}
-                        {can('orders.view') && <div className="space-y-1">
+                        {hasModulePermission('orders') && <div className="space-y-1">
                             {sidebarOpen ? (
                                 <button
                                     onClick={() => setOrdersDropdownOpen(!ordersDropdownOpen)}
@@ -1047,7 +1095,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </div>}
                         
                         {/* Production Dropdown */}
-                        {can('production.view') && <div className="space-y-1">
+                        {hasModulePermission('production') && <div className="space-y-1">
                             {sidebarOpen ? (
                                 <button
                                     onClick={() => setProductionDropdownOpen(!productionDropdownOpen)}
@@ -1097,12 +1145,17 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     </div>
                     
                     {/* MANAGEMENT Section */}
-                    {(can('hrm.view') || can('finance.view') || can('decision_hub.view')) && <div className="px-3 mt-6 mb-2">
+                    {(hasModulePermission('hrm') || hasModulePermission('finance') || hasModulePermission('decision_hub')) && <div className="px-3 mt-6 mb-2">
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Management</span>}
                     </div>}
-                    
+
+                    {hasModulePermission('finance') && <Link href="/finance" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isFinancePage ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                        <DollarSign className="w-5 h-5 flex-shrink-0" />
+                        {sidebarOpen && <span>Finance</span>}
+                    </Link>}
+
                     {/* HRM Dropdown */}
-                    {can('hrm.view') && <div className="space-y-1 px-3 mb-1">
+                    {hasModulePermission('hrm') && <div className="space-y-1 px-3 mb-1">
                         {sidebarOpen ? (
                             <button
                                 onClick={() => setHrmDropdownOpen(!hrmDropdownOpen)}
@@ -1150,13 +1203,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         )}
                     </div>}
 
-                    {can('finance.view') && <Link href="/finance" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isFinancePage ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
-                        <DollarSign className="w-5 h-5 flex-shrink-0" />
-                        {sidebarOpen && <span>Finance</span>}
-                    </Link>}
-
                     {/* Decision Hub Dropdown */}
-                    {can('decision_hub.view') && <div className="space-y-1 px-3 mb-1">
+                    {hasModulePermission('decision_hub') && <div className="space-y-1 px-3 mb-1">
                         {sidebarOpen ? (
                             <button
                                 onClick={() => setDecisionHubDropdownOpen(!decisionHubDropdownOpen)}
@@ -1205,11 +1253,11 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     </div>}
                     
                     {/* BUSINESS Section */}
-                    {can('studio.view') && <div className="px-3 mt-6 mb-2">
+                    {hasModulePermission('studio') && <div className="px-3 mt-6 mb-2">
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Business</span>}
                     </div>}
                     <div className="space-y-1 px-3">
-                        {can('studio.view') && <Link href="/studio" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isStudioPage ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                        {hasModulePermission('studio') && <Link href="/studio" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isStudioPage ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
                             <Camera className="w-5 h-5 flex-shrink-0" />
                             {sidebarOpen && <span>Studio</span>}
                         </Link>}
@@ -1239,19 +1287,26 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
                 {/* User Section */}
                 <div className="p-3 border-t border-slate-200 dark:border-white/[0.06]">
-                    <div className={`flex items-center gap-3 ${!sidebarOpen ? 'justify-center' : ''}`}>
-                        <div className="w-8 h-8 bg-slate-800 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-sm font-medium text-white">
-                                {user?.name?.charAt(0).toUpperCase() || 'A'}
-                            </span>
-                        </div>
+                    <Link
+                        href="/profile"
+                        className={`flex items-center gap-3 ${!sidebarOpen ? 'justify-center' : ''} p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors`}
+                    >
+{user?.employee?.avatar ? (
+    <img src={`/storage/${user.employee.avatar}`} alt={user.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+) : (
+    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+        <span className="text-sm font-medium text-white">
+            {user?.name?.charAt(0).toUpperCase() || 'A'}
+        </span>
+    </div>
+)}
                         {sidebarOpen && (
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{user?.name || 'Admin'}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email || 'admin@dps-erp.com'}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.role?.name ? `@${user.role.name}` : ''}</p>
                             </div>
                         )}
-                    </div>
+                    </Link>
                 </div>
             </aside>
 
@@ -1328,14 +1383,73 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                         <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                     </button>
-                    <Link 
-                        href={route('logout')} 
-                        method="post"
-                        as="button"
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                    >
-                        <LogOut className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                    </Link>
+
+                    {/* User Menu Dropdown */}
+                    <div className="relative user-menu-container">
+                        <button
+                            onClick={() => setUserMenuOpen(!userMenuOpen)}
+                            className="flex items-center gap-2 p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        >
+{user?.employee?.avatar ? (
+    <img src={`/storage/${user.employee.avatar}`} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+) : (
+    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+        <span className="text-sm font-medium text-white">{user?.name?.charAt(0).toUpperCase() || 'A'}</span>
+    </div>
+)}
+                        </button>
+
+                        {userMenuOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#1a1e2a] rounded-xl border border-slate-200 dark:border-white/[0.06] shadow-xl overflow-hidden z-50">
+                                <div className="p-4 border-b border-slate-100 dark:border-white/[0.06]">
+                                    <div className="flex items-center gap-3">
+{user?.employee?.avatar ? (
+    <img src={`/storage/${user.employee.avatar}`} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
+) : (
+    <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+        <span className="text-sm font-medium text-white">{user?.name?.charAt(0).toUpperCase() || 'A'}</span>
+    </div>
+)}
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{user?.name || 'Admin'}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email || ''}</p>
+                                        </div>
+                                    </div>
+                                    {user?.role && (
+                                        <div className="mt-2">
+                                            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${
+                                                user.role.name === 'admin' ? 'bg-red-100 text-red-700' :
+                                                user.role.name === 'manager' ? 'bg-amber-100 text-amber-700' :
+                                                'bg-slate-100 text-slate-700'
+                                            }`}>
+                                                {user.role.name}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="p-2">
+                                    <Link
+                                        href="/profile"
+                                        onClick={() => setUserMenuOpen(false)}
+                                        className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg transition-colors"
+                                    >
+                                        <UserIcon className="w-4 h-4" />
+                                        My Profile
+                                    </Link>
+                                    <Link
+                                        href={route('logout')}
+                                        method="post"
+                                        as="button"
+                                        onClick={() => setUserMenuOpen(false)}
+                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        Sign Out
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </header>
 
@@ -1378,6 +1492,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     <LayoutDashboard className="w-5 h-5" />
                     <span className="text-[10px] font-medium">Dashboard</span>
                 </Link>
+                {hasModulePermission('crm') && (
                 <button
                     onClick={() => setCrmSlideUpOpen(true)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
@@ -1389,6 +1504,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     <Users className="w-5 h-5" />
                     <span className="text-[10px] font-medium">CRM</span>
                 </button>
+                )}
+                {hasModulePermission('inventory') && (
                 <button
                     onClick={() => setInventorySlideUpOpen(true)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
@@ -1400,6 +1517,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     <Package className="w-5 h-5" />
                     <span className="text-[10px] font-medium">Inventory</span>
                 </button>
+                )}
+                {hasModulePermission('products') && (
                 <button
                     onClick={() => setProductsSlideUpOpen(true)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
@@ -1411,6 +1530,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     <Package className="w-5 h-5" />
                     <span className="text-[10px] font-medium">Prices</span>
                 </button>
+                )}
+                {hasModulePermission('orders') && (
                 <Link
                     href="/orders"
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
@@ -1422,6 +1543,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     <ShoppingCart className="w-5 h-5" />
                     <span className="text-[10px] font-medium">Orders</span>
                 </Link>
+                )}
                 <button
                     onClick={() => setMobileMenuOpen(true)}
                     className="flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
@@ -1444,7 +1566,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-slate-900">CRM</h3>
-                                        <p className="text-xs text-slate-500">Client Management</p>
+                                        <p className="text-xs text-slate-500">Clients & Accounts</p>
                                     </div>
                                 </div>
                                 <button 

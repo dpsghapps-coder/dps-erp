@@ -63,7 +63,7 @@ export default function DecisionsIndex() {
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                                 currentStatus === tab.value || (!currentStatus && !tab.value)
                                     ? 'bg-white text-slate-900 shadow-sm dark:bg-white/20 dark:text-white'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-300 dark:hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/10'
                             }`}
                         >
                             {tab.label}
@@ -77,7 +77,7 @@ export default function DecisionsIndex() {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+                                <tr className="border-b border-slate-200 dark:border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
                                     <th className="py-3 px-4">Number</th>
                                     <th className="py-3 px-4">Title</th>
                                     <th className="py-3 px-4">Category</th>
@@ -86,9 +86,9 @@ export default function DecisionsIndex() {
                                     <th className="py-3 px-4 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-white/5">
+                            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                 {decisions.data.map((decision: any) => (
-                                    <tr key={decision.id} className="hover:bg-white/5 transition-colors">
+                                    <tr key={decision.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                                         <td className="py-3 px-4 font-mono text-sm text-slate-900 dark:text-white">
                                             {decision.number}
                                         </td>
@@ -148,7 +148,7 @@ export default function DecisionsIndex() {
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                                 link.active
                                     ? 'bg-white text-slate-900 shadow-sm dark:bg-white/20 dark:text-white'
-                                    : 'text-slate-600 hover:bg-white/50 dark:text-slate-400 dark:hover:bg-white/10'
+                                    : 'text-slate-600 hover:bg-slate-300 dark:hover:bg-white/50 dark:text-slate-400 dark:hover:bg-white/10'
                             } ${!link.url ? 'opacity-50 pointer-events-none' : ''}`}
                             dangerouslySetInnerHTML={{ __html: link.label }}
                         />

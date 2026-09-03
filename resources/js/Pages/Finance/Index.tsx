@@ -1,15 +1,17 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusBadge, EmptyState } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusBadge, EmptyState, Pagination } from '@/Components/ui';
 import { TableLoading, CardLoading, StatCardSkeleton } from '@/Components/ui/Loading';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Plus, Search, Pencil, Trash2, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
 import { useState } from 'react';
+import { useCurrency } from '@/Utils/currency';
 
 export default function FinanceIndex() {
     const { transactions, stats } = usePage().props as { transactions: { data: any[] }, stats: { total_income: number, total_expense: number, balance: number } };
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState('all');
     const isLoading = false;
+    const formatCurrency = useCurrency();
 
     const categories = [...new Set((transactions?.data || []).map((t: any) => t.category).filter(Boolean))];
 
@@ -21,13 +23,6 @@ export default function FinanceIndex() {
         const matchType = typeFilter === 'all' || t.type === typeFilter;
         return matchSearch && matchType;
     });
-
-    const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(amount || 0);
-    };
 
     return (
         <AppLayout>
@@ -184,6 +179,7 @@ export default function FinanceIndex() {
                     </div>
                 )}
             </GlassCard>
+            <Pagination meta={transactions} />
         </AppLayout>
     );
 }

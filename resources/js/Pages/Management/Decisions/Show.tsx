@@ -3,6 +3,7 @@ import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Edit, Plus, Star, CheckCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
+import { useCurrency } from '@/Utils/currency';
 
 interface Props {
     decision: any;
@@ -60,6 +61,7 @@ export default function DecisionShow({ decision, employees }: Props) {
     const [showReviewForm, setShowReviewForm] = useState(false);
     const [expandedItems, setExpandedItems] = useState<number[]>([]);
     const [statusOpen, setStatusOpen] = useState(false);
+    const formatCurrency = useCurrency();
 
     const { data: actionData, setData: setActionData, post: postAction, processing: actionProcessing, errors: actionErrors, reset: resetAction } = useForm({
         description: '',
@@ -370,7 +372,7 @@ export default function DecisionShow({ decision, employees }: Props) {
                             <div className="flex justify-between">
                                 <span className="text-slate-500">Budget</span>
                                 <span className="text-slate-900 dark:text-white font-medium">
-                                    {decision.budget ? `GH₵ ${parseFloat(decision.budget).toLocaleString()}` : '-'}
+                                    {decision.budget ? formatCurrency(decision.budget) : '-'}
                                 </span>
                             </div>
                             <div className="flex justify-between">

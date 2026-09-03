@@ -1,84 +1,46 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { usePage, router, useForm } from '@inertiajs/react';
+import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import { TeamCalendar, BalanceBar, RequestModal } from '@/Components/HRM';
 import { Head, Link } from '@inertiajs/react';
-import { 
-    Plus, 
-    Calendar,
-    Check,
-    X,
-    Filter,
-    User
-} from 'lucide-react';
+import { Plus, Check, X } from 'lucide-react';
 
-const LEAVE_REQUESTS_MOCK = [
-    { id: 1, employee: { id: 1, first_name: 'John', last_name: 'Smith', employee_number: 'EMP-001' }, leave_type: 'annual', start_date: '2026-04-28', end_date: '2026-04-30', days_count: 3, reason: 'Family vacation', status: 'pending' },
-    { id: 2, employee: { id: 2, first_name: 'Sarah', last_name: 'Johnson', employee_number: 'EMP-002' }, leave_type: 'sick', start_date: '2026-04-27', end_date: '2026-04-27', days_count: 1, reason: 'Not feeling well', status: 'approved' },
-    { id: 3, employee: { id: 3, first_name: 'Mike', last_name: 'Chen', employee_number: 'EMP-003' }, leave_type: 'annual', start_date: '2026-05-01', end_date: '2026-05-05', days_count: 5, reason: 'Wedding anniversary trip', status: 'pending' },
-    { id: 4, employee: { id: 4, first_name: 'Emily', last_name: 'Davis', employee_number: 'EMP-004' }, leave_type: 'paternity', start_date: '2026-04-28', end_date: '2026-05-03', days_count: 6, reason: 'New baby care', status: 'approved' },
-    { id: 5, employee: { id: 5, first_name: 'James', last_name: 'Wilson', employee_number: 'EMP-005' }, leave_type: 'sick', start_date: '2026-04-26', end_date: '2026-04-26', days_count: 1, reason: 'Doctor appointment', status: 'rejected' },
-    { id: 6, employee: { id: 6, first_name: 'Lisa', last_name: 'Brown', employee_number: 'EMP-006' }, leave_type: 'annual', start_date: '2026-05-10', end_date: '2026-05-12', days_count: 3, reason: 'Personal time off', status: 'pending' },
-];
-
-const EMPLOYEES_MOCK = [
-    { id: 1, first_name: 'John', last_name: 'Smith' },
-    { id: 2, first_name: 'Sarah', last_name: 'Johnson' },
-    { id: 3, first_name: 'Mike', last_name: 'Chen' },
-    { id: 4, first_name: 'Emily', last_name: 'Davis' },
-    { id: 5, first_name: 'James', last_name: 'Wilson' },
-];
-
-const TEAM_LEAVE_MOCK = [
-    { id: 1, employee: { first_name: 'Emily' }, start_date: '2026-04-28', end_date: '2026-05-03' },
-    { id: 2, employee: { first_name: 'Sarah' }, start_date: '2026-04-27', end_date: '2026-04-27' },
-];
+const BALANCE_COLORS = ['bg-indigo-500', 'bg-red-500', 'bg-blue-500', 'bg-amber-500', 'bg-emerald-500', 'bg-purple-500'];
 
 export default function HrmLeaves() {
     const { props } = usePage();
     const leaveRequestsData = (props as any)?.leaveRequests;
-    const leaveRequests = leaveRequestsData?.data || LEAVE_REQUESTS_MOCK;
-    const leaveBalance = (props as any)?.leaveBalance || { leave_balance: 18 };
+    const leaveRequests = leaveRequestsData?.data || [];
+    const leaveBalance = (props as any)?.leaveBalance;
+    const leaveTypes = (props as any)?.leaveTypes || [];
     const teamLeaveData = (props as any)?.teamLeave;
-    const teamLeave = teamLeaveData?.data || TEAM_LEAVE_MOCK;
-    const employeesData = (props as any)?.employees;
-    const employees = employeesData || EMPLOYEES_MOCK;
+    const teamLeave = teamLeaveData?.data || [];
+    const employees = (props as any)?.employees || [];
 
     const [statusFilter, setStatusFilter] = useState('all');
     const [typeFilter, setTypeFilter] = useState('all');
     const [showModal, setShowModal] = useState(false);
 
-    const { post, processing } = useForm({});
+    const leaveTypeLabels = useMemo(() => {
+        const map: Record<string, string> = {};
+        leaveTypes.forEach((lt: any) => {
+            map[lt.name.toLowerCase()] = lt.name;
+        });
+        return map;
+    }, [leaveTypes]);
 
-    const handleSubmitLeave = async (data: any) => {
-        try {
-            await fetch('/hrm/leaves', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
-        } catch (e) {}
+    const handleSubmitLeave = (data: any) => {
+        router.post('/hrm/leaves', data);
     };
 
-    const handleApprove = async (id: number) => {
-        try {
-            await fetch(`/hrm/leaves/${id}/approve`, { method: 'POST' });
-        } catch (e) {}
+    const handleApprove = (id: number) => {
+        router.post(`/hrm/leaves/${id}/approve`);
     };
 
-    const handleReject = async (id: number) => {
-        try {
-            await fetch(`/hrm/leaves/${id}/reject`, { method: 'POST' });
-        } catch (e) {}
-    };
-
-    const leaveTypeLabels: Record<string, string> = {
-        annual: 'Annual',
-        sick: 'Sick',
-        unpaid: 'Unpaid',
-        maternity: 'Maternity',
-        paternity: 'Paternity',
+    const handleReject = (id: number) => {
+        router.post(`/hrm/leaves/${id}/reject`);
     };
 
     const statusColors: Record<string, string> = {
@@ -86,6 +48,15 @@ export default function HrmLeaves() {
         approved: 'bg-green-500/20 text-green-400',
         rejected: 'bg-red-500/20 text-red-400',
     };
+
+    const filteredLeaveRequests = useMemo(() => {
+        if (!Array.isArray(leaveRequests)) return [];
+        return leaveRequests.filter((leave: any) => {
+            if (statusFilter !== 'all' && leave.status !== statusFilter) return false;
+            if (typeFilter !== 'all' && leave.leave_type !== typeFilter) return false;
+            return true;
+        });
+    }, [leaveRequests, statusFilter, typeFilter]);
 
     const navItems = ['Dashboard', 'Employees', 'Attendance', 'Leaves', 'Holidays', 'Payroll', 'Performance', 'Noticeboard'];
 
@@ -109,8 +80,8 @@ export default function HrmLeaves() {
                 ))}
             </div>
 
-            <PageHeader 
-                title="Leaves" 
+            <PageHeader
+                title="Leaves"
                 subtitle="Manage leave requests & balances"
                 action={
                     <button onClick={() => setShowModal(true)} className="glass-button flex items-center gap-2">
@@ -123,9 +94,19 @@ export default function HrmLeaves() {
                 <GlassCard>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Leave Balance</h3>
                     <div className="space-y-4">
-                        <BalanceBar label="Annual Leave" used={20 - (leaveBalance.leave_balance || 18)} total={20} color="bg-indigo-500" />
-                        <BalanceBar label="Sick Leave" used={2} total={10} color="bg-red-500" />
-                        <BalanceBar label="Personal Leave" used={1} total={5} color="bg-blue-500" />
+                        {leaveBalance?.types?.length > 0 ? (
+                            leaveBalance.types.map((bt: any, i: number) => (
+                                <BalanceBar
+                                    key={bt.id}
+                                    label={bt.name}
+                                    used={bt.used}
+                                    total={bt.days_per_year}
+                                    color={BALANCE_COLORS[i % BALANCE_COLORS.length]}
+                                />
+                            ))
+                        ) : (
+                            <p className="text-sm text-slate-400">Select an employee to view balance</p>
+                        )}
                     </div>
                 </GlassCard>
 
@@ -138,34 +119,42 @@ export default function HrmLeaves() {
             <GlassCard className="mb-6">
                 <div className="flex flex-wrap gap-4 items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <select 
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="glass-input"
-                        >
-                            <option value="all">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
-                        </select>
-                        <select 
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                { value: 'all', label: 'All Status' },
+                                { value: 'pending', label: 'Pending' },
+                                { value: 'approved', label: 'Approved' },
+                                { value: 'rejected', label: 'Rejected' },
+                            ].map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => setStatusFilter(opt.value)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                        statusFilter === opt.value
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
+                            ))}
+                        </div>
+                        <select
                             value={typeFilter}
                             onChange={(e) => setTypeFilter(e.target.value)}
                             className="glass-input"
                         >
                             <option value="all">All Types</option>
-                            <option value="annual">Annual</option>
-                            <option value="sick">Sick</option>
-                            <option value="unpaid">Unpaid</option>
-                            <option value="maternity">Maternity</option>
-                            <option value="paternity">Paternity</option>
+                            {leaveTypes.map((lt: any) => (
+                                <option key={lt.id} value={lt.name.toLowerCase()}>{lt.name}</option>
+                            ))}
                         </select>
                     </div>
                 </div>
             </GlassCard>
 
             <div className="space-y-3">
-                {Array.isArray(leaveRequests) && leaveRequests.map((leave: any) => (
+                {filteredLeaveRequests.map((leave: any) => (
                     <GlassCard key={leave.id}>
                         <div className="flex items-start justify-between">
                             <div className="flex items-start gap-4">
@@ -177,7 +166,7 @@ export default function HrmLeaves() {
                                         {leave.employee?.first_name} {leave.employee?.last_name}
                                     </p>
                                     <p className="text-sm text-slate-500">
-                                        {leaveTypeLabels[leave.leave_type]} Leave 
+                                        {leaveTypeLabels[leave.leave_type] || leave.leave_type}
                                         <span className="mx-2">|</span>
                                         {new Date(leave.start_date).toLocaleDateString()} - {new Date(leave.end_date).toLocaleDateString()}
                                         <span className="mx-2">|</span>
@@ -213,12 +202,14 @@ export default function HrmLeaves() {
                     </GlassCard>
                 ))}
             </div>
+            <Pagination meta={leaveRequestsData} />
 
             <RequestModal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 onSubmit={handleSubmitLeave}
                 employees={employees}
+                leaveTypes={leaveTypes}
             />
         </AppLayout>
     );

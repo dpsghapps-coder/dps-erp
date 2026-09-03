@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model
@@ -18,19 +17,46 @@ class Client extends Model
         'city',
         'country',
         'status',
-        'assigned_to',
+        'pipeline_stage',
+        'lost_reason',
+        'lost_note',
+        'estimated_value',
         'source',
         'notes',
         'location',
+        'next_follow_up_at',
+        'linkedin',
+        'facebook',
+        'instagram',
+        'twitter',
+        'tiktok',
     ];
 
     protected $casts = [
         'status' => 'string',
+        'pipeline_stage' => 'string',
+        'estimated_value' => 'decimal:2',
+        'next_follow_up_at' => 'datetime',
     ];
 
-    public function assignedTo(): BelongsTo
+    public const PIPELINE_STAGES = [
+        'new_lead',
+        'contacted',
+        'meeting_scheduled',
+        'proposal_sent',
+        'negotiating',
+        'converted',
+        'lost',
+    ];
+
+    public static function pipelineStageForStatus(string $status): string
     {
-        return $this->belongsTo(User::class, 'assigned_to');
+        return match ($status) {
+            'active' => 'converted',
+            'inactive' => 'lost',
+            'prospect' => 'negotiating',
+            default => 'new_lead',
+        };
     }
 
     public function contacts(): HasMany
@@ -48,8 +74,18 @@ class Client extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function proformas(): HasMany
+    {
+        return $this->hasMany(Proforma::class);
+    }
+
     public function primaryContact()
     {
-        return $this->hasOne(Contact::class)->where('is_primary', true);
+        return $this->hasOne(Contact::class)->oldest();
+    }
+
+    public function lastInteraction()
+    {
+        return $this->hasOne(Interaction::class)->latestOfMany('occurred_at');
     }
 }

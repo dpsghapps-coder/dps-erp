@@ -1,31 +1,32 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, Plus, Trash2, Package, Tag, List, X, Check, Building2 } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Package, Tag, List, X, Check } from 'lucide-react';
 import { useState } from 'react';
 
 export default function Settings() {
-    const { uoms, categories, attributes, departments } = usePage().props as any;
-    const [activeTab, setActiveTab] = useState<'general' | 'uom' | 'categories' | 'attributes' | 'departments'>('general');
+    const { uoms, categories, attributes, currency: savedCurrency } = usePage().props as any;
+    const [activeTab, setActiveTab] = useState<'general' | 'uom' | 'categories' | 'attributes'>('general');
     const [newUom, setNewUom] = useState('');
     const [newCategory, setNewCategory] = useState('');
     const [newAttribute, setNewAttribute] = useState('');
-    const [newDeptName, setNewDeptName] = useState('');
-    const [newDeptCode, setNewDeptCode] = useState('');
-    const [newDeptDesc, setNewDeptDesc] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
     const [togglingAttr, setTogglingAttr] = useState<number | null>(null);
 
-    const { data, setData, post, processing } = useForm({
+    const { data, setData, put, processing } = useForm({
         company_name: 'DPS-ERP',
         company_email: 'info@dps-erp.com',
         company_phone: '',
         company_address: '',
         timezone: 'UTC',
         date_format: 'Y-m-d',
-        currency: 'USD',
+        currency: savedCurrency || 'GHS',
         fiscal_year_start: '01-01',
     });
+
+    const handleSaveSettings = () => {
+        put('/admin/settings');
+    };
 
     const handleAddUom = (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,25 +75,12 @@ export default function Settings() {
         }
     };
 
-    const handleAddDepartment = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (newDeptName.trim()) {
-            router.post('/admin/settings/department', {
-                name: newDeptName,
-                code: newDeptCode || undefined,
-                description: newDeptDesc || undefined,
-            }, {
-                onSuccess: () => { setNewDeptName(''); setNewDeptCode(''); setNewDeptDesc(''); },
-            });
-        }
-    };
-
     return (
         <AppLayout>
             <Head title="Settings" />
 
             <div className="mb-6">
-                <Link href="/admin" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/admin" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Admin
                 </Link>
             </div>
@@ -128,12 +116,6 @@ export default function Settings() {
                 >
                     <List className="w-4 h-4 inline mr-2" />Attributes
                 </button>
-                <button
-                    onClick={() => setActiveTab('departments')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'departments' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                >
-                    <Building2 className="w-4 h-4 inline mr-2" />Departments
-                </button>
             </div>
 
             {activeTab === 'general' && (
@@ -161,8 +143,8 @@ export default function Settings() {
                     </GlassCard>
 
                     <div className="flex gap-3">
-                        <button className="glass-button flex items-center gap-2">
-                            <Save className="w-4 h-4" /> Save Settings
+                        <button onClick={handleSaveSettings} disabled={processing} className="glass-button flex items-center gap-2">
+                            <Save className="w-4 h-4" /> {processing ? 'Saving...' : 'Save Settings'}
                         </button>
                     </div>
                 </div>
@@ -254,66 +236,6 @@ export default function Settings() {
                                     </div>
                                 </div>
                             ))}
-                        </div>
-                    </GlassCard>
-                </div>
-            )}
-
-            {activeTab === 'departments' && (
-                <div className="max-w-3xl">
-                    <GlassCard>
-                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <Building2 className="w-5 h-5" /> Departments
-                        </h2>
-                        <p className="text-sm text-slate-400 mb-4">Manage departments used across the system (User assignment, Purchase Requests).</p>
-
-                        <form onSubmit={handleAddDepartment} className="space-y-3 mb-6">
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={newDeptName}
-                                    onChange={(e) => setNewDeptName(e.target.value)}
-                                    placeholder="Department name *"
-                                    className="glass-input flex-1"
-                                    required
-                                />
-                                <input
-                                    type="text"
-                                    value={newDeptCode}
-                                    onChange={(e) => setNewDeptCode(e.target.value)}
-                                    placeholder="Code (optional)"
-                                    className="glass-input w-32"
-                                />
-                                <button type="submit" className="glass-button flex items-center gap-2"><Plus className="w-4 h-4" /> Add</button>
-                            </div>
-                            <input
-                                type="text"
-                                value={newDeptDesc}
-                                onChange={(e) => setNewDeptDesc(e.target.value)}
-                                placeholder="Description (optional)"
-                                className="glass-input w-full"
-                            />
-                        </form>
-
-                        <div className="space-y-2">
-                            {(departments || []).map((dept: any) => (
-                                <div key={dept.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                                    <div className="min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium">{dept.name}</span>
-                                            {dept.code && <span className="text-xs text-slate-400 font-mono">({dept.code})</span>}
-                                            {!dept.is_active && <span className="text-xs text-red-400">Inactive</span>}
-                                        </div>
-                                        {dept.description && <p className="text-xs text-slate-500 mt-0.5">{dept.description}</p>}
-                                    </div>
-                                    <Link href={`/admin/settings/department/${dept.id}`} method="delete" as="button" className="text-red-400 hover:text-red-300 shrink-0 ml-4">
-                                        <Trash2 className="w-4 h-4" />
-                                    </Link>
-                                </div>
-                            ))}
-                            {(!departments || departments.length === 0) && (
-                                <p className="text-sm text-slate-400 text-center py-4">No departments created yet.</p>
-                            )}
                         </div>
                     </GlassCard>
                 </div>

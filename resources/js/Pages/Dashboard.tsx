@@ -3,6 +3,7 @@ import { GlassCard, PageHeader, StatusBadge, EmptyState } from '@/Components/ui'
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Users, ShoppingCart, Factory, Camera, Package, UserCog, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useCurrency } from '@/Utils/currency';
 
 const containerVariants = {
     hidden: { opacity: 0 },
@@ -24,6 +25,7 @@ const fadeInUp = {
 
 export default function Dashboard() {
     const { stats, recent_orders, recent_jobs } = usePage().props as any;
+    const formatCurrency = useCurrency();
 
     const statCards = [
         { label: 'Total Clients', value: stats?.total_clients || 0, icon: Users, color: 'text-blue-400', href: '/crm' },
@@ -91,14 +93,14 @@ export default function Dashboard() {
                         {recent_orders?.length > 0 ? (
                             <div className="space-y-3">
                                 {recent_orders.slice(0, 4).map((order: any) => (
-                                    <div key={order.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                                    <div key={order.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
                                         <div>
                                             <p className="font-medium">{order.order_number}</p>
                                             <p className="text-sm text-slate-400">{order.client?.company_name}</p>
                                         </div>
                                         <div className="text-right">
                                             <StatusBadge status={order.status} />
-                                            <p className="text-sm mt-1">${order.grand_total}</p>
+                                            <p className="text-sm mt-1">{formatCurrency(order.grand_total)}</p>
                                         </div>
                                     </div>
                                 ))}
@@ -121,7 +123,7 @@ export default function Dashboard() {
                         {recent_jobs?.length > 0 ? (
                             <div className="space-y-3">
                                 {recent_jobs.slice(0, 4).map((job: any) => (
-                                    <div key={job.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                                    <div key={job.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
                                         <div>
                                             <p className="font-medium">{job.job_number}</p>
                                             <p className="text-sm text-slate-400">{job.title}</p>

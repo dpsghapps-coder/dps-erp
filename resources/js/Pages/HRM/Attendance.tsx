@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePage, router } from '@inertiajs/react';
+import axios from 'axios';
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link } from '@inertiajs/react';
@@ -45,18 +46,24 @@ export default function HrmAttendance() {
 
     const handleCheckIn = async () => {
         try {
-            await fetch('/hrm/attendance/check-in', { method: 'POST' });
-        } catch (e) {}
-        setIsCheckedIn(true);
-        localStorage.setItem('hrmAttendanceCheckedIn', 'true');
+            await axios.post('/hrm/attendance/check-in');
+            setIsCheckedIn(true);
+            localStorage.setItem('hrmAttendanceCheckedIn', 'true');
+            router.reload({ only: ['recentLogs', 'stats'] });
+        } catch (e) {
+            console.error('Error during check-in:', e);
+        }
     };
 
     const handleCheckOut = async () => {
         try {
-            await fetch('/hrm/attendance/check-out', { method: 'POST' });
-        } catch (e) {}
-        setIsCheckedIn(false);
-        localStorage.setItem('hrmAttendanceCheckedIn', 'false');
+            await axios.post('/hrm/attendance/check-out');
+            setIsCheckedIn(false);
+            localStorage.setItem('hrmAttendanceCheckedIn', 'false');
+            router.reload({ only: ['recentLogs', 'stats'] });
+        } catch (e) {
+            console.error('Error during check-out:', e);
+        }
     };
 
     const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
@@ -196,7 +203,7 @@ export default function HrmAttendance() {
                             return (
                                 <div
                                     key={day}
-                                    className={`h-10 rounded-lg flex items-center justify-center text-xs font-medium ${statusColors[status]} text-white`}
+                                    className={`h-10 rounded-lg flex items-center justify-center text-xs font-medium ${statusColors[status]} text-slate-900 dark:text-white`}
                                     title={status}
                                 >
                                     {day}

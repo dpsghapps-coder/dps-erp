@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { usePage, useForm } from '@inertiajs/react';
+import { usePage, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, Pagination } from '@/Components/ui';
 import { TrendChart } from '@/Components/HRM';
 import { Head, Link } from '@inertiajs/react';
 import { 
@@ -12,6 +12,7 @@ import {
     Building2,
     User
 } from 'lucide-react';
+import { useCurrency } from '@/Utils/currency';
 
 const PAYSLIPS_MOCK = [
     { id: 1, employee: { id: 1, first_name: 'John', last_name: 'Smith' }, month: '2026-04', basic_salary: 7917, allowances: 500, overtime: 200, bonuses: 0, deductions_tax: 1800, deductions_insurance: 400, deductions_retirement: 800, gross_pay: 8617, net_pay: 5617, status: 'paid' },
@@ -39,6 +40,8 @@ const TREND_DATA_MOCK = [
 
 export default function HrmPayroll() {
     const { props } = usePage();
+    const filters = (props as any)?.filters;
+    const formatCurrency = useCurrency();
     const payslipsData = (props as any)?.payslips;
     const payslips = payslipsData?.data || payslipsData || PAYSLIPS_MOCK;
     const employeesData = (props as any)?.employees;
@@ -46,9 +49,19 @@ export default function HrmPayroll() {
     const trendData = (props as any)?.trendData;
     const trendData_ = trendData?.data || trendData || TREND_DATA_MOCK;
 
-    const [selectedEmployee, setSelectedEmployee] = useState('all');
-    const [selectedMonth, setSelectedMonth] = useState('all');
+    const [selectedEmployee, setSelectedEmployee] = useState(filters?.employee_id || 'all');
+    const [selectedMonth, setSelectedMonth] = useState(filters?.month || 'all');
     const [selectedPayslip, setSelectedPayslip] = useState<any>(null);
+
+    const handleFilterChange = (employeeId: string, month: string) => {
+        router.get('/hrm/payroll', {
+            employee_id: employeeId === 'all' ? undefined : employeeId,
+            month: month === 'all' ? undefined : month
+        }, {
+            preserveState: true,
+            replace: true
+        });
+    };
 
     const statusColors: Record<string, string> = {
         draft: 'bg-slate-100 text-slate-700',
@@ -87,7 +100,7 @@ export default function HrmPayroll() {
                         <DollarSign className="w-6 h-6 text-green-600" />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">$5,617</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(5617)}</p>
                         <p className="text-sm text-slate-500">This Month</p>
                     </div>
                 </GlassCard>
@@ -97,7 +110,7 @@ export default function HrmPayroll() {
                         <TrendingUp className="w-6 h-6 text-blue-600" />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-slate-900 dark:text-white">$6,017</p>
+                        <p className="text-2xl font-bold text-slate-900 dark:text-white">{formatCurrency(6017)}</p>
                         <p className="text-sm text-slate-500">Avg Monthly</p>
                     </div>
                 </GlassCard>
@@ -136,7 +149,11 @@ export default function HrmPayroll() {
                             <label className="block text-sm font-medium mb-2">Employee</label>
                             <select 
                                 value={selectedEmployee}
-                                onChange={(e) => setSelectedEmployee(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setSelectedEmployee(val);
+                                    handleFilterChange(val, selectedMonth);
+                                }}
                                 className="glass-input w-full"
                             >
                                 <option value="all">All Employees</option>
@@ -151,7 +168,11 @@ export default function HrmPayroll() {
                             <label className="block text-sm font-medium mb-2">Month</label>
                             <select 
                                 value={selectedMonth}
-                                onChange={(e) => setSelectedMonth(e.target.value)}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setSelectedMonth(val);
+                                    handleFilterChange(selectedEmployee, val);
+                                }}
                                 className="glass-input w-full"
                             >
                                 <option value="all">All Months</option>
@@ -174,7 +195,7 @@ export default function HrmPayroll() {
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-white/10">
+                            <tr className="border-b border-slate-200 dark:border-white/10">
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Month</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Employee</th>
                                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Basic</th>
@@ -187,17 +208,17 @@ export default function HrmPayroll() {
                         </thead>
                         <tbody>
                             {payslips.map((payslip: any) => (
-                                <tr key={payslip.id} className="border-b border-white/5 hover:bg-white/5">
+                                <tr key={payslip.id} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
                                     <td className="py-3 px-4 font-mono text-sm">{payslip.month}</td>
                                     <td className="py-3 px-4">
                                         {payslip.employee?.first_name} {payslip.employee?.last_name}
                                     </td>
-                                    <td className="py-3 px-4 text-right">${payslip.basic_salary?.toLocaleString()}</td>
-                                    <td className="py-3 px-4 text-right">${((payslip.allowances || 0) + (payslip.overtime || 0) + (payslip.bonuses || 0)).toLocaleString()}</td>
+                                    <td className="py-3 px-4 text-right">{formatCurrency(payslip.basic_salary)}</td>
+                                    <td className="py-3 px-4 text-right">{formatCurrency((payslip.allowances || 0) + (payslip.overtime || 0) + (payslip.bonuses || 0))}</td>
                                     <td className="py-3 px-4 text-right text-red-500">
-                                        -${((payslip.deductions_tax || 0) + (payslip.deductions_insurance || 0) + (payslip.deductions_retirement || 0)).toLocaleString()}
+                                        -{formatCurrency((payslip.deductions_tax || 0) + (payslip.deductions_insurance || 0) + (payslip.deductions_retirement || 0))}
                                     </td>
-                                    <td className="py-3 px-4 text-right font-medium">${payslip.net_pay?.toLocaleString()}</td>
+                                    <td className="py-3 px-4 text-right font-medium">{formatCurrency(payslip.net_pay)}</td>
                                     <td className="py-3 px-4">
                                         <span className={`text-xs px-2 py-1 rounded-full ${statusColors[payslip.status]}`}>
                                             {payslip.status}
@@ -212,6 +233,7 @@ export default function HrmPayroll() {
                     </table>
                 </div>
             </GlassCard>
+            <Pagination meta={payslipsData} />
         </AppLayout>
     );
 }

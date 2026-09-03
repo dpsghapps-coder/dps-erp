@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProductCategory;
 use App\Models\Service;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 
 class ServiceController extends Controller
 {
     public function index()
     {
-        $services = Service::with('prices')
+        $services = Service::with(['prices', 'category'])
             ->orderBy('created_at', 'desc')
             ->paginate(25);
 
@@ -18,16 +20,19 @@ class ServiceController extends Controller
 
     public function create()
     {
-        return inertia('Services/Create');
+        return inertia('Services/Create', [
+            'categories' => ProductCategory::orderBy('name')->get(),
+            'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+            'nextCode' => Service::generateCode(),
+        ]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code' => 'required|string|unique:services|max:50',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'category' => 'nullable|string|max:100',
+            'category_id' => 'nullable|exists:product_categories,id',
             'unit' => 'required|string|max:30',
             'is_active' => 'boolean',
             'prices' => 'nullable|array',
@@ -37,10 +42,10 @@ class ServiceController extends Controller
         ]);
 
         $service = Service::create([
-            'code' => $validated['code'],
+            'code' => Service::generateCode(),
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'category' => $validated['category'] ?? null,
+            'category_id' => $validated['category_id'] ?? null,
             'unit' => $validated['unit'],
             'is_active' => $validated['is_active'] ?? true,
         ]);
@@ -56,7 +61,7 @@ class ServiceController extends Controller
 
     public function show(Service $service)
     {
-        $service->load('prices');
+        $service->load(['prices', 'category']);
 
         return inertia('Services/Show', ['service' => $service]);
     }
@@ -65,16 +70,19 @@ class ServiceController extends Controller
     {
         $service->load('prices');
 
-        return inertia('Services/Edit', ['service' => $service]);
+        return inertia('Services/Edit', [
+            'service' => $service,
+            'categories' => ProductCategory::orderBy('name')->get(),
+            'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+        ]);
     }
 
     public function update(Request $request, Service $service)
     {
         $validated = $request->validate([
-            'code' => 'required|string|unique:services,code,'.$service->id,
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'category' => 'nullable|string|max:100',
+            'category_id' => 'nullable|exists:product_categories,id',
             'unit' => 'required|string|max:30',
             'is_active' => 'boolean',
             'prices' => 'nullable|array',
@@ -84,10 +92,9 @@ class ServiceController extends Controller
         ]);
 
         $service->update([
-            'code' => $validated['code'],
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'category' => $validated['category'] ?? null,
+            'category_id' => $validated['category_id'] ?? null,
             'unit' => $validated['unit'],
             'is_active' => $validated['is_active'] ?? true,
         ]);

@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Plus, Search, User, Shield, ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
@@ -23,14 +23,16 @@ export default function UsersIndex() {
     ];
 
     const filteredUsers = (users?.data || []).filter((u: any) => {
+        const displayName = u.employee ? `${u.employee.first_name} ${u.employee.last_name}` : u.name || '';
+        const deptName = u.employee?.department?.name || '';
         const matchSearch = !search ||
-            u.name.toLowerCase().includes(search.toLowerCase()) ||
+            displayName.toLowerCase().includes(search.toLowerCase()) ||
             u.email.toLowerCase().includes(search.toLowerCase());
         const matchRole = roleFilter === 'all' || u.role_id == roleFilter;
         const matchStatus = statusFilter === 'all' ||
             (statusFilter === 'active' && u.is_active) ||
             (statusFilter === 'inactive' && !u.is_active);
-        const matchDept = departmentFilter === 'all' || u.department === departmentFilter;
+        const matchDept = departmentFilter === 'all' || deptName === departmentFilter;
         return matchSearch && matchRole && matchStatus && matchDept;
     });
 
@@ -39,7 +41,7 @@ export default function UsersIndex() {
             <Head title="User Management" />
 
             <div className="mb-6">
-                <Link href="/admin" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/admin" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Administration
                 </Link>
             </div>
@@ -70,15 +72,15 @@ export default function UsersIndex() {
             </GlassCard>
 
             {/* Status Tabs */}
-            <div className="flex gap-1 mb-2 bg-white/5 rounded-lg p-1 w-fit">
+            <div className="flex gap-1 mb-2 bg-slate-50 dark:bg-white/5 rounded-lg p-1 w-fit">
                 {STATUS_TABS.map((tab) => (
                     <button
                         key={tab.value}
                         onClick={() => setStatusFilter(tab.value)}
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                             statusFilter === tab.value
-                                ? 'bg-slate-900 text-white'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white'
+                                : 'text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                         }`}
                     >
                         {tab.label}
@@ -87,15 +89,15 @@ export default function UsersIndex() {
             </div>
 
             {/* Department Tabs */}
-            <div className="flex gap-1 mb-4 bg-white/5 rounded-lg p-1 w-fit">
+            <div className="flex gap-1 mb-4 bg-slate-50 dark:bg-white/5 rounded-lg p-1 w-fit">
                 {departmentTabs.map((tab: any) => (
                     <button
                         key={tab.value}
                         onClick={() => setDepartmentFilter(tab.value)}
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                             departmentFilter === tab.value
-                                ? 'bg-slate-900 text-white'
-                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white'
+                                : 'text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5'
                         }`}
                     >
                         {tab.label}
@@ -107,12 +109,11 @@ export default function UsersIndex() {
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-white/10">
+                            <tr className="border-b border-slate-200 dark:border-white/10">
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">User</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Email</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Role</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Department</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Manager</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Employee</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Status</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Created</th>
@@ -121,18 +122,21 @@ export default function UsersIndex() {
                         </thead>
                         <tbody>
                             {filteredUsers.length > 0 ? (
-                                filteredUsers.map((user: any) => (
-                                    <tr key={user.id} className="border-b border-white/5 hover:bg-white/5">
+                                filteredUsers.map((user: any) => {
+                                    const displayName = user.employee ? `${user.employee.first_name} ${user.employee.last_name}` : user.name || '-';
+                                    const deptName = user.employee?.department?.name || '';
+                                    return (
+                                    <tr key={user.id} className="border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5">
                                         <td className="py-3 px-4">
                                             <div className="flex items-center gap-3">
-                                                {user.avatar ? (
-                                                    <img src={`/storage/${user.avatar}`} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                                                {user.employee?.avatar ? (
+                                                    <img src={`/storage/${user.employee.avatar}`} alt={displayName} className="w-8 h-8 rounded-full object-cover" />
                                                 ) : (
-                                                    <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center text-sm">
-                                                        {user.name?.charAt(0)}
+                                                    <div className="w-8 h-8 bg-slate-100 dark:bg-white/10 rounded-full flex items-center justify-center text-sm">
+                                                        {displayName.charAt(0)}
                                                     </div>
                                                 )}
-                                                <p className="font-medium">{user.name}</p>
+                                                <p className="font-medium">{displayName}</p>
                                             </div>
                                         </td>
                                         <td className="py-3 px-4 text-slate-400">{user.email}</td>
@@ -147,16 +151,13 @@ export default function UsersIndex() {
                                             )}
                                         </td>
                                         <td className="py-3 px-4">
-                                            {user.department ? (
+                                            {deptName ? (
                                                 <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-400">
-                                                    {user.department}
+                                                    {deptName}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-500">-</span>
                                             )}
-                                        </td>
-                                        <td className="py-3 px-4 text-slate-400 text-sm">
-                                            {user.department_manager?.name || '-'}
                                         </td>
                                         <td className="py-3 px-4 text-slate-400 text-sm">
                                             {user.employee ? (
@@ -181,7 +182,8 @@ export default function UsersIndex() {
                                             </Link>
                                         </td>
                                     </tr>
-                                ))
+                                    );
+                                })
                             ) : (
                                 <tr>
                                     <td colSpan={9} className="py-8">
@@ -193,6 +195,7 @@ export default function UsersIndex() {
                     </table>
                 </div>
             </GlassCard>
+            <Pagination meta={users} />
         </AppLayout>
     );
 }

@@ -5,12 +5,12 @@ import { Plus, Trash2 } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 export default function HrmSettingsIndex() {
-    const { departments, levels, employmentTypes, leaveTypes } = usePage().props as any;
+    const { departments, employmentTypes, leaveTypes, staffLevels } = usePage().props as any;
 
     const deptForm = useForm({ name: '' });
-    const levelForm = useForm({ name: '', job_title: '' });
     const empTypeForm = useForm({ name: '' });
-    const leaveTypeForm = useForm({ name: '', level_id: '', days_per_year: '' });
+    const leaveTypeForm = useForm({ name: '', staff_level_id: '', days_per_year: '' });
+    const staffLevelForm = useForm({ name: '' });
 
     const handleDelete = (url: string, name: string) => {
         Swal.fire({
@@ -43,21 +43,6 @@ export default function HrmSettingsIndex() {
                     ]} data={departments} />
                 </GlassCard>
 
-                <GlassCard><div className="flex justify-between items-center mb-2"><h2 className="text-lg font-semibold">Levels</h2><span className="text-sm text-gray-500">{levels.length} items</span></div>
-                    <form onSubmit={(e) => { e.preventDefault(); levelForm.post('/hrm/settings/levels', { onSuccess: () => levelForm.reset() }); }}>
-                        <div className="flex gap-2 mb-4">
-                            <input className="glass-input flex-1" placeholder="New Level" value={levelForm.data.name} onChange={e => levelForm.setData('name', e.target.value)} />
-                            <input className="glass-input flex-1" placeholder="Job Title" value={levelForm.data.job_title} onChange={e => levelForm.setData('job_title', e.target.value)} />
-                            <button className="glass-button"><Plus className="w-4 h-4" /></button>
-                        </div>
-                    </form>
-                    <DataTable columns={[
-                        { header: 'Level', key: 'name' },
-                        { header: 'Job Title', key: 'job_title' },
-                        { header: 'Actions', className: 'text-right', render: (l: any) => <button onClick={() => handleDelete(`/hrm/settings/levels/${l.id}`, l.name)}><Trash2 className="w-4 h-4 text-red-500" /></button> }
-                    ]} data={levels} />
-                </GlassCard>
-
                 <GlassCard><div className="flex justify-between items-center mb-2"><h2 className="text-lg font-semibold">Employment Types</h2><span className="text-sm text-gray-500">{employmentTypes.length} items</span></div>
                     <form onSubmit={(e) => { e.preventDefault(); empTypeForm.post('/hrm/settings/employment-types', { onSuccess: () => empTypeForm.reset() }); }}>
                         <div className="flex gap-2 mb-4">
@@ -71,14 +56,37 @@ export default function HrmSettingsIndex() {
                     ]} data={employmentTypes} />
                 </GlassCard>
 
-                <GlassCard><div className="flex justify-between items-center mb-2"><h2 className="text-lg font-semibold">Leave Types</h2><span className="text-sm text-gray-500">{leaveTypes.length} items</span></div>
+                <GlassCard><div className="flex justify-between items-center mb-2"><h2 className="text-lg font-semibold">Staff Levels</h2><span className="text-sm text-gray-500">{staffLevels.length} items</span></div>
+                    <form onSubmit={(e) => { e.preventDefault(); staffLevelForm.post('/hrm/settings/staff-levels', { onSuccess: () => staffLevelForm.reset() }); }}>
+                        <div className="flex gap-2 mb-4">
+                            <select className="glass-input flex-1" value={staffLevelForm.data.name} onChange={e => staffLevelForm.setData('name', e.target.value)}>
+                                <option value="">Select Staff Level</option>
+                                <option value="Managing Director">Managing Director</option>
+                                <option value="General Manager">General Manager</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Supervisor">Supervisor</option>
+                                <option value="Assistant Supervisor">Assistant Supervisor</option>
+                                <option value="Senior Worker">Senior Worker</option>
+                                <option value="Junior Worker">Junior Worker</option>
+                                <option value="Intern">Intern</option>
+                            </select>
+                            <button className="glass-button" disabled={!staffLevelForm.data.name}><Plus className="w-4 h-4" /></button>
+                        </div>
+                    </form>
+                    <DataTable columns={[
+                        { header: 'Name', key: 'name' },
+                        { header: 'Actions', className: 'text-right', render: (s: any) => <button onClick={() => handleDelete(`/hrm/settings/staff-levels/${s.id}`, s.name)}><Trash2 className="w-4 h-4 text-red-500" /></button> }
+                    ]} data={staffLevels} />
+                </GlassCard>
+
+                <GlassCard><div className="flex justify-between items-center mb-2"><h2 className="text-lg font-semibold">Leave Days</h2><span className="text-sm text-gray-500">{leaveTypes.length} items</span></div>
                     <form onSubmit={(e) => { e.preventDefault(); leaveTypeForm.post('/hrm/settings/leave-types', { onSuccess: () => leaveTypeForm.reset() }); }}>
                         <div className="space-y-2 mb-4">
-                            <input className="glass-input w-full" placeholder="Leave Name (e.g., Manager)" value={leaveTypeForm.data.name} onChange={e => leaveTypeForm.setData('name', e.target.value)} />
+                            <input className="glass-input w-full" placeholder="Leave Name (e.g., Annual Leave)" value={leaveTypeForm.data.name} onChange={e => leaveTypeForm.setData('name', e.target.value)} />
                             <div className="flex gap-2">
-                                <select className="glass-input flex-1" value={leaveTypeForm.data.level_id} onChange={e => leaveTypeForm.setData('level_id', e.target.value)}>
-                                    <option value="">Select Level</option>
-                                    {levels.map((l: any) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                                <select className="glass-input flex-1" value={leaveTypeForm.data.staff_level_id} onChange={e => leaveTypeForm.setData('staff_level_id', e.target.value)}>
+                                    <option value="">Select Staff Level</option>
+                                    {staffLevels.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
                                 <input type="number" className="glass-input w-24" placeholder="Days" value={leaveTypeForm.data.days_per_year} onChange={e => leaveTypeForm.setData('days_per_year', e.target.value)} />
                                 <button className="glass-button"><Plus className="w-4 h-4" /></button>
@@ -86,8 +94,8 @@ export default function HrmSettingsIndex() {
                         </div>
                     </form>
                     <DataTable columns={[
-                        { header: 'Type', key: 'name' },
-                        { header: 'Level', render: (l: any) => l.level?.name },
+                        { header: 'Name', key: 'name' },
+                        { header: 'Staff Level', render: (l: any) => l.staffLevel?.name || '-' },
                         { header: 'Days', key: 'days_per_year' },
                         { header: 'Actions', className: 'text-right', render: (lt: any) => <button onClick={() => handleDelete(`/hrm/settings/leave-types/${lt.id}`, lt.name)}><Trash2 className="w-4 h-4 text-red-500" /></button> }
                     ]} data={leaveTypes} />

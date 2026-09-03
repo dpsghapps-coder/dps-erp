@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { usePage, useForm } from '@inertiajs/react';
+import { usePage, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { MiniCalendar } from '@/Components/HRM';
+import { MiniCalendar, AddHolidayModal } from '@/Components/HRM';
 import { Head, Link } from '@inertiajs/react';
 import { 
     Plus, 
@@ -41,14 +41,10 @@ export default function HrmHolidays() {
 
     const { post, processing } = useForm({});
 
-    const handleAddHoliday = async (data: any) => {
-        try {
-            await fetch('/hrm/holidays', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
-            });
-        } catch (e) {}
+    const handleAddHoliday = (data: any) => {
+        router.post('/hrm/holidays', data, {
+            onSuccess: () => setShowAddModal(false)
+        });
     };
 
     const filteredHolidays = typeFilter === 'all' 
@@ -149,12 +145,18 @@ export default function HrmHolidays() {
 
             <MiniCalendar year={year} holidays={holidays} />
 
+            <AddHolidayModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                onSubmit={handleAddHoliday}
+            />
+
             <GlassCard className="mt-6">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Holiday List</h3>
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="border-b border-white/10">
+                            <tr className="border-b border-slate-200 dark:border-white/10">
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Date</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Holiday</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Type</th>
@@ -162,7 +164,7 @@ export default function HrmHolidays() {
                         </thead>
                         <tbody>
                             {filteredHolidays.map((holiday: any) => (
-                                <tr key={holiday.id} className="border-b border-white/5">
+                                <tr key={holiday.id} className="border-b border-slate-100 dark:border-white/5">
                                     <td className="py-3 px-4">
                                         {new Date(holiday.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </td>

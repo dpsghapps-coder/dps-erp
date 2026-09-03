@@ -5,6 +5,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\CrmLeadController;
 use App\Http\Controllers\CrmReportController;
+use App\Http\Controllers\ProformaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HRM\SettingController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\StudioController;
+use App\Http\Controllers\Marketing\CampaignController;
 use App\Http\Controllers\Management\DashboardController as ManagementDashboardController;
 use App\Http\Controllers\Management\MeetingController;
 use App\Http\Controllers\Management\DecisionController;
@@ -54,15 +56,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // CRM Routes
     Route::middleware('permission:crm.view')->group(function () {
         Route::get('/crm', [CrmController::class, 'index'])->name('crm.index');
-        Route::get('/crm/leads', [CrmLeadController::class, 'index'])->name('crm.leads');
-        Route::get('/crm/reports', [CrmReportController::class, 'index'])->name('crm.reports');
-        Route::get('/crm/{client}', [CrmController::class, 'show'])->name('crm.show');
         Route::get('/crm/create', [CrmController::class, 'create'])->name('crm.create');
         Route::post('/crm', [CrmController::class, 'store'])->name('crm.store');
+        Route::get('/crm/leads', [CrmLeadController::class, 'index'])->name('crm.leads');
+        Route::get('/crm/reports', [CrmReportController::class, 'index'])->name('crm.reports');
+        Route::patch('/crm/bulk-update', [CrmController::class, 'updateBulk'])->name('crm.updateBulk');
+        Route::get('/crm/{client}', [CrmController::class, 'show'])->name('crm.show');
         Route::get('/crm/{client}/edit', [CrmController::class, 'edit'])->name('crm.edit');
         Route::put('/crm/{client}', [CrmController::class, 'update'])->name('crm.update');
         Route::delete('/crm/{client}', [CrmController::class, 'destroy'])->name('crm.destroy');
+        Route::patch('/crm/{client}/status', [CrmController::class, 'updateStatus'])->name('crm.updateStatus');
         Route::post('/crm/{client}/interactions', [CrmController::class, 'logInteraction'])->name('crm.interactions');
+        Route::post('/crm/{client}/contacts', [CrmController::class, 'storeContact'])->name('crm.contacts.store');
+        Route::put('/crm/{client}/contacts/{contact}', [CrmController::class, 'updateContact'])->name('crm.contacts.update');
+        Route::delete('/crm/{client}/contacts/{contact}', [CrmController::class, 'destroyContact'])->name('crm.contacts.destroy');
+
+        // Proforma Routes (must be before {client} wildcard)
+        Route::get('/crm/{client}/proformas', [ProformaController::class, 'index'])->name('crm.proformas.index');
+        Route::get('/crm/{client}/proformas/create', [ProformaController::class, 'create'])->name('crm.proformas.create');
+        Route::post('/crm/{client}/proformas', [ProformaController::class, 'store'])->name('crm.proformas.store');
+        Route::get('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'show'])->name('crm.proformas.show');
+        Route::get('/crm/{client}/proformas/{proforma}/edit', [ProformaController::class, 'edit'])->name('crm.proformas.edit');
+        Route::put('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'update'])->name('crm.proformas.update');
+        Route::delete('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'destroy'])->name('crm.proformas.destroy');
     });
 
     // Products Routes
@@ -70,9 +86,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/products', [ProductController::class, 'index'])->name('products.index');
         Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
         Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+        Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
         Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
         Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
         Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+        Route::get('/calculators', [ProductController::class, 'calculators'])->name('products.calculators');
     });
 
     // Services Routes
@@ -106,6 +124,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/inventory/materials/{product}/suppliers', [ProductCatalogController::class, 'storeSupplierPrice'])->name('inventory.materials.suppliers.store');
         Route::put('/inventory/materials/suppliers/{supplierPrice}', [ProductCatalogController::class, 'updateSupplierPrice'])->name('inventory.materials.suppliers.update');
         Route::delete('/inventory/materials/suppliers/{supplierPrice}', [ProductCatalogController::class, 'destroySupplierPrice'])->name('inventory.materials.suppliers.destroy');
+
+        Route::post('/inventory/materials/{product}/prices', [ProductCatalogController::class, 'storePrice'])->name('inventory.materials.prices.store');
+        Route::put('/inventory/materials/prices/{price}', [ProductCatalogController::class, 'updatePrice'])->name('inventory.materials.prices.update');
+        Route::delete('/inventory/materials/prices/{price}', [ProductCatalogController::class, 'destroyPrice'])->name('inventory.materials.prices.destroy');
 
         Route::get('/inventory/stock', [StockController::class, 'index'])->name('inventory.stock');
         Route::post('/inventory/stock', [StockController::class, 'store'])->name('inventory.stock.store');
@@ -205,27 +227,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/hrm/performance', [HrmController::class, 'storePerformance'])->name('hrm.performance.store');
         Route::get('/hrm/noticeboard', [HrmController::class, 'noticeboard'])->name('hrm.noticeboard');
         Route::post('/hrm/noticeboard', [HrmController::class, 'storeNotice'])->name('hrm.noticeboard.store');
-        Route::get('/admin/hrm/departments', [HrmController::class, 'departments'])->name('admin.hrm.departments');
-        Route::post('/admin/hrm/departments', [HrmController::class, 'storeDepartment'])->name('admin.hrm.departments.store');
-        Route::put('/admin/hrm/departments/{department}', [HrmController::class, 'updateDepartment'])->name('admin.hrm.departments.update');
-        Route::delete('/admin/hrm/departments/{department}', [HrmController::class, 'destroyDepartment'])->name('admin.hrm.departments.destroy');
         Route::get('/hrm/create', [HrmController::class, 'create'])->name('hrm.create');
         Route::post('/hrm', [HrmController::class, 'store'])->name('hrm.store');
-        Route::get('/hrm/{employee}', [HrmController::class, 'show'])->name('hrm.show');
-        Route::get('/hrm/{employee}/edit', [HrmController::class, 'edit'])->name('hrm.edit');
-        Route::put('/hrm/{employee}', [HrmController::class, 'update'])->name('hrm.update');
 
-        // HRM Settings routes
+        // HRM Settings routes (must be before {employee} wildcard)
         Route::get('/hrm/settings', [SettingController::class, 'index'])->name('hrm.settings.index');
         Route::post('/hrm/settings/departments', [SettingController::class, 'storeDepartment'])->name('hrm.settings.departments.store');
         Route::get('/hrm/settings/departments/{department}/edit', [SettingController::class, 'editDepartment'])->name('hrm.settings.departments.edit');
         Route::put('/hrm/settings/departments/{department}', [SettingController::class, 'updateDepartment'])->name('hrm.settings.departments.update');
         Route::delete('/hrm/settings/departments/{department}', [SettingController::class, 'destroyDepartment'])->name('hrm.settings.departments.destroy');
-
-        Route::post('/hrm/settings/levels', [SettingController::class, 'storeLevel'])->name('hrm.settings.levels.store');
-        Route::get('/hrm/settings/levels/{level}/edit', [SettingController::class, 'editLevel'])->name('hrm.settings.levels.edit');
-        Route::put('/hrm/settings/levels/{level}', [SettingController::class, 'updateLevel'])->name('hrm.settings.levels.update');
-        Route::delete('/hrm/settings/levels/{level}', [SettingController::class, 'destroyLevel'])->name('hrm.settings.levels.destroy');
 
         Route::post('/hrm/settings/employment-types', [SettingController::class, 'storeEmploymentType'])->name('hrm.settings.employment-types.store');
         Route::get('/hrm/settings/employment-types/{employmentType}/edit', [SettingController::class, 'editEmploymentType'])->name('hrm.settings.employment-types.edit');
@@ -236,6 +246,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/hrm/settings/leave-types/{leaveType}/edit', [SettingController::class, 'editLeaveType'])->name('hrm.settings.leave-types.edit');
         Route::put('/hrm/settings/leave-types/{leaveType}', [SettingController::class, 'updateLeaveType'])->name('hrm.settings.leave-types.update');
         Route::delete('/hrm/settings/leave-types/{leaveType}', [SettingController::class, 'destroyLeaveType'])->name('hrm.settings.leave-types.destroy');
+
+        Route::post('/hrm/settings/staff-levels', [SettingController::class, 'storeStaffLevel'])->name('hrm.settings.staff-levels.store');
+        Route::delete('/hrm/settings/staff-levels/{staffLevel}', [SettingController::class, 'destroyStaffLevel'])->name('hrm.settings.staff-levels.destroy');
+
+        Route::get('/hrm/{employee}', [HrmController::class, 'show'])->name('hrm.show');
+        Route::get('/hrm/{employee}/edit', [HrmController::class, 'edit'])->name('hrm.edit');
+        Route::put('/hrm/{employee}', [HrmController::class, 'update'])->name('hrm.update');
     });
 
     // Studio Routes
@@ -323,15 +340,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/admin/settings/attribute', [AdminController::class, 'storeAttribute']);
         Route::delete('/admin/settings/attribute/{setting}', [AdminController::class, 'deleteAttribute']);
         Route::post('/admin/settings/category-attribute', [AdminController::class, 'toggleCategoryAttribute']);
-
-        // Department Management
-        Route::post('/admin/settings/department', [AdminController::class, 'storeDepartment']);
-        Route::delete('/admin/settings/department/{department}', [AdminController::class, 'deleteDepartment']);
     });
 
     // Chat Routes
     Route::middleware('permission:chat.view')->group(function () {
         Route::get('/chat/conversations', [ChatController::class, 'getConversations']);
+        Route::get('/chat/conversations/{conversationId}', [ChatController::class, 'getConversation']);
         Route::get('/chat/conversations/{conversationId}/messages', [ChatController::class, 'getMessages']);
         Route::post('/chat/conversations/{conversationId}/messages', [ChatController::class, 'sendMessage']);
         Route::post('/chat/conversations', [ChatController::class, 'createConversation']);
@@ -342,6 +356,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/chat/conversations/{conversationId}/leave', [ChatController::class, 'leaveConversation']);
         Route::delete('/chat/conversations/{conversationId}', [ChatController::class, 'deleteConversation']);
         Route::get('/chat/unread', [ChatController::class, 'getUnreadCounts']);
+        Route::get('/chat/presence', [ChatController::class, 'getPresence']);
+        Route::post('/chat/conversations/{conversationId}/messages/{messageId}/pin', [ChatController::class, 'pinMessage']);
+        Route::delete('/chat/conversations/{conversationId}/messages/{messageId}/pin', [ChatController::class, 'unpinMessage']);
+    });
+
+    // Marketing Routes
+    Route::middleware('permission:marketing.view')->prefix('marketing')->name('marketing.')->group(function () {
+        Route::get('/', [CampaignController::class, 'index'])->name('index');
+        Route::get('/create', [CampaignController::class, 'create'])->name('create');
+        Route::post('/', [CampaignController::class, 'store'])->name('store');
+        Route::get('/{campaign}', [CampaignController::class, 'show'])->name('show');
+        Route::get('/{campaign}/edit', [CampaignController::class, 'edit'])->name('edit');
+        Route::put('/{campaign}', [CampaignController::class, 'update'])->name('update');
+        Route::delete('/{campaign}', [CampaignController::class, 'destroy'])->name('destroy');
     });
 
     // Notification Routes
@@ -355,6 +383,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Profile & Search (accessible to all authenticated users)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/notification-preferences', [ProfileController::class, 'updateNotificationPreferences'])->name('profile.notification-preferences');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/search', [SearchController::class, 'search'])->name('search');

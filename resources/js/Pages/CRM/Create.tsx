@@ -1,11 +1,13 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import GPSMapPicker from '@/Components/GPSMapPicker';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, MapPin, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ClientCreate() {
+    const { url } = usePage();
+    const fromLeads = url.includes('from=leads');
     const { data, setData, post, processing, errors } = useForm({
         company_name: '',
         email: '',
@@ -18,9 +20,13 @@ export default function ClientCreate() {
         country: '',
         location: '',
         source: '',
-        contact_person_1: '',
-        contact_person_mobile: '',
+        estimated_value: '',
         notes: '',
+        linkedin: '',
+        facebook: '',
+        instagram: '',
+        twitter: '',
+        tiktok: '',
     });
     const [showMapModal, setShowMapModal] = useState(false);
 
@@ -34,8 +40,8 @@ export default function ClientCreate() {
             <Head title="Add Client" />
 
             <div className="mb-6">
-                <Link href="/crm" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors">
-                    <ArrowLeft className="w-4 h-4" /> Back to Clients
+                <Link href={fromLeads ? '/crm/leads' : '/crm'} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors">
+                    <ArrowLeft className="w-4 h-4" /> {fromLeads ? 'Back to Lead Management' : 'Back to Clients'}
                 </Link>
             </div>
 
@@ -97,15 +103,30 @@ export default function ClientCreate() {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Source</label>
-                                <input 
-                                    type="text"
-                                    value={data.source}
-                                    onChange={(e) => setData('source', e.target.value)}
-                                    className="glass-input w-full"
-                                    placeholder="Referral, Ads, etc."
-                                />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Source</label>
+                                    <input
+                                        type="text"
+                                        value={data.source}
+                                        onChange={(e) => setData('source', e.target.value)}
+                                        className="glass-input w-full"
+                                        placeholder="Referral, Ads, etc."
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Estimated Value</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={data.estimated_value}
+                                        onChange={(e) => setData('estimated_value', e.target.value)}
+                                        className="glass-input w-full"
+                                        placeholder="e.g. 15000"
+                                    />
+                                    {errors.estimated_value && <p className="text-red-500 text-sm mt-1">{errors.estimated_value}</p>}
+                                </div>
                             </div>
                         </div>
                     </GlassCard>
@@ -127,7 +148,7 @@ export default function ClientCreate() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2">Company Contact No</label>
+                                <label className="block text-sm font-medium mb-2">Phone</label>
                                 <input 
                                     type="text"
                                     value={data.phone}
@@ -203,37 +224,6 @@ export default function ClientCreate() {
                         </div>
                     </GlassCard>
 
-                    {/* Contact Person */}
-                    <GlassCard>
-                        <h2 className="text-lg font-semibold mb-4">Contact Person</h2>
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Contact Person 1</label>
-                                <input 
-                                    type="text"
-                                    value={data.contact_person_1}
-                                    onChange={(e) => setData('contact_person_1', e.target.value)}
-                                    className="glass-input w-full"
-                                    placeholder="Full name"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Contact Person Mobile</label>
-                                <input 
-                                    type="text"
-                                    value={data.contact_person_mobile}
-                                    onChange={(e) => setData('contact_person_mobile', e.target.value)}
-                                    className="glass-input w-full"
-                                    placeholder="0XXXXXXXXX (10 digits starting with 0)"
-                                    maxLength={10}
-                                />
-                                <p className="text-xs text-slate-400 mt-1">10 digits starting with 0</p>
-                                {errors.contact_person_mobile && <p className="text-red-500 text-sm mt-1">{errors.contact_person_mobile}</p>}
-                            </div>
-                        </div>
-                    </GlassCard>
-
                     {/* Notes */}
                     <GlassCard>
                         <h2 className="text-lg font-semibold mb-4">Notes</h2>
@@ -244,6 +234,68 @@ export default function ClientCreate() {
                                 className="glass-input w-full h-40"
                                 placeholder="Additional notes..."
                             />
+                        </div>
+                    </GlassCard>
+
+                    {/* Social Media */}
+                    <GlassCard>
+                        <h2 className="text-lg font-semibold mb-4">Social Media</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">LinkedIn</label>
+                                <input 
+                                    type="url"
+                                    value={data.linkedin}
+                                    onChange={(e) => setData('linkedin', e.target.value)}
+                                    className="glass-input w-full"
+                                    placeholder="https://linkedin.com/company/..."
+                                />
+                                {errors.linkedin && <p className="text-red-500 text-sm mt-1">{errors.linkedin}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Facebook</label>
+                                <input 
+                                    type="url"
+                                    value={data.facebook}
+                                    onChange={(e) => setData('facebook', e.target.value)}
+                                    className="glass-input w-full"
+                                    placeholder="https://facebook.com/..."
+                                />
+                                {errors.facebook && <p className="text-red-500 text-sm mt-1">{errors.facebook}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Instagram</label>
+                                <input 
+                                    type="url"
+                                    value={data.instagram}
+                                    onChange={(e) => setData('instagram', e.target.value)}
+                                    className="glass-input w-full"
+                                    placeholder="https://instagram.com/..."
+                                />
+                                {errors.instagram && <p className="text-red-500 text-sm mt-1">{errors.instagram}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Twitter / X</label>
+                                <input 
+                                    type="url"
+                                    value={data.twitter}
+                                    onChange={(e) => setData('twitter', e.target.value)}
+                                    className="glass-input w-full"
+                                    placeholder="https://x.com/..."
+                                />
+                                {errors.twitter && <p className="text-red-500 text-sm mt-1">{errors.twitter}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">TikTok</label>
+                                <input 
+                                    type="url"
+                                    value={data.tiktok}
+                                    onChange={(e) => setData('tiktok', e.target.value)}
+                                    className="glass-input w-full"
+                                    placeholder="https://tiktok.com/@..."
+                                />
+                                {errors.tiktok && <p className="text-red-500 text-sm mt-1">{errors.tiktok}</p>}
+                            </div>
                         </div>
                     </GlassCard>
                 </div>

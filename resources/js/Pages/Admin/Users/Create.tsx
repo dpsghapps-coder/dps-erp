@@ -1,19 +1,16 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 export default function UserCreate() {
-    const { roles, managers, departments, employees } = usePage().props as any;
+    const { roles, employees } = usePage().props as any;
     const { data, setData, post, processing, errors } = useForm({
-        name: '',
         email: '',
         password: '',
         role_id: '',
         is_active: true,
-        department: '',
-        department_manager_id: '',
         employee_id: '',
         avatar: null as File | null,
     });
@@ -30,19 +27,22 @@ export default function UserCreate() {
         }
     };
 
+    const handleEmployeeChange = (empId: string) => {
+        setData('employee_id', empId);
+        if (empId) {
+            const emp = employees?.find((em: any) => String(em.id) === String(empId));
+            if (emp) {
+                setData('email', emp.email || '');
+                setAvatarPreview(emp.avatar ? `/storage/${emp.avatar}` : null);
+            }
+        } else {
+            setAvatarPreview(null);
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        const formData = new FormData();
-        formData.append('name', data.name);
-        formData.append('email', data.email);
-        formData.append('password', data.password);
-        if (data.role_id) formData.append('role_id', String(data.role_id));
-        formData.append('is_active', data.is_active ? '1' : '0');
-        if (data.department) formData.append('department', data.department);
-        if (data.department_manager_id) formData.append('department_manager_id', String(data.department_manager_id));
-        if (data.employee_id) formData.append('employee_id', String(data.employee_id));
-        if (data.avatar) formData.append('avatar', data.avatar);
-        post('/admin/users', { forceFormData: true });
+        router.post('/admin/users', data, { forceFormData: true });
     };
 
     return (
@@ -50,7 +50,7 @@ export default function UserCreate() {
             <Head title="Add User" />
 
             <div className="mb-6">
-                <Link href="/admin/users" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/admin/users" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Users
                 </Link>
             </div>
@@ -95,7 +95,7 @@ export default function UserCreate() {
                                 <label className="block text-sm font-medium mb-2">Link to Employee (HRM)</label>
                                 <select
                                     value={data.employee_id}
-                                    onChange={(e) => setData('employee_id', e.target.value)}
+                                    onChange={(e) => handleEmployeeChange(e.target.value)}
                                     className="glass-input w-full"
                                 >
                                     <option value="">No Employee</option>
@@ -106,18 +106,6 @@ export default function UserCreate() {
                                     ))}
                                 </select>
                                 {errors.employee_id && <p className="text-red-400 text-sm mt-1">{errors.employee_id}</p>}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Name</label>
-                                <input
-                                    type="text"
-                                    value={data.name}
-                                    onChange={(e) => setData('name', e.target.value)}
-                                    className="glass-input w-full"
-                                    placeholder="Full name"
-                                />
-                                {errors.name && <p className="text-red-400 text-sm mt-1">{errors.name}</p>}
                             </div>
 
                             <div>
@@ -159,36 +147,6 @@ export default function UserCreate() {
                                 {errors.role_id && <p className="text-red-400 text-sm mt-1">{errors.role_id}</p>}
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Department</label>
-                                <select
-                                    value={data.department}
-                                    onChange={(e) => setData('department', e.target.value)}
-                                    className="glass-input w-full"
-                                >
-                                    <option value="">No Department</option>
-                                    {(departments || []).map((dept: any) => (
-                                        <option key={dept.id} value={dept.name}>{dept.name}</option>
-                                    ))}
-                                </select>
-                                {errors.department && <p className="text-red-400 text-sm mt-1">{errors.department}</p>}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium mb-2">Department Manager</label>
-                                <select
-                                    value={data.department_manager_id}
-                                    onChange={(e) => setData('department_manager_id', e.target.value)}
-                                    className="glass-input w-full"
-                                >
-                                    <option value="">No Manager</option>
-                                    {(managers || []).map((manager: any) => (
-                                        <option key={manager.id} value={manager.id}>{manager.name}</option>
-                                    ))}
-                                </select>
-                                {errors.department_manager_id && <p className="text-red-400 text-sm mt-1">{errors.department_manager_id}</p>}
-                            </div>
-
                             <div className="flex items-center gap-3">
                                 <input
                                     type="checkbox"
@@ -201,7 +159,7 @@ export default function UserCreate() {
                             </div>
                         </div>
 
-                        <div className="flex gap-3 mt-6 pt-4 border-t border-white/10">
+                        <div className="flex gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-white/10">
                             <button type="submit" className="glass-button" disabled={processing}>
                                 Create User
                             </button>

@@ -19,8 +19,6 @@ class User extends Authenticatable
         'avatar',
         'role_id',
         'is_active',
-        'department',
-        'department_manager_id',
         'employee_id',
     ];
 
@@ -43,19 +41,14 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    public function departmentManager(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'department_manager_id');
-    }
-
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
-    public function departmentStaff(): HasMany
+    public function getDepartmentAttribute(): ?string
     {
-        return $this->hasMany(User::class, 'department_manager_id');
+        return $this->employee?->department?->name;
     }
 
     public function hasRole(string $roleName): bool
@@ -92,11 +85,6 @@ class User extends Authenticatable
         }
 
         return $this->role->permissions->pluck('name')->toArray();
-    }
-
-    public function assignedClients(): HasMany
-    {
-        return $this->hasMany(Client::class, 'assigned_to');
     }
 
     public function productionJobs(): HasMany

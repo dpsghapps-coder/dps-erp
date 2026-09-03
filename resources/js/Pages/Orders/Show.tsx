@@ -2,9 +2,11 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, FileText, Check, X } from 'lucide-react';
+import { useCurrency } from '@/Utils/currency';
 
 export default function OrderShow() {
     const { order } = usePage().props as any;
+    const formatCurrency = useCurrency();
     
     const paymentColors: Record<string, string> = {
         unpaid: 'payment-unpaid',
@@ -20,7 +22,7 @@ export default function OrderShow() {
             <Head title={`Order ${order?.order_number}`} />
 
             <div className="mb-6">
-                <Link href="/orders" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/orders" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Orders
                 </Link>
             </div>
@@ -56,13 +58,13 @@ export default function OrderShow() {
                             {statusSteps.map((step, i) => (
                                 <div key={step} className="flex items-center">
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                                        i <= currentStep ? 'bg-white/20' : 'bg-white/5'
+                                        i <= currentStep ? 'bg-slate-200 dark:bg-white/20' : 'bg-slate-50 dark:bg-white/5'
                                     }`}>
                                         {i + 1}
                                     </div>
                                     {i < statusSteps.length - 1 && (
                                         <div className={`w-16 h-px mx-2 ${
-                                            i < currentStep ? 'bg-white/30' : 'bg-white/10'
+                                            i < currentStep ? 'bg-slate-300 dark:bg-white/30' : 'bg-slate-100 dark:bg-white/10'
                                         }`} />
                                     )}
                                 </div>
@@ -83,7 +85,7 @@ export default function OrderShow() {
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-white/10">
+                                    <tr className="border-b border-slate-200 dark:border-white/10">
                                         <th className="text-left py-2 px-2 text-sm font-medium text-slate-400">Product</th>
                                         <th className="text-right py-2 px-2 text-sm font-medium text-slate-400">Qty</th>
                                         <th className="text-right py-2 px-2 text-sm font-medium text-slate-400">Unit Price</th>
@@ -93,15 +95,15 @@ export default function OrderShow() {
                                 </thead>
                                 <tbody>
                                     {(order?.items || []).map((item: any) => (
-                                        <tr key={item.id} className="border-b border-white/5">
+                                        <tr key={item.id} className="border-b border-slate-100 dark:border-white/5">
                                             <td className="py-3 px-2">
                                                 <p className="font-medium">{item.product?.name}</p>
                                                 {item.description && <p className="text-sm text-slate-400">{item.description}</p>}
                                             </td>
                                             <td className="py-3 px-2 text-right">{item.qty}</td>
-                                            <td className="py-3 px-2 text-right">${parseFloat(item.unit_price).toFixed(2)}</td>
+                                            <td className="py-3 px-2 text-right">{formatCurrency(item.unit_price)}</td>
                                             <td className="py-3 px-2 text-right">{item.discount_pct}%</td>
-                                            <td className="py-3 px-2 text-right font-medium">${parseFloat(item.line_total).toFixed(2)}</td>
+                                            <td className="py-3 px-2 text-right font-medium">{formatCurrency(item.line_total)}</td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -140,19 +142,19 @@ export default function OrderShow() {
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-slate-400">Subtotal</span>
-                                <span>${parseFloat(order?.total_amount || 0).toFixed(2)}</span>
+                                <span>{formatCurrency(order?.total_amount || 0)}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-slate-400">Discount</span>
-                                <span>-${parseFloat(order?.discount_amount || 0).toFixed(2)}</span>
+                                <span>-{formatCurrency(order?.discount_amount || 0)}</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-slate-400">Tax</span>
-                                <span>${parseFloat(order?.tax_amount || 0).toFixed(2)}</span>
+                                <span>{formatCurrency(order?.tax_amount || 0)}</span>
                             </div>
-                            <div className="flex justify-between pt-2 border-t border-white/10 font-medium">
+                            <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-white/10 font-medium">
                                 <span>Total</span>
-                                <span>${parseFloat(order?.grand_total || 0).toFixed(2)}</span>
+                                <span>{formatCurrency(order?.grand_total || 0)}</span>
                             </div>
                         </div>
                     </GlassCard>

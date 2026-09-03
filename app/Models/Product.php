@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Product extends Model
@@ -25,8 +24,10 @@ class Product extends Model
         'is_active' => 'boolean',
     ];
 
-    protected static function bootProduct(): void
+    protected static function boot(): void
     {
+        parent::boot();
+
         static::creating(function (Product $product) {
             if (empty($product->sku)) {
                 $product->sku = static::generateSku();
@@ -53,9 +54,9 @@ class Product extends Model
         return $this->hasMany(PriceListItem::class);
     }
 
-    public function components(): MorphMany
+    public function components(): HasMany
     {
-        return $this->morphMany(ProductComponent::class, 'product');
+        return $this->hasMany(ProductComponent::class);
     }
 
     public function materials(): HasMany
@@ -91,16 +92,7 @@ class Product extends Model
 
     public function calculateCost(): float
     {
-        $cost = 0;
-        foreach ($this->components as $component) {
-            if ($component->component_type === InventoryProduct::class) {
-                $cost += $component->component->unit_price * $component->quantity;
-            } elseif ($component->component_type === Service::class) {
-                $cost += $component->component->default_price * $component->quantity;
-            }
-        }
-
-        return $cost;
+        return (float) $this->components->sum(fn (ProductComponent $component) => $component->unit_price * $component->quantity);
     }
 }
 
@@ -111,11 +103,13 @@ class ProductComponent extends Model
         'component_type',
         'component_id',
         'quantity',
+        'unit_price',
         'notes',
     ];
 
     protected $casts = [
         'quantity' => 'float',
+        'unit_price' => 'decimal:2',
     ];
 
     public function product(): BelongsTo

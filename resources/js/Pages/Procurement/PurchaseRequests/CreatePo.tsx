@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, LoadingSpinner } from '@/Components/ui';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { ArrowLeft, Save, ShoppingCart } from 'lucide-react';
+import { useCurrency } from '@/Utils/currency';
 
 interface Props {
     purchaseRequest: any;
@@ -35,6 +36,7 @@ export default function CreatePoFromPr({ purchaseRequest, suppliers }: Props) {
     };
 
     const totalAmount = data.items.reduce((sum: number, item: any) => sum + (item.qty * item.unit_cost), 0);
+    const formatCurrency = useCurrency();
 
     return (
         <AppLayout>
@@ -88,7 +90,7 @@ export default function CreatePoFromPr({ purchaseRequest, suppliers }: Props) {
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                        <tr className="border-b border-slate-200 dark:border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
                                             <th className="py-3 px-2">#</th>
                                             <th className="py-3 px-2">Item</th>
                                             <th className="py-3 px-2 text-right">Qty</th>
@@ -96,7 +98,7 @@ export default function CreatePoFromPr({ purchaseRequest, suppliers }: Props) {
                                             <th className="py-3 px-2 text-right">Line Total</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-white/5">
+                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                         {data.items.map((item: any, index: number) => (
                                             <tr key={index}>
                                                 <td className="py-3 px-2 text-sm text-slate-500">{index + 1}</td>
@@ -124,7 +126,7 @@ export default function CreatePoFromPr({ purchaseRequest, suppliers }: Props) {
                                                     />
                                                 </td>
                                                 <td className="py-3 px-2 text-right font-medium text-slate-600 dark:text-slate-300">
-                                                    ${(item.qty * item.unit_cost).toFixed(2)}
+                                                    {formatCurrency(item.qty * item.unit_cost)}
                                                 </td>
                                             </tr>
                                         ))}
@@ -164,7 +166,7 @@ export default function CreatePoFromPr({ purchaseRequest, suppliers }: Props) {
                                     <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white">
                                         <span>PO Total</span>
                                         <span className="text-indigo-600 dark:text-indigo-400">
-                                            ${totalAmount.toFixed(2)}
+                                            {formatCurrency(totalAmount)}
                                         </span>
                                     </div>
                                 </div>

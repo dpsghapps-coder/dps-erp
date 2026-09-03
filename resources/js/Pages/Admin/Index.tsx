@@ -10,7 +10,7 @@ export default function AdminIndex() {
         { label: 'Total Users', value: total_users || 0, icon: Users, color: 'blue', href: '/admin/users' },
         { label: 'Active Users', value: active_users || 0, icon: UserCheck, color: 'green', href: '/admin/users' },
         { label: 'Roles', value: total_roles || 0, icon: Shield, color: 'purple', href: '/admin/roles' },
-        { label: 'Departments', value: total_departments || 0, icon: Building2, color: 'orange', href: '/admin/settings' },
+        { label: 'Departments', value: total_departments || 0, icon: Building2, color: 'orange', href: '/hrm/settings' },
     ];
 
     const colorClasses: Record<string, { bg: string; icon: string }> = {
@@ -37,7 +37,7 @@ export default function AdminIndex() {
         },
         {
             title: 'System Settings',
-            description: 'Manage UOM, categories, attributes, departments, and general settings.',
+            description: 'Manage UOM, categories, and general settings.',
             icon: Settings,
             color: 'orange',
             href: '/admin/settings',

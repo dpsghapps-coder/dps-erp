@@ -1,6 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, LoadingSpinner } from '@/Components/ui';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import { useState } from 'react';
 
@@ -61,12 +61,11 @@ export default function MeetingEdit({ meeting, employees }: Props) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        put(`/management/meetings/${meeting.id}`, {
-            forceFormData: true,
+        router.put(`/management/meetings/${meeting.id}`, {
             ...data,
             attendees,
             agendas,
-        } as any);
+        }, { forceFormData: true });
     };
 
     return (

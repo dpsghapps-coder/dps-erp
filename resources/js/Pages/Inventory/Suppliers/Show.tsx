@@ -3,6 +3,7 @@ import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Mail, MapPin, User, Building2, Smartphone, Map, Eye, X } from 'lucide-react';
 import { useState } from 'react';
+import WhatsAppLink from '@/Components/WhatsAppLink';
 
 export default function SuppliersShow() {
     const { supplier } = usePage().props as any;
@@ -81,7 +82,7 @@ function BranchCard({ branch }: { branch: any }) {
                 )}
                 {branch.mobile && (
                     <span className="flex items-center gap-1">
-                        <Smartphone className="w-3.5 h-3.5 text-slate-400" /> {branch.mobile}
+                        <Smartphone className="w-3.5 h-3.5 text-slate-400" /> <WhatsAppLink phone={branch.mobile} className="text-green-600 hover:underline">{branch.mobile}</WhatsAppLink>
                     </span>
                 )}
                 {branch.email && (

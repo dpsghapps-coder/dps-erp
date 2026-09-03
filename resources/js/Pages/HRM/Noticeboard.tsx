@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { usePage, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, Pagination } from '@/Components/ui';
 import { Head, Link } from '@inertiajs/react';
 import { 
     Bell, 
@@ -199,6 +199,7 @@ export default function HrmNoticeboard() {
                     </GlassCard>
                 </div>
             </div>
+            <Pagination meta={(props as any)?.notices} />
 
             {showComposer && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">

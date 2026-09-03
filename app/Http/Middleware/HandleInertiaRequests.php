@@ -29,7 +29,7 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $user = $request->user();
+        $user = $request->user() ? $request->user()->load('employee') : null;
 
         return [
             ...parent::share($request),
@@ -37,6 +37,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
                 'permissions' => $user ? $user->getPermissionNames() : [],
             ],
+            'currency' => \App\Models\Setting::get('currency', 'GHS'),
         ];
     }
 }

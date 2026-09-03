@@ -123,7 +123,7 @@ export default function MeetingShow() {
                             </div>
                         </div>
                         {meeting.notes && (
-                            <div className="mt-4 pt-4 border-t border-white/10">
+                            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Notes</p>
                                 <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{meeting.notes}</p>
                             </div>
@@ -200,7 +200,7 @@ export default function MeetingShow() {
                             </h3>
                             <div className="space-y-2">
                                 {meeting.attendees.map((attendee: any) => (
-                                    <div key={attendee.id} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                                    <div key={attendee.id} className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/5 last:border-0">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-medium text-slate-600 dark:text-slate-300">
                                                 {attendee.user?.name?.charAt(0)?.toUpperCase()}

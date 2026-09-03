@@ -17,6 +17,7 @@ class UserNotificationPreference extends Model
         'inventory',
         'hrm',
         'chat_messages',
+        'marketing',
     ];
 
     protected $casts = [
@@ -25,6 +26,7 @@ class UserNotificationPreference extends Model
         'inventory' => 'boolean',
         'hrm' => 'boolean',
         'chat_messages' => 'boolean',
+        'marketing' => 'boolean',
     ];
 
     public function user(): BelongsTo

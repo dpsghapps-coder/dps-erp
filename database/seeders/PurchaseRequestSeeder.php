@@ -32,7 +32,6 @@ class PurchaseRequestSeeder extends Seeder
                 'name' => 'Sarah Mensah',
                 'password' => bcrypt('password'),
                 'is_active' => true,
-                'department' => 'Engineering',
             ]
         );
 
@@ -42,7 +41,6 @@ class PurchaseRequestSeeder extends Seeder
                 'name' => 'John Darko',
                 'password' => bcrypt('password'),
                 'is_active' => true,
-                'department' => 'Operations',
             ]
         );
 
@@ -52,7 +50,6 @@ class PurchaseRequestSeeder extends Seeder
                 'name' => 'Fatima Ibrahim',
                 'password' => bcrypt('password'),
                 'is_active' => true,
-                'department' => 'Sales',
             ]
         );
 
@@ -62,7 +59,6 @@ class PurchaseRequestSeeder extends Seeder
                 'name' => 'Kofi Asante',
                 'password' => bcrypt('password'),
                 'is_active' => true,
-                'department' => 'Operations',
             ]
         );
 
@@ -72,7 +68,6 @@ class PurchaseRequestSeeder extends Seeder
                 'name' => 'Ama Osei',
                 'password' => bcrypt('password'),
                 'is_active' => true,
-                'department' => 'Finance',
             ]
         );
 

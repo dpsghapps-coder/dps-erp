@@ -1,12 +1,14 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusBadge, DataTable } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusBadge, DataTable, Pagination } from '@/Components/ui';
 import ProcurementTabs from '@/Components/ProcurementTabs';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Plus, Search } from 'lucide-react';
 import { useState } from 'react';
+import { useCurrency } from '@/Utils/currency';
 
 export default function ProcurementOrdersIndex() {
     const { purchase_orders } = usePage().props as any;
+    const formatCurrency = useCurrency();
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
 
@@ -21,7 +23,7 @@ export default function ProcurementOrdersIndex() {
         { header: 'Supplier', render: (po: any) => po.supplier?.company_name },
         { header: 'Status', render: (po: any) => <StatusBadge status={po.status} /> },
         { header: 'Expected', render: (po: any) => po.expected_date ? new Date(po.expected_date).toLocaleDateString() : '-' },
-        { header: 'Total', className: 'text-right', render: (po: any) => `$${parseFloat(po.total_amount || 0).toFixed(2)}` },
+        { header: 'Total', className: 'text-right', render: (po: any) => formatCurrency(po.total_amount || 0) },
         { header: 'Actions', className: 'text-right', render: (po: any) => <Link href={`/procurement/${po.id}`} className="text-blue-600 hover:underline">View</Link> }
     ];
 
@@ -55,19 +57,29 @@ export default function ProcurementOrdersIndex() {
                             />
                         </div>
                     </div>
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="glass-input"
-                    >
-                        <option value="all">All Status</option>
-                        <option value="draft">Draft</option>
-                        <option value="ordered">Ordered</option>
-                        <option value="purchased">Purchased</option>
-                        <option value="inspected">Inspected</option>
-                        <option value="closed">Closed</option>
-                        <option value="cancelled">Cancelled</option>
-                    </select>
+                    <div className="flex flex-wrap gap-2">
+                        {[
+                            { value: 'all', label: 'All Status' },
+                            { value: 'draft', label: 'Draft' },
+                            { value: 'ordered', label: 'Ordered' },
+                            { value: 'purchased', label: 'Purchased' },
+                            { value: 'inspected', label: 'Inspected' },
+                            { value: 'closed', label: 'Closed' },
+                            { value: 'cancelled', label: 'Cancelled' },
+                        ].map((opt) => (
+                            <button
+                                key={opt.value}
+                                onClick={() => setStatusFilter(opt.value)}
+                                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                    statusFilter === opt.value
+                                        ? 'bg-indigo-600 text-white'
+                                        : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </GlassCard>
 
@@ -85,7 +97,7 @@ export default function ProcurementOrdersIndex() {
                                 </div>
                                 <p className="text-sm text-slate-600 mb-2">{po.supplier?.company_name}</p>
                                 <div className="flex justify-between items-center text-sm">
-                                    <span className="text-slate-500">Total: ${parseFloat(po.total_amount || 0).toFixed(2)}</span>
+                                    <span className="text-slate-500">Total: {formatCurrency(po.total_amount || 0)}</span>
                                     <Link href={`/procurement/${po.id}`} className="text-blue-600 font-medium">View</Link>
                                 </div>
                             </div>
@@ -95,6 +107,7 @@ export default function ProcurementOrdersIndex() {
                     )}
                 </div>
             </GlassCard>
+            <Pagination meta={purchase_orders} />
         </AppLayout>
     );
 }

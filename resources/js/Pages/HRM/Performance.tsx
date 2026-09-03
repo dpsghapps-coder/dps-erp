@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { usePage, useForm } from '@inertiajs/react';
+import { usePage, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, Pagination } from '@/Components/ui';
 import { Head, Link } from '@inertiajs/react';
 import { 
     Star, 
@@ -29,11 +29,21 @@ const EMPLOYEES_MOCK = [
 
 export default function HrmPerformance() {
     const { props } = usePage();
+    const filters = (props as any)?.filters;
     const reviews = (props as any)?.reviews?.data || REVIEWS_MOCK;
     const employees = (props as any)?.employees || EMPLOYEES_MOCK;
 
-    const [selectedEmployee, setSelectedEmployee] = useState('all');
+    const [selectedEmployee, setSelectedEmployee] = useState(filters?.employee_id || 'all');
     const [showAddModal, setShowAddModal] = useState(false);
+
+    const handleFilterChange = (employeeId: string) => {
+        router.get('/hrm/performance', {
+            employee_id: employeeId === 'all' ? undefined : employeeId,
+        }, {
+            preserveState: true,
+            replace: true
+        });
+    };
 
     const { post, processing, data, setData } = useForm({
         employee_id: '',
@@ -151,7 +161,11 @@ export default function HrmPerformance() {
                 <div className="flex flex-wrap gap-4 items-center">
                     <select 
                         value={selectedEmployee}
-                        onChange={(e) => setSelectedEmployee(e.target.value)}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setSelectedEmployee(val);
+                            handleFilterChange(val);
+                        }}
                         className="glass-input"
                     >
                         <option value="all">All Employees</option>
@@ -213,6 +227,7 @@ export default function HrmPerformance() {
                     </GlassCard>
                 ))}
             </div>
+            <Pagination meta={(props as any)?.reviews} />
 
             {showAddModal && (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">

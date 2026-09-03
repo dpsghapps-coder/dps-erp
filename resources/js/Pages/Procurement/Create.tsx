@@ -3,6 +3,7 @@ import { GlassCard, PageHeader, LoadingSpinner } from '@/Components/ui';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { useCurrency } from '@/Utils/currency';
 
 export default function ProcurementCreate({ suppliers, materials, goods }: { suppliers: any[], materials: any[], goods: any[] }) {
     const { data, setData, post, processing, errors } = useForm({
@@ -11,6 +12,7 @@ export default function ProcurementCreate({ suppliers, materials, goods }: { sup
         notes: '',
         items: [{ type: 'material', product_id: '', qty: 1, unit_cost: 0 }]
     });
+    const formatCurrency = useCurrency();
 
     const [selectedItemIndices, setSelectedItemIndices] = useState<number[]>([]);
     const [showBulkModal, setShowBulkModal] = useState(false);
@@ -129,7 +131,7 @@ export default function ProcurementCreate({ suppliers, materials, goods }: { sup
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                        <tr className="border-b border-slate-200 dark:border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
                                             <th className="py-3 px-2 w-10">
                                                 <input 
                                                     type="checkbox" 
@@ -146,7 +148,7 @@ export default function ProcurementCreate({ suppliers, materials, goods }: { sup
                                             <th className="py-3 px-2 w-10"></th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-white/5">
+                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                         {data.items.map((item, index) => (
                                             <tr key={index} className={selectedItemIndices.includes(index) ? 'bg-indigo-500/5' : ''}>
                                                 <td className="py-3 px-2">
@@ -205,7 +207,7 @@ export default function ProcurementCreate({ suppliers, materials, goods }: { sup
                                                     />
                                                 </td>
                                                 <td className="py-3 px-2 text-right font-medium text-slate-600 dark:text-slate-300">
-                                                    ${(item.qty * item.unit_cost).toFixed(2)}
+                                                    {formatCurrency(item.qty * item.unit_cost)}
                                                 </td>
                                                 <td className="py-3 px-2 text-center">
                                                     {data.items.length > 1 && (
@@ -281,13 +283,13 @@ export default function ProcurementCreate({ suppliers, materials, goods }: { sup
                                     <div className="flex justify-between mb-2">
                                         <span className="text-slate-500 dark:text-slate-400">Subtotal</span>
                                         <span className="font-medium text-slate-900 dark:text-white">
-                                            ${data.items.reduce((sum, item) => sum + (item.qty * item.unit_cost), 0).toFixed(2)}
+                                            {formatCurrency(data.items.reduce((sum, item) => sum + (item.qty * item.unit_cost), 0))}
                                         </span>
                                     </div>
                                     <div className="flex justify-between text-lg font-bold text-slate-900 dark:text-white">
                                         <span>Total</span>
                                         <span className="text-indigo-600 dark:text-indigo-400">
-                                            ${data.items.reduce((sum, item) => sum + (item.qty * item.unit_cost), 0).toFixed(2)}
+                                            {formatCurrency(data.items.reduce((sum, item) => sum + (item.qty * item.unit_cost), 0))}
                                         </span>
                                     </div>
                                 </div>

@@ -11,15 +11,13 @@ class Contact extends Model
         'client_id',
         'first_name',
         'last_name',
+        'branch',
+        'location',
         'job_title',
-        'email',
         'phone',
-        'is_primary',
     ];
 
-    protected $casts = [
-        'is_primary' => 'boolean',
-    ];
+    protected $casts = [];
 
     public function client(): BelongsTo
     {

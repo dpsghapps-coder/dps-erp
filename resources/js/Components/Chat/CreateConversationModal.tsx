@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Search, Users, User } from 'lucide-react';
+import axios from 'axios';
 
 interface CreateConversationModalProps {
     onClose: () => void;
@@ -11,7 +12,6 @@ interface User {
     name: string;
     email: string;
     avatar: string | null;
-    department: string | null;
 }
 
 export default function CreateConversationModal({ onClose, onConversationCreated }: CreateConversationModalProps) {
@@ -34,8 +34,7 @@ export default function CreateConversationModal({ onClose, onConversationCreated
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`/search?q=${encodeURIComponent(searchQuery)}&type=users`);
-            const data = await response.json();
+            const { data } = await axios.get('/search', { params: { q: searchQuery, type: 'users' } });
             setUsers(data.users || data || []);
         } catch (error) {
             console.error('Failed to fetch users:', error);
@@ -64,20 +63,12 @@ export default function CreateConversationModal({ onClose, onConversationCreated
 
         setCreating(true);
         try {
-            const response = await fetch('/chat/conversations', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    type,
-                    name: type === 'group' ? name : undefined,
-                    participant_ids: selectedUsers.map(u => u.id),
-                }),
+            const { data: conversation } = await axios.post('/chat/conversations', {
+                type,
+                name: type === 'group' ? name : undefined,
+                participant_ids: selectedUsers.map(u => u.id),
             });
-
-            if (response.ok) {
-                const conversation = await response.json();
-                onConversationCreated(conversation.id);
-            }
+            onConversationCreated(conversation.id);
         } catch (error) {
             console.error('Failed to create conversation:', error);
         } finally {
@@ -205,7 +196,7 @@ export default function CreateConversationModal({ onClose, onConversationCreated
                                                 {user.name}
                                             </p>
                                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                                {user.department || user.email}
+                                                {user.email}
                                             </p>
                                         </div>
                                         {isSelected && (

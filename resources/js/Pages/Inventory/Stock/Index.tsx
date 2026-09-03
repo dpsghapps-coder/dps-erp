@@ -1,15 +1,17 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import InventoryTabs from '@/Components/InventoryTabs';
 import { Head, usePage, useForm, router } from '@inertiajs/react';
 import { Plus, Search, Package, Calendar, Pencil, Trash2, DollarSign, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
+import { useCurrency } from '@/Utils/currency';
 import Swal from 'sweetalert2';
 
 type SubTab = 'purchases' | 'levels';
 
 export default function StockIndex() {
     const { stocks, products, stockLevels, suppliers, categories } = usePage().props as any;
+    const formatCurrency = useCurrency();
     const [search, setSearch] = useState('');
     const [subTab, setSubTab] = useState<SubTab>('purchases');
     const [showModal, setShowModal] = useState(false);
@@ -204,10 +206,10 @@ export default function StockIndex() {
                                             </td>
                                             <td className="py-3 px-4 text-right font-medium text-slate-900">{stock.qty_purchased}</td>
                                             <td className="py-3 px-4 text-right text-slate-600">
-                                                {stock.price ? `$${Number(stock.price).toFixed(2)}` : '-'}
+                                                {stock.price ? formatCurrency(Number(stock.price)) : '-'}
                                             </td>
                                             <td className="py-3 px-4 text-right font-medium text-slate-900">
-                                                {stock.total_cost ? `$${Number(stock.total_cost).toFixed(2)}` : '-'}
+                                                {stock.total_cost ? formatCurrency(Number(stock.total_cost)) : '-'}
                                             </td>
                                             <td className="py-3 px-4 text-slate-500 max-w-[200px] truncate">{stock.notes || '-'}</td>
                                             <td className="py-3 px-4 text-slate-700">{stock.supplier?.company_name || '-'}</td>
@@ -266,8 +268,8 @@ export default function StockIndex() {
                                     <div className="space-y-1 text-sm text-slate-600">
                                         <div className="flex justify-between"><span>Date:</span><span>{stock.date_purchased ? new Date(stock.date_purchased).toLocaleDateString() : '-'}</span></div>
                                         <div className="flex justify-between"><span>Qty:</span><span className="font-medium">{stock.qty_purchased}</span></div>
-                                        {stock.price > 0 && <div className="flex justify-between"><span>Price:</span><span>${Number(stock.price).toFixed(2)}</span></div>}
-                                        {stock.total_cost > 0 && <div className="flex justify-between"><span>Total:</span><span className="font-semibold">${Number(stock.total_cost).toFixed(2)}</span></div>}
+                                        {stock.price > 0 && <div className="flex justify-between"><span>Price:</span><span>{formatCurrency(Number(stock.price))}</span></div>}
+                                        {stock.total_cost > 0 && <div className="flex justify-between"><span>Total:</span><span className="font-semibold">{formatCurrency(Number(stock.total_cost))}</span></div>}
                                         {stock.supplier?.company_name && <div className="flex justify-between"><span>Supplier:</span><span>{stock.supplier.company_name}</span></div>}
                                         {stock.purchased_by && <div className="flex justify-between"><span>Purchased By:</span><span>{stock.purchased_by}</span></div>}
                                         {stock.added_by && <div className="flex justify-between"><span>Added By:</span><span className="text-slate-400">{stock.added_by}</span></div>}
@@ -281,6 +283,7 @@ export default function StockIndex() {
                     </div>
                 </GlassCard>
             )}
+            {subTab === 'purchases' && <Pagination meta={stocks} />}
 
             {subTab === 'levels' && (
                 <GlassCard className="overflow-hidden">
@@ -475,7 +478,7 @@ export default function StockIndex() {
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Total Cost</label>
                                         <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
-                                            ${totalCost.toFixed(2)}
+                                            {formatCurrency(totalCost)}
                                         </div>
                                     </div>
                                 </div>

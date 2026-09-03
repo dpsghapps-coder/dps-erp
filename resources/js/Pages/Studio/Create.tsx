@@ -34,7 +34,7 @@ export default function StudioCreate() {
             <Head title="Create Booking" />
 
             <div className="mb-6">
-                <Link href="/studio" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/studio" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Studio
                 </Link>
             </div>
@@ -123,7 +123,7 @@ export default function StudioCreate() {
                             <p className="text-sm text-slate-400 mb-4">Select resources for this booking</p>
                             <div className="space-y-2">
                                 {(resources || []).map((resource: any) => (
-                                    <label key={resource.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10">
+                                    <label key={resource.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-white/10">
                                         <input 
                                             type="checkbox"
                                             checked={data.resource_ids.includes(String(resource.id))}

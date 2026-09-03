@@ -4,6 +4,7 @@ import ProcurementTabs from '@/Components/ProcurementTabs';
 import { Head, usePage, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Send, Check, X, MessageSquare, Clock, Pause, FileText, Download, Upload, Search as SearchIcon, Package } from 'lucide-react';
 import { useState } from 'react';
+import { useCurrency } from '@/Utils/currency';
 
 const WORKFLOW_STEPS = [
     { key: 'draft', label: 'Draft' },
@@ -100,6 +101,7 @@ function AuditTimeline({ history }: { history: any[] }) {
 
 export default function PurchaseRequestShow() {
     const { purchaseRequest: pr } = usePage().props as any;
+    const formatCurrency = useCurrency();
     const user = (usePage().props as any).auth?.user;
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showQueryModal, setShowQueryModal] = useState(false);
@@ -266,7 +268,7 @@ export default function PurchaseRequestShow() {
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                    <tr className="border-b border-slate-200 dark:border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
                                         <th className="py-3 px-2">#</th>
                                         <th className="py-3 px-2">Item</th>
                                         <th className="py-3 px-2 text-right">Qty</th>
@@ -275,7 +277,7 @@ export default function PurchaseRequestShow() {
                                         <th className="py-3 px-2">Attachments</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-white/5">
+                                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                     {pr.items?.map((item: any, index: number) => (
                                         <tr key={item.id}>
                                             <td className="py-3 px-2 text-sm text-slate-500">{index + 1}</td>
@@ -286,9 +288,9 @@ export default function PurchaseRequestShow() {
                                                 )}
                                             </td>
                                             <td className="py-3 px-2 text-right text-sm">{item.qty_requested} {item.uom}</td>
-                                            <td className="py-3 px-2 text-right text-sm">${parseFloat(item.estimated_cost).toFixed(2)}</td>
+                                            <td className="py-3 px-2 text-right text-sm">{formatCurrency(item.estimated_cost)}</td>
                                             <td className="py-3 px-2 text-right text-sm font-medium">
-                                                ${(item.qty_requested * item.estimated_cost).toFixed(2)}
+                                                {formatCurrency(item.qty_requested * item.estimated_cost)}
                                             </td>
                                             <td className="py-3 px-2">
                                                 {item.attachments?.length > 0 && (
@@ -323,7 +325,7 @@ export default function PurchaseRequestShow() {
                             <div className="overflow-x-auto">
                                 <table className="w-full">
                                     <thead>
-                                        <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                                        <tr className="border-b border-slate-200 dark:border-white/10 text-left text-xs uppercase tracking-wider text-slate-500 font-semibold">
                                             <th className="py-3 px-2">#</th>
                                             <th className="py-3 px-2">Item</th>
                                             <th className="py-3 px-2 text-right">Qty</th>
@@ -332,7 +334,7 @@ export default function PurchaseRequestShow() {
                                             <th className="py-3 px-2">Inspection</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-white/5">
+                                    <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                                         {pr.purchase_order.items?.map((item: any, index: number) => (
                                             <tr key={item.id}>
                                                 <td className="py-3 px-2 text-sm text-slate-500">{index + 1}</td>
@@ -340,9 +342,9 @@ export default function PurchaseRequestShow() {
                                                     <p className="font-medium">{item.description}</p>
                                                 </td>
                                                 <td className="py-3 px-2 text-right text-sm">{item.qty}</td>
-                                                <td className="py-3 px-2 text-right text-sm">${parseFloat(item.unit_cost).toFixed(2)}</td>
+                                                <td className="py-3 px-2 text-right text-sm">{formatCurrency(item.unit_cost)}</td>
                                                 <td className="py-3 px-2 text-right text-sm font-medium">
-                                                    ${parseFloat(item.line_total).toFixed(2)}
+                                                    {formatCurrency(item.line_total)}
                                                 </td>
                                                 <td className="py-3 px-2">
                                                     {item.inspection_status && item.inspection_status !== 'pending' ? (

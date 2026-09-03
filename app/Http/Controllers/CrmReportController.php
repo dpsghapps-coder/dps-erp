@@ -17,9 +17,28 @@ class CrmReportController extends Controller
             'inactive' => Client::where('status', 'inactive')->count(),
         ];
 
-        $conversionRate = $stats['prospects'] + $stats['active'] > 0
-            ? round(($stats['active'] / ($stats['prospects'] + $stats['active'])) * 100, 1)
+        $won = Client::where('pipeline_stage', 'converted')->count();
+        $lost = Client::where('pipeline_stage', 'lost')->count();
+        $conversionRate = $won + $lost > 0
+            ? round(($won / ($won + $lost)) * 100, 1)
             : 0;
+
+        $pipelineStages = Client::PIPELINE_STAGES;
+        $pipelineFunnel = [];
+        foreach ($pipelineStages as $stage) {
+            $pipelineFunnel[$stage] = Client::where('pipeline_stage', $stage)->count();
+        }
+
+        $openStages = ['new_lead', 'contacted', 'meeting_scheduled', 'proposal_sent', 'negotiating'];
+        $pipelineValue = (float) Client::whereIn('pipeline_stage', $openStages)->sum('estimated_value');
+        $wonValue = (float) Client::where('pipeline_stage', 'converted')->sum('estimated_value');
+
+        $lostReasons = Client::where('pipeline_stage', 'lost')
+            ->whereNotNull('lost_reason')
+            ->selectRaw('lost_reason, count(*) as count')
+            ->groupBy('lost_reason')
+            ->pluck('count', 'lost_reason')
+            ->toArray();
 
         // Monthly new clients (last 12 months)
         $monthlyClients = [];
@@ -56,6 +75,12 @@ class CrmReportController extends Controller
         return inertia('CRM/Reports', [
             'stats' => $stats,
             'conversionRate' => $conversionRate,
+            'won' => $won,
+            'lost' => $lost,
+            'pipelineFunnel' => $pipelineFunnel,
+            'pipelineValue' => $pipelineValue,
+            'wonValue' => $wonValue,
+            'lostReasons' => $lostReasons,
             'monthlyClients' => $monthlyClients,
             'sources' => $sources,
             'industries' => $industries,

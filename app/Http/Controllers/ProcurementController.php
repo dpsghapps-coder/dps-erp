@@ -71,20 +71,36 @@ class ProcurementController extends Controller
             'expected_date' => 'nullable|date',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.type' => 'required|in:material,good',
+            'items.*.product_id' => 'required|string',
             'items.*.qty' => 'required|numeric|min:0.01',
             'items.*.unit_cost' => 'required|numeric|min:0',
         ]);
 
-        $po = PurchaseOrder::create(array_merge($validated, [
+        foreach ($validated['items'] as $index => $item) {
+            $modelClass = $item['type'] === 'good' ? Good::class : InventoryProduct::class;
+            if (! $modelClass::whereKey($item['product_id'])->exists()) {
+                return back()->withErrors(["items.{$index}.product_id" => 'Selected item was not found.'])->withInput();
+            }
+        }
+
+        $po = PurchaseOrder::create([
+            'supplier_id' => $validated['supplier_id'],
+            'expected_date' => $validated['expected_date'] ?? null,
+            'notes' => $validated['notes'] ?? null,
             'po_number' => PurchaseOrder::generatePoNumber(),
             'created_by' => auth()->id(),
             'status' => 'draft',
-        ]));
+        ]);
 
         foreach ($validated['items'] as $item) {
-            $item['line_total'] = $item['qty'] * $item['unit_cost'];
-            $po->items()->create($item);
+            $po->items()->create([
+                'product_id' => $item['product_id'],
+                'product_type' => $item['type'] === 'good' ? Good::class : InventoryProduct::class,
+                'qty' => $item['qty'],
+                'unit_cost' => $item['unit_cost'],
+                'line_total' => $item['qty'] * $item['unit_cost'],
+            ]);
         }
 
         $po->update(['total_amount' => $po->items->sum('line_total')]);

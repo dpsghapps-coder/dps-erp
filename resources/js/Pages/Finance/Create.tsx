@@ -41,7 +41,7 @@ export default function FinanceCreate() {
             <Head title="Add Transaction" />
 
             <div className="mb-6">
-                <Link href="/finance" className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                <Link href="/finance" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Finance
                 </Link>
             </div>
@@ -128,7 +128,7 @@ export default function FinanceCreate() {
                         </div>
                     </div>
 
-                    <div className="flex justify-end gap-4 mt-6 pt-6 border-t border-white/10">
+                    <div className="flex justify-end gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-white/10">
                         <Link href="/finance" className="glass-button">Cancel</Link>
                         <button type="submit" disabled={processing} className="glass-button">
                             {processing ? 'Saving...' : 'Save Transaction'}

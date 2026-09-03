@@ -35,7 +35,7 @@ export default function KanbanColumn({
 
     const dropClassName = [
         'flex-1 space-y-2 min-h-[200px] p-2 rounded-lg transition-colors',
-        isOver ? 'bg-white/10 ring-2 ring-white/20' : '',
+        isOver ? 'bg-slate-100 dark:bg-white/10 ring-2 ring-white/20' : '',
     ].join(' ');
 
     return (
@@ -44,10 +44,10 @@ export default function KanbanColumn({
                 <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold">{label}</h3>
                     <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-400 bg-white/5 px-2 py-0.5 rounded-full">{count}</span>
+                        <span className="text-xs text-slate-400 bg-slate-50 dark:bg-white/5 px-2 py-0.5 rounded-full">{count}</span>
                         <button
                             onClick={onAddJob}
-                            className="p-0.5 rounded hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+                            className="p-0.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                             title={`Add job to ${label}`}
                         >
                             <Plus className="w-4 h-4" />
