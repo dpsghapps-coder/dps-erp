@@ -14,26 +14,27 @@ class Employee extends Model
         'first_name',
         'last_name',
         'email',
+        'avatar',
         'department_id',
-        'level_id',
+        'staff_level_id',
         'employment_type_id',
         'job_title',
-        'employment_type',
         'date_hired',
         'date_terminated',
         'salary',
-        'leave_balance',
+        'leave_days',
         'pay_frequency',
-        'phone',
-        'emergency_contact',
+        'mobile_1',
+        'mobile_2',
+        'emergency_person',
+        'supervising_manager_id',
     ];
 
     protected $casts = [
-        'employment_type' => 'string',
         'date_hired' => 'date',
         'date_terminated' => 'date',
         'salary' => 'decimal:2',
-        'leave_balance' => 'decimal:1',
+        'leave_days' => 'decimal:1',
     ];
 
     public function user(): BelongsTo
@@ -46,9 +47,14 @@ class Employee extends Model
         return $this->belongsTo(Department::class);
     }
 
-    public function level(): BelongsTo
+    public function staffLevel(): BelongsTo
     {
-        return $this->belongsTo(Level::class);
+        return $this->belongsTo(StaffLevel::class);
+    }
+
+    public function supervisingManager(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'supervising_manager_id');
     }
 
     public function employmentType(): BelongsTo
@@ -83,6 +89,6 @@ class Employee extends Model
 
     public function getInitialsAttribute()
     {
-        return "{$this->first_name?->charAt(0)}{$this->last_name?->charAt(0)}";
+        return ($this->first_name ? $this->first_name[0] : '') . ($this->last_name ? $this->last_name[0] : '');
     }
 }

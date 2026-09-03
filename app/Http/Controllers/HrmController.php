@@ -8,13 +8,14 @@ use App\Models\Employee;
 use App\Models\EmploymentType;
 use App\Models\Holiday;
 use App\Models\LeaveRequest;
-use App\Models\Level;
+use App\Models\LeaveType;
 use App\Models\Notice;
 use App\Models\Payroll;
 use App\Models\Performance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class HrmController extends Controller
 {
@@ -37,9 +38,17 @@ class HrmController extends Controller
             'pendingApprovals' => LeaveRequest::where('status', 'pending')->count(),
         ];
 
+        $presentIds = AttendanceLog::where('date', $today)->whereNotNull('check_in')->pluck('employee_id');
+        $onLeaveIds = LeaveRequest::where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->where('status', 'approved')
+            ->pluck('employee_id');
+
         $attendanceData = [
-            'present' => AttendanceLog::where('date', $today)->whereNotNull('check_in')->count(),
-            'absent' => Employee::count() - AttendanceLog::where('date', $today)->count(),
+            'present' => $presentIds->count(),
+            'absent' => Employee::whereNull('date_terminated')
+                ->whereNotIn('id', $presentIds->merge($onLeaveIds))
+                ->count(),
             'onLeave' => $stats['onLeave'],
         ];
 
@@ -74,13 +83,14 @@ class HrmController extends Controller
 
     public function employees(Request $request)
     {
-        $query = Employee::with(['department', 'level', 'employmentType']);
+        $query = Employee::with(['department', 'employmentType']);
 
         if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('first_name', 'like', "%{$request->search}%")
-                    ->orWhere('last_name', 'like', "%{$request->search}%")
-                    ->orWhere('employee_number', 'like', "%{$request->search}%");
+            $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('employee_number', 'like', "%{$search}%");
             });
         }
 
@@ -107,7 +117,7 @@ class HrmController extends Controller
 
     public function employeeShow(Employee $employee)
     {
-        $employee->load(['department', 'level', 'employmentType', 'leaveRequests', 'attendanceLogs', 'payrolls', 'performances']);
+        $employee->load(['department', 'employmentType', 'leaveRequests', 'attendanceLogs', 'payrolls', 'performances']);
 
         return response()->json($employee);
     }
@@ -201,11 +211,38 @@ class HrmController extends Controller
     {
         $employeeId = $request->employee_id;
 
+        $leaveTypes = LeaveType::orderBy('name')->get();
+
         if ($employeeId) {
-            $leaveBalance = Employee::find($employeeId);
+            $employee = Employee::with('staffLevel')->find($employeeId);
             $leaveRequests = LeaveRequest::where('employee_id', $employeeId)
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
+
+            $year = Carbon::now()->year;
+            $approvedThisYear = LeaveRequest::where('employee_id', $employeeId)
+                ->where('status', 'approved')
+                ->whereYear('start_date', $year)
+                ->get()
+                ->groupBy('leave_type')
+                ->map(fn ($requests) => $requests->sum('days_count'));
+
+            $balanceData = $leaveTypes->map(function ($lt) use ($employee, $approvedThisYear) {
+                $used = $approvedThisYear->get(strtolower($lt->name), 0);
+                return [
+                    'id' => $lt->id,
+                    'name' => $lt->name,
+                    'days_per_year' => $lt->days_per_year,
+                    'used' => $used,
+                    'remaining' => max(0, $lt->days_per_year - $used),
+                ];
+            });
+
+            $leaveBalance = [
+                'employee_id' => $employeeId,
+                'staff_level_id' => $employee->staff_level_id,
+                'types' => $balanceData,
+            ];
         } else {
             $leaveRequests = LeaveRequest::with('employee')
                 ->orderBy('created_at', 'desc')
@@ -224,6 +261,7 @@ class HrmController extends Controller
         return inertia('HRM/Leaves', [
             'leaveRequests' => $leaveRequests,
             'leaveBalance' => $leaveBalance,
+            'leaveTypes' => $leaveTypes,
             'employees' => $employees,
             'teamLeave' => $teamLeave,
         ]);
@@ -231,9 +269,11 @@ class HrmController extends Controller
 
     public function storeLeave(Request $request)
     {
+        $validTypes = LeaveType::pluck('name')->map(fn ($name) => strtolower($name))->implode(',');
+
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'leave_type' => 'required|in:annual,sick,unpaid,maternity,paternity',
+            'leave_type' => 'required|in:' . $validTypes,
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'nullable|string',
@@ -260,8 +300,8 @@ class HrmController extends Controller
 
         if ($leaveRequest->employee) {
             $employee = $leaveRequest->employee;
-            $newBalance = max(0, ($employee->leave_balance ?? 20) - $leaveRequest->days_count);
-            $employee->update(['leave_balance' => $newBalance]);
+            $newBalance = max(0, ($employee->leave_days ?? 20) - $leaveRequest->days_count);
+            $employee->update(['leave_days' => $newBalance]);
         }
 
         return back()->with('success', 'Leave approved successfully');
@@ -347,6 +387,10 @@ class HrmController extends Controller
             'employees' => $employees,
             'trendData' => $trendData,
             'selectedPayslip' => $selectedPayslip,
+            'filters' => [
+                'employee_id' => $employeeId,
+                'month' => $month,
+            ],
         ]);
     }
 
@@ -367,6 +411,9 @@ class HrmController extends Controller
         return inertia('HRM/Performance', [
             'reviews' => $reviews,
             'employees' => $employees,
+            'filters' => [
+                'employee_id' => $employeeId,
+            ],
         ]);
     }
 
@@ -435,62 +482,17 @@ class HrmController extends Controller
         return back()->with('success', 'Notice posted successfully');
     }
 
-    public function departments()
-    {
-        $departments = Department::withCount('employees')->get();
-
-        return inertia('Admin/HrmDepartments', [
-            'departments' => $departments,
-        ]);
-    }
-
-    public function storeDepartment(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50|unique:departments',
-            'manager_id' => 'nullable|exists:employees,id',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
-
-        Department::create($validated);
-
-        return back()->with('success', 'Department created successfully');
-    }
-
-    public function updateDepartment(Request $request, Department $department)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'nullable|string|max:50|unique:departments,code,'.$department->id,
-            'manager_id' => 'nullable|exists:employees,id',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-        ]);
-
-        $department->update($validated);
-
-        return back()->with('success', 'Department updated successfully');
-    }
-
-    public function destroyDepartment(Department $department)
-    {
-        if ($department->employees()->count() > 0) {
-            return back()->with('error', 'Cannot delete department with employees');
-        }
-
-        $department->delete();
-
-        return back()->with('success', 'Department deleted successfully');
-    }
-
     public function create()
     {
+        $nextNumber = (Employee::max('id') ?? 0) + 1;
+        $employeeNumber = 'EMP' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+
         return inertia('HRM/Create', [
             'departments' => Department::all(),
-            'levels' => Level::all(),
             'employmentTypes' => EmploymentType::all(),
+            'staffLevels' => \App\Models\StaffLevel::orderBy('sort_order')->get(),
+            'managers' => Employee::with('staffLevel')->whereHas('staffLevel', fn ($q) => $q->whereIn('name', ['Managing Director', 'General Manager', 'Manager']))->orderBy('first_name')->get(),
+            'employeeNumber' => $employeeNumber,
         ]);
     }
 
@@ -502,19 +504,32 @@ class HrmController extends Controller
             'email' => 'required|email|unique:employees',
             'employee_number' => 'required|string|unique:employees',
             'department_id' => 'required|exists:departments,id',
-            'level_id' => 'required|exists:levels,id',
+            'staff_level_id' => 'nullable|exists:staff_levels,id',
+            'supervising_manager_id' => 'nullable|exists:employees,id',
             'employment_type_id' => 'required|exists:employment_types,id',
+            'job_title' => 'nullable|string|max:255',
+            'salary' => 'nullable|numeric|min:0',
+            'mobile_1' => 'nullable|string|max:255',
+            'mobile_2' => 'nullable|string|max:255',
+            'emergency_person' => 'nullable|string|max:255',
+            'pay_frequency' => 'nullable|string|in:weekly,bi_weekly,monthly',
+            'leave_days' => 'nullable|numeric|min:0',
             'date_hired' => 'required|date',
+            'avatar' => 'nullable|image|max:2048',
         ]);
 
-        Employee::create($validated);
+        $validated['avatar'] = $request->hasFile('avatar')
+            ? $request->file('avatar')->store('avatars', 'public')
+            : null;
+
+        $employee = Employee::create($validated);
 
         return redirect()->route('hrm.employees')->with('success', 'Employee created successfully');
     }
 
     public function show(Employee $employee)
     {
-        $employee->load(['department', 'level', 'employmentType', 'leaveRequests', 'attendanceLogs', 'payrolls', 'performances']);
+        $employee->load(['department', 'employmentType', 'staffLevel', 'supervisingManager', 'leaveRequests', 'attendanceLogs', 'payrolls', 'performances']);
 
         return inertia('HRM/Show', [
             'employee' => $employee,
@@ -523,13 +538,18 @@ class HrmController extends Controller
 
     public function edit(Employee $employee)
     {
-        $employee->load(['department', 'level', 'employmentType']);
+        $employee->load(['department', 'employmentType', 'staffLevel', 'supervisingManager']);
 
         return inertia('HRM/Edit', [
             'employee' => $employee,
             'departments' => Department::all(),
-            'levels' => Level::all(),
             'employmentTypes' => EmploymentType::all(),
+            'staffLevels' => \App\Models\StaffLevel::orderBy('sort_order')->get(),
+            'managers' => Employee::with('staffLevel')
+                ->where('id', '!=', $employee->id)
+                ->whereHas('staffLevel', fn ($q) => $q->whereIn('name', ['Managing Director', 'General Manager', 'Manager']))
+                ->orderBy('first_name')
+                ->get(),
         ]);
     }
 
@@ -539,13 +559,30 @@ class HrmController extends Controller
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
             'email' => 'required|email|unique:employees,email,'.$employee->id,
-            'employee_number' => 'required|string|unique:employees,employee_number,'.$employee->id,
             'department_id' => 'required|exists:departments,id',
-            'level_id' => 'required|exists:levels,id',
+            'staff_level_id' => 'nullable|exists:staff_levels,id',
+            'supervising_manager_id' => 'nullable|exists:employees,id|not_in:'.$employee->id,
             'employment_type_id' => 'required|exists:employment_types,id',
+            'job_title' => 'nullable|string|max:255',
+            'salary' => 'nullable|numeric|min:0',
+            'mobile_1' => 'nullable|string|max:255',
+            'mobile_2' => 'nullable|string|max:255',
+            'emergency_person' => 'nullable|string|max:255',
+            'pay_frequency' => 'nullable|string|in:weekly,bi_weekly,monthly',
+            'leave_days' => 'nullable|numeric|min:0',
             'date_hired' => 'required|date',
             'date_terminated' => 'nullable|date',
+            'avatar' => 'nullable|image|max:2048',
         ]);
+
+        if ($request->hasFile('avatar')) {
+            if ($employee->avatar) {
+                Storage::disk('public')->delete($employee->avatar);
+            }
+            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        } else {
+            unset($validated['avatar']);
+        }
 
         $employee->update($validated);
 

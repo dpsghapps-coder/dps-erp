@@ -4,9 +4,11 @@ namespace App\Http\Controllers\HRM;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\Employee;
 use App\Models\EmploymentType;
+use App\Models\LeaveRequest;
 use App\Models\LeaveType;
-use App\Models\Level;
+use App\Models\StaffLevel;
 use Illuminate\Http\Request;
 
 class SettingController extends Controller
@@ -15,9 +17,9 @@ class SettingController extends Controller
     {
         return inertia('HRM/Settings/Index', [
             'departments' => Department::all(),
-            'levels' => Level::all(),
             'employmentTypes' => EmploymentType::all(),
-            'leaveTypes' => LeaveType::with('level')->get(),
+            'leaveTypes' => LeaveType::with('staffLevel')->get(),
+            'staffLevels' => StaffLevel::orderBy('sort_order')->get(),
         ]);
     }
 
@@ -40,25 +42,6 @@ class SettingController extends Controller
         ]));
 
         return back()->with('success', 'Department updated');
-    }
-
-    // Edit Level
-    public function editLevel(Level $level)
-    {
-        return inertia('HRM/Settings/EditLevel', [
-            'level' => $level,
-        ]);
-    }
-
-    public function updateLevel(Request $request, Level $level)
-    {
-        $level->update($request->validate([
-            'name' => 'required|string|max:255',
-            'job_title' => 'nullable|string|max:255',
-            'description' => 'nullable|string',
-        ]));
-
-        return back()->with('success', 'Level updated');
     }
 
     // Edit Employment Type
@@ -90,8 +73,8 @@ class SettingController extends Controller
     {
         $leaveType->update($request->validate([
             'name' => 'required|string|max:255',
-            'level_id' => 'required|exists:levels,id',
-            'days_per_year' => 'required\integer',
+            'staff_level_id' => 'required|exists:staff_levels,id',
+            'days_per_year' => 'required|integer',
         ]));
 
         return back()->with('success', 'Leave type updated');
@@ -102,13 +85,6 @@ class SettingController extends Controller
         Department::create($request->validate(['name' => 'required|string|max:255']));
 
         return back()->with('success', 'Department created');
-    }
-
-    public function storeLevel(Request $request)
-    {
-        Level::create($request->validate(['name' => 'required|string|max:255']));
-
-        return back()->with('success', 'Level created');
     }
 
     public function storeEmploymentType(Request $request)
@@ -122,29 +98,30 @@ class SettingController extends Controller
     {
         LeaveType::create($request->validate([
             'name' => 'required|string|max:255',
-            'level_id' => 'required|exists:levels,id',
+            'staff_level_id' => 'required|exists:staff_levels,id',
             'days_per_year' => 'required|integer',
         ]));
 
-        return back()->with('success', 'Leave type created');
+        return back()->with('success', 'Leave days created');
     }
 
     public function destroyDepartment(Department $department)
     {
+        if ($department->employees()->exists()) {
+            return back()->withErrors('Cannot delete department with assigned employees.');
+        }
+
         $department->delete();
 
         return back()->with('success', 'Department deleted');
     }
 
-    public function destroyLevel(Level $level)
-    {
-        $level->delete();
-
-        return back()->with('success', 'Level deleted');
-    }
-
     public function destroyEmploymentType(EmploymentType $employmentType)
     {
+        if (Employee::where('employment_type_id', $employmentType->id)->exists()) {
+            return back()->withErrors('Cannot delete employment type with assigned employees.');
+        }
+
         $employmentType->delete();
 
         return back()->with('success', 'Employment type deleted');
@@ -152,8 +129,33 @@ class SettingController extends Controller
 
     public function destroyLeaveType(LeaveType $leaveType)
     {
+        if (LeaveRequest::where('leave_type', strtolower($leaveType->name))->exists()) {
+            return back()->withErrors('Cannot delete leave type with existing leave requests.');
+        }
+
         $leaveType->delete();
 
         return back()->with('success', 'Leave type deleted');
+    }
+
+    // Staff Level CRUD
+    public function storeStaffLevel(Request $request)
+    {
+        StaffLevel::create($request->validate([
+            'name' => 'required|string|max:255|unique:staff_levels',
+        ]));
+
+        return back()->with('success', 'Staff level created');
+    }
+
+    public function destroyStaffLevel(StaffLevel $staffLevel)
+    {
+        if ($staffLevel->employees()->exists() || LeaveType::where('staff_level_id', $staffLevel->id)->exists()) {
+            return back()->withErrors('Cannot delete staff level with assigned employees or leave types.');
+        }
+
+        $staffLevel->delete();
+
+        return back()->with('success', 'Staff level deleted');
     }
 }
