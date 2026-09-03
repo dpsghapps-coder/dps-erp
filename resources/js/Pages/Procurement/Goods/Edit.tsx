@@ -1,6 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 
@@ -11,7 +11,7 @@ export default function GoodEdit() {
     const [attributeValues, setAttributeValues] = useState<Record<string, string>>(goodAttributes);
     const [picture, setPicture] = useState<File | null>(null);
 
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, processing, errors } = useForm({
         material_id: good.material_id,
         item_name: good.item_name,
         item_description: good.item_description || '',
@@ -34,13 +34,13 @@ export default function GoodEdit() {
         formData.append('item_category', data.item_category || '');
         formData.append('uom', data.uom);
         formData.append('item_status', data.item_status || 'Active');
+        formData.append('restock_threshold', String(data.restock_threshold ?? 0));
         formData.append('attributes', JSON.stringify(attributeValues));
         formData.append('supplier_id', data.supplier_id || '');
         if (picture) formData.append('picture', picture);
         formData.append('_method', 'PUT');
 
-        put(`/procurement/goods/${good.id}`, {
-            data: formData,
+        router.post(`/procurement/goods/${good.id}`, formData, {
             onSuccess: () => {
                 window.location.href = `/procurement/goods/${good.id}`;
             }

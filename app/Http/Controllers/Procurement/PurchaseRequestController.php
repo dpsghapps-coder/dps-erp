@@ -23,13 +23,13 @@ class PurchaseRequestController extends Controller
 
         if ($user->hasRole('admin') || $user->hasRole('md') || $user->hasRole('general')) {
             // See all PRs
-        } elseif ($user->hasPermissionTo('pr.finance.review')) {
+        } elseif ($user->hasPermission('pr.finance.review')) {
             // Finance sees dept_approved + their own
             $query->where(function ($q) use ($user) {
                 $q->where('status', 'dept_approved')
                     ->orWhere('requester_id', $user->id);
             });
-        } elseif ($user->hasPermissionTo('pr.approve')) {
+        } elseif ($user->hasPermission('pr.approve')) {
             // Dept managers see their department's PRs + their own
             $query->where(function ($q) use ($user) {
                 $q->where('department', $user->department)
@@ -94,7 +94,7 @@ class PurchaseRequestController extends Controller
         ]);
 
         $user = $request->user();
-        $deptManager = User::where('department', $validated['department'])
+        $deptManager = User::whereHas('employee.department', fn ($q) => $q->where('name', $validated['department']))
             ->whereHas('role', fn ($q) => $q->where('name', 'manager'))
             ->first();
 
@@ -167,6 +167,11 @@ class PurchaseRequestController extends Controller
 
     public function edit(PurchaseRequest $purchaseRequest)
     {
+        $user = auth()->user();
+        if ($purchaseRequest->requester_id !== $user->id && ! $user->hasRole('admin')) {
+            abort(403, 'You do not have permission to edit this purchase request');
+        }
+
         if (! in_array($purchaseRequest->status, ['draft', 'queried'])) {
             return back()->withErrors(['error' => 'Cannot edit a PR that is not in draft or queried status']);
         }
@@ -182,6 +187,11 @@ class PurchaseRequestController extends Controller
 
     public function update(Request $request, PurchaseRequest $purchaseRequest)
     {
+        $user = $request->user();
+        if ($purchaseRequest->requester_id !== $user->id && ! $user->hasRole('admin')) {
+            abort(403, 'You do not have permission to update this purchase request');
+        }
+
         if (! in_array($purchaseRequest->status, ['draft', 'queried'])) {
             return back()->withErrors(['error' => 'Cannot update a PR that is not in draft or queried status']);
         }
@@ -253,23 +263,38 @@ class PurchaseRequestController extends Controller
 
     public function submit(PurchaseRequest $purchaseRequest)
     {
+        $user = auth()->user();
+        if ($purchaseRequest->requester_id !== $user->id && ! $user->hasRole('admin')) {
+            return back()->withErrors(['error' => 'You do not have permission to submit this purchase request']);
+        }
+
         if ($purchaseRequest->status !== 'draft') {
             return back()->withErrors(['error' => 'Only draft PRs can be submitted']);
         }
 
-        $purchaseRequest->update(['status' => 'pending']);
-        PurchaseRequestHistory::create([
-            'purchase_request_id' => $purchaseRequest->id,
-            'status' => 'pending',
-            'changed_by' => auth()->id(),
-            'comment' => 'PR submitted for review',
-        ]);
+        DB::transaction(function () use ($purchaseRequest) {
+            $purchaseRequest->update(['status' => 'pending']);
+            PurchaseRequestHistory::create([
+                'purchase_request_id' => $purchaseRequest->id,
+                'status' => 'pending',
+                'changed_by' => auth()->id(),
+                'comment' => 'PR submitted for review',
+            ]);
+        });
 
         return back()->with('success', 'Purchase request submitted for review');
     }
 
     public function deptReview(Request $request, PurchaseRequest $purchaseRequest)
     {
+        $user = $request->user();
+        $canReview = $user->hasRole('admin') || $user->hasRole('md') || $user->hasRole('general')
+            || ($user->hasPermission('pr.approve') && $purchaseRequest->department === $user->department);
+
+        if (! $canReview) {
+            return back()->withErrors(['error' => 'You do not have permission to review this purchase request']);
+        }
+
         $validated = $request->validate([
             'action' => 'required|in:approve,reject,query',
             'comment' => 'nullable|string',
@@ -285,23 +310,29 @@ class PurchaseRequestController extends Controller
             'query' => 'queried',
         };
 
-        $purchaseRequest->update([
-            'status' => $newStatus,
-            'dept_manager_comment' => $validated['comment'] ?? null,
-        ]);
+        DB::transaction(function () use ($purchaseRequest, $newStatus, $validated) {
+            $purchaseRequest->update([
+                'status' => $newStatus,
+                'dept_manager_comment' => $validated['comment'] ?? null,
+            ]);
 
-        PurchaseRequestHistory::create([
-            'purchase_request_id' => $purchaseRequest->id,
-            'status' => $newStatus,
-            'changed_by' => auth()->id(),
-            'comment' => $validated['comment'] ?? "Department manager {$validated['action']}d the PR",
-        ]);
+            PurchaseRequestHistory::create([
+                'purchase_request_id' => $purchaseRequest->id,
+                'status' => $newStatus,
+                'changed_by' => auth()->id(),
+                'comment' => $validated['comment'] ?? "Department manager {$validated['action']}d the PR",
+            ]);
+        });
 
         return back()->with('success', "Purchase request {$validated['action']}d successfully");
     }
 
     public function financeReview(Request $request, PurchaseRequest $purchaseRequest)
     {
+        if (! $request->user()->hasPermission('pr.finance.review')) {
+            return back()->withErrors(['error' => 'You do not have permission to perform finance review']);
+        }
+
         $validated = $request->validate([
             'action' => 'required|in:approve,reject,query,hold',
             'comment' => 'nullable|string',
@@ -320,20 +351,22 @@ class PurchaseRequestController extends Controller
             'hold' => 'held',
         };
 
-        $purchaseRequest->update([
-            'status' => $newStatus,
-            'finance_comment' => $validated['comment'] ?? null,
-            'supplier_id' => $validated['supplier_id'] ?? $purchaseRequest->supplier_id,
-            'finance_user_id' => auth()->id(),
-            'postpone_until' => $validated['postpone_until'] ?? null,
-        ]);
+        DB::transaction(function () use ($purchaseRequest, $newStatus, $validated) {
+            $purchaseRequest->update([
+                'status' => $newStatus,
+                'finance_comment' => $validated['comment'] ?? null,
+                'supplier_id' => $validated['supplier_id'] ?? $purchaseRequest->supplier_id,
+                'finance_user_id' => auth()->id(),
+                'postpone_until' => $validated['postpone_until'] ?? null,
+            ]);
 
-        PurchaseRequestHistory::create([
-            'purchase_request_id' => $purchaseRequest->id,
-            'status' => $newStatus,
-            'changed_by' => auth()->id(),
-            'comment' => $validated['comment'] ?? "Finance {$validated['action']}d the PR",
-        ]);
+            PurchaseRequestHistory::create([
+                'purchase_request_id' => $purchaseRequest->id,
+                'status' => $newStatus,
+                'changed_by' => auth()->id(),
+                'comment' => $validated['comment'] ?? "Finance {$validated['action']}d the PR",
+            ]);
+        });
 
         return back()->with('success', "Purchase request {$validated['action']}d successfully");
     }
@@ -342,8 +375,8 @@ class PurchaseRequestController extends Controller
     {
         $user = auth()->user();
         $canCancel = $purchaseRequest->requester_id === $user->id
-            || $user->hasPermissionTo('pr.approve')
-            || $user->hasPermissionTo('pr.finance.review');
+            || $user->hasPermission('pr.approve')
+            || $user->hasPermission('pr.finance.review');
 
         if (! $canCancel) {
             return back()->withErrors(['error' => 'You do not have permission to cancel this PR']);
@@ -353,13 +386,15 @@ class PurchaseRequestController extends Controller
             return back()->withErrors(['error' => 'Cannot cancel this PR']);
         }
 
-        $purchaseRequest->update(['status' => 'cancelled']);
-        PurchaseRequestHistory::create([
-            'purchase_request_id' => $purchaseRequest->id,
-            'status' => 'cancelled',
-            'changed_by' => $user->id,
-            'comment' => 'PR cancelled',
-        ]);
+        DB::transaction(function () use ($purchaseRequest, $user) {
+            $purchaseRequest->update(['status' => 'cancelled']);
+            PurchaseRequestHistory::create([
+                'purchase_request_id' => $purchaseRequest->id,
+                'status' => 'cancelled',
+                'changed_by' => $user->id,
+                'comment' => 'PR cancelled',
+            ]);
+        });
 
         return back()->with('success', 'Purchase request cancelled');
     }
@@ -469,6 +504,10 @@ class PurchaseRequestController extends Controller
 
     public function inspect(Request $request, PurchaseRequest $purchaseRequest)
     {
+        if (! $request->user()->hasPermission('procurement.inspect')) {
+            return back()->withErrors(['error' => 'You do not have permission to inspect this purchase order']);
+        }
+
         $validated = $request->validate([
             'items' => 'required|array|min:1',
             'items.*.item_id' => 'required|exists:purchase_order_items,id',
@@ -489,21 +528,21 @@ class PurchaseRequestController extends Controller
         DB::transaction(function () use ($validated, $po) {
             foreach ($validated['items'] as $itemData) {
                 $poItem = $po->items()->findOrFail($itemData['item_id']);
+                $acceptedQty = match ($itemData['inspection_status']) {
+                    'rejected' => 0,
+                    default => $itemData['accepted_qty'] ?? $poItem->qty,
+                };
                 $poItem->update([
                     'inspection_status' => $itemData['inspection_status'],
-                    'accepted_qty' => $itemData['accepted_qty'] ?? $poItem->qty,
+                    'accepted_qty' => $acceptedQty,
                     'inspection_notes' => $itemData['inspection_notes'] ?? null,
                 ]);
             }
 
-            $allAccepted = $po->items()->where('inspection_status', 'accepted')->count() === $po->items()->count();
-            $anyRejected = $po->items()->where('inspection_status', 'rejected')->exists();
-            $anyPartial = $po->items()->where('inspection_status', 'partial')->exists();
+            $allInspected = $po->items()->whereNull('inspection_status')->doesntExist();
 
-            if ($allAccepted) {
+            if ($allInspected) {
                 $po->update(['status' => 'inspected']);
-            } elseif ($anyRejected || $anyPartial) {
-                // Keep as purchased, items have mixed results
             }
         });
 
@@ -512,6 +551,10 @@ class PurchaseRequestController extends Controller
 
     public function closePo(PurchaseRequest $purchaseRequest)
     {
+        if (! auth()->user()->hasPermission('procurement.close')) {
+            return back()->withErrors(['error' => 'You do not have permission to close this purchase order']);
+        }
+
         if (! $purchaseRequest->purchase_order_id) {
             return back()->withErrors(['error' => 'No PO linked to this PR']);
         }
@@ -523,14 +566,14 @@ class PurchaseRequestController extends Controller
 
         DB::transaction(function () use ($po) {
             foreach ($po->items as $item) {
-                if ($item->product_id && $item->inspection_status === 'accepted') {
+                if ($item->product_id && in_array($item->inspection_status, ['accepted', 'partial']) && $item->accepted_qty > 0) {
                     Stock::create([
                         'product_id' => $item->product_id,
                         'good_id' => null,
                         'supplier_id' => $po->supplier_id,
                         'qty_purchased' => $item->accepted_qty,
                         'price' => $item->unit_cost,
-                        'total_cost' => $item->line_total,
+                        'total_cost' => $item->accepted_qty * $item->unit_cost,
                         'date_purchased' => now()->toDateString(),
                         'notes' => "Auto-created from PO {$po->po_number}",
                         'added_by' => auth()->user()->name,
@@ -547,6 +590,11 @@ class PurchaseRequestController extends Controller
 
     public function destroy(PurchaseRequest $purchaseRequest)
     {
+        $user = auth()->user();
+        if ($purchaseRequest->requester_id !== $user->id && ! $user->hasRole('admin')) {
+            abort(403, 'You do not have permission to delete this purchase request');
+        }
+
         if (! in_array($purchaseRequest->status, ['draft', 'cancelled'])) {
             return back()->withErrors(['error' => 'Only draft or cancelled PRs can be deleted']);
         }

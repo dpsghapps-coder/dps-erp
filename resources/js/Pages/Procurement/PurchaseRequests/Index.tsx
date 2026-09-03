@@ -1,21 +1,37 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusBadge, DataTable } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusBadge, DataTable, Pagination } from '@/Components/ui';
 import ProcurementTabs from '@/Components/ProcurementTabs';
-import { Head, usePage, Link } from '@inertiajs/react';
+import { Head, usePage, Link, router } from '@inertiajs/react';
 import { Plus, Search, FileText } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export default function PurchaseRequestsIndex() {
     const { purchaseRequests, filters, pendingCount, deptApprovedCount } = usePage().props as any;
     const [search, setSearch] = useState(filters?.search || '');
     const [statusFilter, setStatusFilter] = useState(filters?.status || 'all');
+    const isFirstRender = useRef(true);
 
-    const filteredPRs = (purchaseRequests?.data || []).filter((pr: any) => {
-        const matchSearch = !search || pr.pr_number.toLowerCase().includes(search.toLowerCase()) ||
-            pr.requester?.name?.toLowerCase().includes(search.toLowerCase());
-        const matchStatus = statusFilter === 'all' || pr.status === statusFilter;
-        return matchSearch && matchStatus;
-    });
+    const purchaseRequestsList = purchaseRequests?.data || [];
+
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            router.get('/procurement/purchase-requests', {
+                search: search || undefined,
+                status: statusFilter !== 'all' ? statusFilter : undefined,
+            }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 300);
+
+        return () => clearTimeout(timeout);
+    }, [search, statusFilter]);
 
     const columns = [
         { header: 'PR #', key: 'pr_number', className: 'font-mono' },
@@ -36,21 +52,9 @@ export default function PurchaseRequestsIndex() {
         )},
     ];
 
-    const handleSearch = (value: string) => {
-        setSearch(value);
-        const params = new URLSearchParams(window.location.search);
-        if (value) params.set('search', value);
-        else params.delete('search');
-        window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
-    };
+    const handleSearch = (value: string) => setSearch(value);
 
-    const handleStatusFilter = (status: string) => {
-        setStatusFilter(status);
-        const params = new URLSearchParams(window.location.search);
-        if (status !== 'all') params.set('status', status);
-        else params.delete('status');
-        window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
-    };
+    const handleStatusFilter = (status: string) => setStatusFilter(status);
 
     return (
         <AppLayout>
@@ -100,7 +104,7 @@ export default function PurchaseRequestsIndex() {
                                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                                     statusFilter === tab.value
                                         ? 'bg-white text-slate-900 shadow-sm'
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-300 dark:hover:bg-white/50'
                                 }`}
                             >
                                 {tab.label}
@@ -117,11 +121,11 @@ export default function PurchaseRequestsIndex() {
 
             <GlassCard className="overflow-hidden p-0">
                 <div className="hidden md:block">
-                    <DataTable columns={columns} data={filteredPRs} emptyMessage="No purchase requests found" />
+                    <DataTable columns={columns} data={purchaseRequestsList} emptyMessage="No purchase requests found" />
                 </div>
                 <div className="md:hidden space-y-3 p-4">
-                    {filteredPRs.length > 0 ? (
-                        filteredPRs.map((pr: any) => (
+                    {purchaseRequestsList.length > 0 ? (
+                        purchaseRequestsList.map((pr: any) => (
                             <Link
                                 key={pr.id}
                                 href={`/procurement/purchase-requests/${pr.id}`}
@@ -150,6 +154,7 @@ export default function PurchaseRequestsIndex() {
                     )}
                 </div>
             </GlassCard>
+            <Pagination meta={purchaseRequests} />
         </AppLayout>
     );
 }

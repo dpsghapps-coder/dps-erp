@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import ProcurementTabs from '@/Components/ProcurementTabs';
 import InputError from '@/Components/InputError';
 import { Head, Link, usePage, useForm, router } from '@inertiajs/react';
@@ -16,7 +16,7 @@ export default function GoodsIndex() {
     const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
     const [picture, setPicture] = useState<File | null>(null);
 
-    const { data, setData, post, delete: destroy, processing, reset } = useForm({
+    const { data, setData, post, delete: destroy, processing, reset, errors } = useForm({
         item_name: '',
         item_description: '',
         item_category: '',
@@ -44,11 +44,11 @@ export default function GoodsIndex() {
         formData.append('item_category', data.item_category || '');
         formData.append('uom', data.uom);
         formData.append('item_status', data.item_status || 'Active');
+        formData.append('supplier_id', data.supplier_id || '');
         formData.append('attributes', JSON.stringify(attributeValues));
         if (picture) formData.append('picture', picture);
 
-        post('/procurement/goods', {
-            data: formData,
+        router.post('/procurement/goods', formData, {
             onSuccess: () => {
                 setShowModal(false);
                 setPicture(null);
@@ -103,6 +103,7 @@ export default function GoodsIndex() {
             item_category: '',
             uom: 'Pieces',
             item_status: 'Active',
+            supplier_id: '',
         });
         setShowModal(true);
     };
@@ -246,6 +247,7 @@ export default function GoodsIndex() {
                     )}
                 </div>
             </GlassCard>
+            <Pagination meta={goods} />
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
