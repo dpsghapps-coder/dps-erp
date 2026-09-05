@@ -10,7 +10,7 @@ export default function RolesIndex() {
     const [expandedRole, setExpandedRole] = useState<number | null>(null);
     const [showPermissions, setShowPermissions] = useState(false);
 
-    const groupedPermissions = (permissions || []).reduce((acc: Record<string, any[]>, perm: any) => {
+    const groupedPermissions: Record<string, any[]> = (permissions || []).reduce((acc: Record<string, any[]>, perm: any) => {
         if (!acc[perm.module]) acc[perm.module] = [];
         acc[perm.module].push(perm);
         return acc;
@@ -96,7 +96,7 @@ export default function RolesIndex() {
             {/* Roles Grid */}
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {roles.map((role: any) => {
-                    const permsByModule = (role.permissions || []).reduce((acc: Record<string, any[]>, perm: any) => {
+                    const permsByModule: Record<string, any[]> = (role.permissions || []).reduce((acc: Record<string, any[]>, perm: any) => {
                         if (!acc[perm.module]) acc[perm.module] = [];
                         acc[perm.module].push(perm);
                         return acc;

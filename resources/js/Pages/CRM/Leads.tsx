@@ -1,9 +1,8 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
-import KanbanBoard from '@/Components/KanbanBoard';
+import { GlassCard, PageHeader, StatusBadge, StatusChips } from '@/Components/ui';
 import PipelineBoard from '@/Components/PipelineBoard';
 import { Head, usePage, Link, router, useForm } from '@inertiajs/react';
-import { Plus, Search, Users, TrendingUp, Target, Clock, AlertTriangle, User, MapPin, ChevronDown, ChevronUp, Link2, Check, X, LayoutGrid, List, DollarSign, XCircle } from 'lucide-react';
+import { Plus, Search, Users, TrendingUp, Target, Clock, AlertTriangle, User, MapPin, ChevronDown, ChevronUp, Link2, Check, X, LayoutGrid, List, DollarSign, XCircle, Rocket } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useCurrency } from '@/Utils/currency';
 
@@ -32,10 +31,10 @@ function daysSince(dateStr: string | null): number | null {
 }
 
 const STATUS_OPTIONS = [
-    { value: 'lead', label: 'Lead', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-    { value: 'prospect', label: 'Prospect', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-    { value: 'active', label: 'Active', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
-    { value: 'inactive', label: 'Inactive', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
+    { value: 'bronze', label: 'Bronze', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+    { value: 'silver', label: 'Silver', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
+    { value: 'gold', label: 'Gold', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+    { value: 'platinum', label: 'Platinum', color: 'bg-violet-500/20 text-violet-400 border-violet-500/30' },
 ];
 
 const INTERACTION_ICONS: Record<string, string> = {
@@ -73,9 +72,9 @@ function calculateScore(client: any): number {
 }
 
 export default function LeadsIndex() {
-    const { clients, stats, currentFilter, currentView } = usePage().props as any;
+    const { deals, eligibleForCampaign, stats, currentFilter, currentView } = usePage().props as any;
     const formatCurrency = useCurrency();
-    const clientsList = clients?.data || clients || [];
+    const dealsList = deals?.data || deals || [];
     const [statsCollapsed, setStatsCollapsed] = useState(false);
     const [search, setSearch] = useState('');
     const [letterFilter, setLetterFilter] = useState<string | null>(null);
@@ -87,14 +86,15 @@ export default function LeadsIndex() {
     const [dueTodayOnly, setDueTodayOnly] = useState(false);
     const [sortByScore, setSortByScore] = useState(true);
     const [viewMode, setViewMode] = useState<'list' | 'board'>(currentView === 'board' ? 'board' : 'list');
-    const [boardTab, setBoardTab] = useState<'status' | 'pipeline'>('pipeline');
     const [showQuickLeadModal, setShowQuickLeadModal] = useState(false);
+    const [showCampaignModal, setShowCampaignModal] = useState(false);
+    const [campaignClientId, setCampaignClientId] = useState('');
+    const [campaignSearch, setCampaignSearch] = useState('');
 
     const quickLeadForm = useForm({
         company_name: '',
         phone: '',
         email: '',
-        status: 'lead',
         source: 'Referral',
         estimated_value: '',
         next_follow_up_at: '',
@@ -106,6 +106,24 @@ export default function LeadsIndex() {
             onSuccess: () => {
                 quickLeadForm.reset();
                 setShowQuickLeadModal(false);
+            },
+        });
+    };
+
+    const filteredCampaignClients = useMemo(() => {
+        const list = eligibleForCampaign || [];
+        if (!campaignSearch) return list;
+        return list.filter((c: any) => c.company_name.toLowerCase().includes(campaignSearch.toLowerCase()));
+    }, [eligibleForCampaign, campaignSearch]);
+
+    const handleStartCampaign = () => {
+        if (!campaignClientId) return;
+        router.post(`/crm/${campaignClientId}/deals`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowCampaignModal(false);
+                setCampaignClientId('');
+                setCampaignSearch('');
             },
         });
     };
@@ -130,27 +148,32 @@ export default function LeadsIndex() {
     };
 
     const selectAll = () => {
-        if (selectedIds.size === filteredClients.length) {
+        if (selectedIds.size === filteredDeals.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(filteredClients.map((c: any) => c.id)));
+            setSelectedIds(new Set(filteredDeals.map((d: any) => d.client.id)));
         }
     };
 
+    const [bulkFollowUpDate, setBulkFollowUpDate] = useState('');
+
     const handleBulkUpdate = () => {
-        if (!bulkStatus) return;
+        if (!bulkStatus && !bulkFollowUpDate) return;
         router.patch('/crm/bulk-update', {
             ids: Array.from(selectedIds),
             ...(bulkStatus && { status: bulkStatus }),
+            ...(bulkFollowUpDate && { next_follow_up_at: bulkFollowUpDate }),
         }, { preserveScroll: true, onFinish: () => {
             setSelectedIds(new Set());
             setBulkStatus('');
+            setBulkFollowUpDate('');
         }});
     };
 
-    const filteredClients = useMemo(() => {
+    const filteredDeals = useMemo(() => {
         const today = new Date().toISOString().split('T')[0];
-        const filtered = clientsList.filter((c: any) => {
+        const filtered = dealsList.filter((d: any) => {
+            const c = d.client || {};
             const matchSearch = !search ||
                 c.company_name.toLowerCase().includes(search.toLowerCase()) ||
                 c.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -160,31 +183,31 @@ export default function LeadsIndex() {
                 c.primaryContact?.last_name?.toLowerCase().includes(search.toLowerCase());
             const matchLetter = !letterFilter || c.company_name.charAt(0).toUpperCase() === letterFilter;
             const matchSource = sourceFilter === 'all' || c.source === sourceFilter;
-            const matchDueToday = !dueTodayOnly || (c.next_follow_up_at && c.next_follow_up_at.split('T')[0] <= today);
+            const matchDueToday = !dueTodayOnly || (d.next_follow_up_at && d.next_follow_up_at.split('T')[0] <= today);
             return matchSearch && matchLetter && matchSource && matchDueToday;
         });
         if (sortByScore) {
-            filtered.sort((a: any, b: any) => calculateScore(b) - calculateScore(a));
+            filtered.sort((a: any, b: any) => calculateScore(b.client) - calculateScore(a.client));
         }
         return filtered;
-    }, [clientsList, search, letterFilter, sourceFilter, dueTodayOnly, sortByScore]);
+    }, [dealsList, search, letterFilter, sourceFilter, dueTodayOnly, sortByScore]);
 
     const letterCounts = useMemo(() => {
         const counts: Record<string, number> = {};
-        clientsList.forEach((c: any) => {
-            const letter = c.company_name?.charAt(0)?.toUpperCase();
+        dealsList.forEach((d: any) => {
+            const letter = d.client?.company_name?.charAt(0)?.toUpperCase();
             if (letter && /[A-Z]/.test(letter)) {
                 counts[letter] = (counts[letter] || 0) + 1;
             }
         });
         return counts;
-    }, [clientsList]);
+    }, [dealsList]);
 
-    const handleStatusChange = (clientId: number, newStatus: string, followUpDate?: string) => {
+    const handleFollowUpChange = (deal: any, followUpDate: string) => {
         setOpenStatusId(null);
-        router.patch(`/crm/${clientId}/status`, {
-            status: newStatus,
-            ...(followUpDate && { next_follow_up_at: followUpDate }),
+        router.patch(`/deals/${deal.id}/status`, {
+            stage: deal.stage,
+            next_follow_up_at: followUpDate,
         }, {
             preserveScroll: true,
         });
@@ -213,6 +236,12 @@ export default function LeadsIndex() {
                                 <LayoutGrid className="w-4 h-4" />
                             </button>
                         </div>
+                        <button
+                            onClick={() => setShowCampaignModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600/20 border border-indigo-500/20 transition-colors text-sm font-medium"
+                        >
+                            <Rocket className="w-4 h-4" /> Start Sale Campaign
+                        </button>
                         <button
                             onClick={() => setShowQuickLeadModal(true)}
                             className="glass-button flex items-center gap-2 text-sm"
@@ -381,16 +410,21 @@ export default function LeadsIndex() {
                                     </Link>
                                 ))}
                             </div>
-                            <select
-                                value={sourceFilter}
-                                onChange={(e) => setSourceFilter(e.target.value)}
-                                className="glass-input text-sm"
-                            >
-                                <option value="all">All Sources</option>
-                                {SOURCES.map(s => (
-                                    <option key={s} value={s}>{s}</option>
+                            <div className="flex flex-wrap gap-2">
+                                {['all', ...SOURCES].map(s => (
+                                    <button
+                                        key={s}
+                                        onClick={() => setSourceFilter(s)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                            sourceFilter === s
+                                                ? 'bg-indigo-600 text-white'
+                                                : 'bg-slate-100 dark:bg-white/10 text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20 hover:text-slate-900 dark:hover:text-white'
+                                        }`}
+                                    >
+                                        {s === 'all' ? 'All Sources' : s}
+                                    </button>
                                 ))}
-                            </select>
+                            </div>
                             <button
                                 onClick={() => setDueTodayOnly(!dueTodayOnly)}
                                 className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
@@ -605,27 +639,7 @@ export default function LeadsIndex() {
                             </GlassCard>
                         )
                     ) : (
-                        <>
-                            <div className="flex bg-slate-100 dark:bg-white/10 rounded-lg p-0.5 mb-4 w-fit">
-                                <button
-                                    onClick={() => setBoardTab('pipeline')}
-                                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${boardTab === 'pipeline' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                                >
-                                    Sales Pipeline
-                                </button>
-                                <button
-                                    onClick={() => setBoardTab('status')}
-                                    className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${boardTab === 'status' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                                >
-                                    Status Board
-                                </button>
-                            </div>
-                            {boardTab === 'pipeline' ? (
-                                <PipelineBoard clients={clientsList} />
-                            ) : (
-                                <KanbanBoard clients={clientsList} />
-                            )}
-                        </>
+                        <PipelineBoard clients={clientsList} />
                     )}
                 </div>
             </div>
@@ -634,16 +648,12 @@ export default function LeadsIndex() {
                 <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl px-6 py-4 flex items-center gap-4">
                     <span className="text-sm font-medium text-slate-900 dark:text-white">{selectedIds.size} selected</span>
                     <div className="w-px h-6 bg-slate-100 dark:bg-white/10" />
-                    <select
+                    <StatusChips
                         value={bulkStatus}
-                        onChange={(e) => setBulkStatus(e.target.value)}
-                        className="glass-input text-sm"
-                    >
-                        <option value="">Change status...</option>
-                        {STATUS_OPTIONS.map(o => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
-                        ))}
-                    </select>
+                        onChange={setBulkStatus}
+                        options={STATUS_OPTIONS}
+                        size="sm"
+                    />
                     <button
                         onClick={handleBulkUpdate}
                         disabled={!bulkStatus}
@@ -657,6 +667,78 @@ export default function LeadsIndex() {
                     >
                         <X className="w-4 h-4" />
                     </button>
+                </div>
+            )}
+            {/* Start Sale Campaign Modal */}
+            {showCampaignModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Start Sale Campaign</h3>
+                                <p className="text-xs text-slate-400">Pick an existing client to start a new deal at New Lead</p>
+                            </div>
+                            <button onClick={() => { setShowCampaignModal(false); setCampaignClientId(''); setCampaignSearch(''); }} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="relative">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search clients..."
+                                    value={campaignSearch}
+                                    onChange={(e) => setCampaignSearch(e.target.value)}
+                                    className="glass-input w-full pl-10 text-sm"
+                                />
+                            </div>
+
+                            <div className="max-h-64 overflow-y-auto space-y-1 border border-slate-200 dark:border-white/10 rounded-lg p-1.5">
+                                {filteredCampaignClients.length > 0 ? (
+                                    filteredCampaignClients.map((c: any) => (
+                                        <button
+                                            key={c.id}
+                                            onClick={() => setCampaignClientId(String(c.id))}
+                                            className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                                                campaignClientId === String(c.id)
+                                                    ? 'bg-indigo-600 text-white'
+                                                    : 'hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300'
+                                            }`}
+                                        >
+                                            {c.company_name}
+                                            {c.first_converted_at && (
+                                                <span className={`ml-2 text-xs ${campaignClientId === String(c.id) ? 'text-indigo-200' : 'text-slate-400'}`}>
+                                                    (Existing client)
+                                                </span>
+                                            )}
+                                        </button>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-slate-400 text-center py-6">No eligible clients found</p>
+                                )}
+                            </div>
+
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowCampaignModal(false); setCampaignClientId(''); setCampaignSearch(''); }}
+                                    className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 text-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleStartCampaign}
+                                    disabled={!campaignClientId}
+                                    className="glass-button text-sm font-medium disabled:opacity-40"
+                                >
+                                    Start Campaign
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
             {/* Quick Lead Modal */}
@@ -710,15 +792,13 @@ export default function LeadsIndex() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs text-slate-400 mb-1">Stage / Status</label>
-                                    <select
+                                    <label className="block text-xs text-slate-400 mb-1">Tier</label>
+                                    <StatusChips
                                         value={quickLeadForm.data.status}
-                                        onChange={(e) => quickLeadForm.setData('status', e.target.value)}
-                                        className="glass-input w-full text-sm"
-                                    >
-                                        <option value="lead">Lead</option>
-                                        <option value="prospect">Prospect</option>
-                                    </select>
+                                        onChange={(v) => quickLeadForm.setData('status', v)}
+                                        options={STATUS_OPTIONS}
+                                        size="sm"
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-xs text-slate-400 mb-1">Source</label>

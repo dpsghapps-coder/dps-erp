@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { usePage, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import { MiniCalendar, AddHolidayModal } from '@/Components/HRM';
 import { Head, Link } from '@inertiajs/react';
 import { 
@@ -121,15 +121,16 @@ export default function HrmHolidays() {
             <GlassCard className="mb-6">
                 <div className="flex flex-wrap gap-4 items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <select 
+                        <StatusChips
+                            name="Type"
                             value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value as any)}
-                            className="glass-input"
-                        >
-                            <option value="all">All Types</option>
-                            <option value="company">Company</option>
-                            <option value="public">Public</option>
-                        </select>
+                            onChange={(v) => setTypeFilter(v as any)}
+                            options={[
+                                { value: 'all', label: 'All Types' },
+                                { value: 'company', label: 'Company' },
+                                { value: 'public', label: 'Public' },
+                            ]}
+                        />
                         <select 
                             value={year}
                             onChange={(e) => setYear(parseInt(e.target.value))}

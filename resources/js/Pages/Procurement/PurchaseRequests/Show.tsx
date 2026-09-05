@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusBadge, StatusChips } from '@/Components/ui';
 import ProcurementTabs from '@/Components/ProcurementTabs';
 import { Head, usePage, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Send, Check, X, MessageSquare, Clock, Pause, FileText, Download, Upload, Search as SearchIcon, Package } from 'lucide-react';
@@ -720,15 +720,16 @@ export default function PurchaseRequestShow() {
                                     <div className="grid grid-cols-3 gap-3">
                                         <div>
                                             <label className="block text-xs font-medium mb-1 text-slate-500">Status *</label>
-                                            <select
-                                                className="glass-input w-full text-sm"
+                                            <StatusChips
                                                 value={item.inspection_status}
-                                                onChange={(e) => updateInspectionItem(index, 'inspection_status', e.target.value)}
-                                            >
-                                                <option value="accepted">Accepted</option>
-                                                <option value="rejected">Rejected</option>
-                                                <option value="partial">Partial</option>
-                                            </select>
+                                                onChange={(v) => updateInspectionItem(index, 'inspection_status', v)}
+                                                options={[
+                                                    { value: 'accepted', label: 'Accepted' },
+                                                    { value: 'rejected', label: 'Rejected' },
+                                                    { value: 'partial', label: 'Partial' },
+                                                ]}
+                                                size="sm"
+                                            />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-medium mb-1 text-slate-500">Accepted Qty</label>

@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, X, Plus } from 'lucide-react';
 import { useState } from 'react';
@@ -110,17 +110,17 @@ export default function CampaignEdit() {
 
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Status *</label>
-                                    <select
+                                    <StatusChips
                                         value={data.status}
-                                        onChange={(e) => setData('status', e.target.value)}
-                                        className="glass-input w-full"
-                                    >
-                                        <option value="draft">Draft</option>
-                                        <option value="scheduled">Scheduled</option>
-                                        <option value="active">Active</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="cancelled">Cancelled</option>
-                                    </select>
+                                        onChange={(v) => setData('status', v)}
+                                        options={[
+                                            { value: 'draft', label: 'Draft' },
+                                            { value: 'scheduled', label: 'Scheduled' },
+                                            { value: 'active', label: 'Active' },
+                                            { value: 'completed', label: 'Completed' },
+                                            { value: 'cancelled', label: 'Cancelled' },
+                                        ]}
+                                    />
                                 </div>
                             </div>
 

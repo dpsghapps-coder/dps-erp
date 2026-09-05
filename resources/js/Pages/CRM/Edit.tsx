@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import GPSMapPicker from '@/Components/GPSMapPicker';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, MapPin, X } from 'lucide-react';
@@ -11,7 +11,7 @@ export default function ClientEdit() {
         company_name: client?.company_name || '',
         email: client?.email || '',
         phone: client?.phone || '',
-        status: client?.status || 'lead',
+        status: client?.status || '',
         industry: client?.industry || '',
         website: client?.website || '',
         address: client?.address || '',
@@ -19,7 +19,6 @@ export default function ClientEdit() {
         country: client?.country || '',
         location: client?.location || '',
         source: client?.source || '',
-        estimated_value: client?.estimated_value || '',
         notes: client?.notes || '',
         linkedin: client?.linkedin || '',
         facebook: client?.facebook || '',
@@ -63,35 +62,34 @@ export default function ClientEdit() {
                                 {errors.company_name && <p className="text-red-500 text-sm mt-1">{errors.company_name}</p>}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Status *</label>
-                                    <select 
-                                        value={data.status}
-                                        onChange={(e) => setData('status', e.target.value)}
-                                        className="glass-input w-full"
-                                    >
-                                        <option value="lead">Lead</option>
-                                        <option value="prospect">Prospect</option>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
-                                </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Tier</label>
+                                <StatusChips
+                                    value={data.status}
+                                    onChange={(v) => setData('status', v)}
+                                    options={[
+                                        { value: 'bronze', label: 'Bronze' },
+                                        { value: 'silver', label: 'Silver' },
+                                        { value: 'gold', label: 'Gold' },
+                                        { value: 'platinum', label: 'Platinum' },
+                                    ]}
+                                />
+                                <p className="text-xs text-slate-400 mt-1">Assigned automatically when a New Business deal converts, or set manually here.</p>
+                            </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Industry</label>
-                                    <input 
-                                        type="text"
-                                        value={data.industry}
-                                        onChange={(e) => setData('industry', e.target.value)}
-                                        className="glass-input w-full"
-                                    />
-                                </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Industry</label>
+                                <input
+                                    type="text"
+                                    value={data.industry}
+                                    onChange={(e) => setData('industry', e.target.value)}
+                                    className="glass-input w-full"
+                                />
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium mb-2">Website</label>
-                                <input 
+                                <input
                                     type="url"
                                     value={data.website}
                                     onChange={(e) => setData('website', e.target.value)}
@@ -100,30 +98,15 @@ export default function ClientEdit() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Source</label>
-                                    <input
-                                        type="text"
-                                        value={data.source}
-                                        onChange={(e) => setData('source', e.target.value)}
-                                        className="glass-input w-full"
-                                        placeholder="Referral, Ads, etc."
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Estimated Value</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={data.estimated_value}
-                                        onChange={(e) => setData('estimated_value', e.target.value)}
-                                        className="glass-input w-full"
-                                        placeholder="e.g. 15000"
-                                    />
-                                    {errors.estimated_value && <p className="text-red-500 text-sm mt-1">{errors.estimated_value}</p>}
-                                </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Source</label>
+                                <input
+                                    type="text"
+                                    value={data.source}
+                                    onChange={(e) => setData('source', e.target.value)}
+                                    className="glass-input w-full"
+                                    placeholder="Referral, Ads, etc."
+                                />
                             </div>
                         </div>
                     </GlassCard>

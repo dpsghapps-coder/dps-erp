@@ -5,37 +5,64 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCurrency } from '@/Utils/currency';
 
+const PRODUCT_TYPE = 'App\\Models\\Product';
+const SERVICE_TYPE = 'App\\Models\\Service';
+
 interface LineItem {
     product_id: string;
+    product_type: string;
     description: string;
     qty: number;
     unit_price: number;
     discount_pct: number;
 }
 
+function priceForQuantity(item: any, qty: number): number {
+    const tiers = item?.prices || [];
+    const applicable = tiers
+        .filter((p: any) => qty >= p.min_qty && (p.max_qty === null || p.max_qty === undefined || qty <= p.max_qty))
+        .sort((a: any, b: any) => b.min_qty - a.min_qty)[0];
+
+    return applicable ? Number(applicable.unit_price) : Number(item?.default_price || 0);
+}
+
+function findPickable(products: any[], services: any[], type: string, id: string) {
+    if (type === PRODUCT_TYPE) return (products || []).find((p: any) => String(p.id) === String(id));
+    if (type === SERVICE_TYPE) return (services || []).find((s: any) => String(s.id) === String(id));
+    return null;
+}
+
 export default function OrderCreate() {
-    const { clients } = usePage().props;
+    const page = usePage().props as any;
+    const { clients, products, services } = page;
     const formatCurrency = useCurrency();
+    const isAdmin = page.auth?.user?.role?.name === 'admin';
+    const permissions = (page.auth?.permissions as string[]) || [];
+    const canApplyDiscount = isAdmin || permissions.includes('*') || permissions.includes('orders.apply_discount');
     const { data, setData, post, processing, errors } = useForm({
         client_id: '',
         contact_id: '',
         delivery_date: '',
         notes: '',
-        items: [{ product_id: '', description: '', qty: 1, unit_price: 0, discount_pct: 0 }] as LineItem[],
+        items: [{ product_id: '', product_type: '', description: '', qty: 1, unit_price: 0, discount_pct: 0 }] as LineItem[],
     });
 
     const [selectedClient, setSelectedClient] = useState<any>(null);
-    const [products, setProducts] = useState<any[]>([]);
 
     useEffect(() => {
         if (data.client_id && clients) {
             const client = clients.find((c: any) => c.id == data.client_id);
             setSelectedClient(client);
+            if (data.contact_id && !client?.contacts?.some((ct: any) => ct.id == data.contact_id)) {
+                setData('contact_id', '');
+            }
+        } else {
+            setSelectedClient(null);
         }
     }, [data.client_id, clients]);
 
     const addItem = () => {
-        setData('items', [...data.items, { product_id: '', description: '', qty: 1, unit_price: 0, discount_pct: 0 }]);
+        setData('items', [...data.items, { product_id: '', product_type: '', description: '', qty: 1, unit_price: 0, discount_pct: 0 }]);
     };
 
     const removeItem = (index: number) => {
@@ -47,15 +74,25 @@ export default function OrderCreate() {
     const updateItem = (index: number, field: keyof LineItem, value: any) => {
         const newItems = [...data.items];
         newItems[index] = { ...newItems[index], [field]: value };
-        
-        if (field === 'product_id' && value) {
-            const product = products.find((p: any) => p.id == value);
-            if (product) {
-                newItems[index].description = product.name;
-                newItems[index].unit_price = product.default_price || 0;
+
+        if (field === 'product_id') {
+            // value arrives as "type|id" from the picker
+            const [type, id] = String(value).split('|');
+            newItems[index].product_type = type || '';
+            newItems[index].product_id = id || '';
+
+            const picked = findPickable(products, services, type, id);
+            if (picked) {
+                newItems[index].description = picked.name;
+                newItems[index].unit_price = priceForQuantity(picked, newItems[index].qty);
+            }
+        } else if (field === 'qty') {
+            const picked = findPickable(products, services, newItems[index].product_type, newItems[index].product_id);
+            if (picked) {
+                newItems[index].unit_price = priceForQuantity(picked, value);
             }
         }
-        
+
         setData('items', newItems);
     };
 
@@ -63,8 +100,8 @@ export default function OrderCreate() {
         return item.qty * item.unit_price * (1 - item.discount_pct / 100);
     };
 
-    const subtotal = data.items.reduce((sum, item) => sum + calculateLineTotal(item), 0);
-    const discount = 0;
+    const subtotal = data.items.reduce((sum, item) => sum + item.qty * item.unit_price, 0);
+    const discount = data.items.reduce((sum, item) => sum + item.qty * item.unit_price * (item.discount_pct / 100), 0);
     const tax = 0;
     const grandTotal = subtotal - discount + tax;
 
@@ -90,11 +127,11 @@ export default function OrderCreate() {
                     <div className="lg:col-span-2 space-y-6">
                         <GlassCard>
                             <h2 className="text-lg font-semibold mb-4">Order Details</h2>
-                            
+
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Client *</label>
-                                    <select 
+                                    <select
                                         value={data.client_id}
                                         onChange={(e) => setData('client_id', e.target.value)}
                                         className="glass-input w-full"
@@ -108,8 +145,26 @@ export default function OrderCreate() {
                                 </div>
 
                                 <div>
+                                    <label className="block text-sm font-medium mb-2">Contact</label>
+                                    <select
+                                        value={data.contact_id}
+                                        onChange={(e) => setData('contact_id', e.target.value)}
+                                        disabled={!selectedClient?.contacts?.length}
+                                        className="glass-input w-full"
+                                    >
+                                        <option value="">
+                                            {selectedClient?.contacts?.length ? 'Select Contact' : 'No contacts for this client'}
+                                        </option>
+                                        {(selectedClient?.contacts || []).map((ct: any) => (
+                                            <option key={ct.id} value={ct.id}>{ct.first_name} {ct.last_name}</option>
+                                        ))}
+                                    </select>
+                                    {errors.contact_id && <p className="text-red-400 text-sm mt-1">{errors.contact_id}</p>}
+                                </div>
+
+                                <div>
                                     <label className="block text-sm font-medium mb-2">Delivery Date</label>
-                                    <input 
+                                    <input
                                         type="date"
                                         value={data.delivery_date}
                                         onChange={(e) => setData('delivery_date', e.target.value)}
@@ -120,7 +175,7 @@ export default function OrderCreate() {
 
                             <div className="mt-4">
                                 <label className="block text-sm font-medium mb-2">Notes</label>
-                                <textarea 
+                                <textarea
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
                                     className="glass-input w-full h-20"
@@ -141,7 +196,7 @@ export default function OrderCreate() {
                                 <table className="w-full">
                                     <thead>
                                         <tr className="border-b border-slate-200 dark:border-white/10">
-                                            <th className="text-left py-2 px-2 text-sm font-medium text-slate-400">Product</th>
+                                            <th className="text-left py-2 px-2 text-sm font-medium text-slate-400">Product / Service</th>
                                             <th className="text-left py-2 px-2 text-sm font-medium text-slate-400">Description</th>
                                             <th className="text-right py-2 px-2 text-sm font-medium text-slate-400 w-20">Qty</th>
                                             <th className="text-right py-2 px-2 text-sm font-medium text-slate-400 w-24">Unit Price</th>
@@ -154,19 +209,33 @@ export default function OrderCreate() {
                                         {data.items.map((item, index) => (
                                             <tr key={index} className="border-b border-slate-100 dark:border-white/5">
                                                 <td className="py-2 px-2">
-                                                    <select 
-                                                        value={item.product_id}
+                                                    <select
+                                                        value={item.product_type && item.product_id ? `${item.product_type}|${item.product_id}` : ''}
                                                         onChange={(e) => updateItem(index, 'product_id', e.target.value)}
                                                         className="glass-input w-full text-sm"
                                                     >
                                                         <option value="">Select</option>
-                                                        {(products || []).map((p: any) => (
-                                                            <option key={p.id} value={p.id}>{p.name}</option>
-                                                        ))}
+                                                        {(products || []).length > 0 && (
+                                                            <optgroup label="Products">
+                                                                {products.map((p: any) => (
+                                                                    <option key={`p-${p.id}`} value={`${PRODUCT_TYPE}|${p.id}`}>{p.name}</option>
+                                                                ))}
+                                                            </optgroup>
+                                                        )}
+                                                        {(services || []).length > 0 && (
+                                                            <optgroup label="Services">
+                                                                {services.map((s: any) => (
+                                                                    <option key={`s-${s.id}`} value={`${SERVICE_TYPE}|${s.id}`}>{s.name}</option>
+                                                                ))}
+                                                            </optgroup>
+                                                        )}
                                                     </select>
+                                                    {(errors as any)[`items.${index}.product_id`] && (
+                                                        <p className="text-red-400 text-xs mt-1">{(errors as any)[`items.${index}.product_id`]}</p>
+                                                    )}
                                                 </td>
                                                 <td className="py-2 px-2">
-                                                    <input 
+                                                    <input
                                                         type="text"
                                                         value={item.description}
                                                         onChange={(e) => updateItem(index, 'description', e.target.value)}
@@ -174,7 +243,7 @@ export default function OrderCreate() {
                                                     />
                                                 </td>
                                                 <td className="py-2 px-2">
-                                                    <input 
+                                                    <input
                                                         type="number"
                                                         value={item.qty}
                                                         onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value) || 0)}
@@ -184,7 +253,7 @@ export default function OrderCreate() {
                                                     />
                                                 </td>
                                                 <td className="py-2 px-2">
-                                                    <input 
+                                                    <input
                                                         type="number"
                                                         value={item.unit_price}
                                                         onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
@@ -194,21 +263,25 @@ export default function OrderCreate() {
                                                     />
                                                 </td>
                                                 <td className="py-2 px-2">
-                                                    <input 
-                                                        type="number"
-                                                        value={item.discount_pct}
-                                                        onChange={(e) => updateItem(index, 'discount_pct', parseFloat(e.target.value) || 0)}
-                                                        className="glass-input w-full text-sm text-right"
-                                                        min="0"
-                                                        max="100"
-                                                        step="0.01"
-                                                    />
+                                                    {canApplyDiscount ? (
+                                                        <input
+                                                            type="number"
+                                                            value={item.discount_pct}
+                                                            onChange={(e) => updateItem(index, 'discount_pct', parseFloat(e.target.value) || 0)}
+                                                            className="glass-input w-full text-sm text-right"
+                                                            min="0"
+                                                            max="100"
+                                                            step="0.01"
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm text-right text-slate-400 px-1">{item.discount_pct || 0}%</p>
+                                                    )}
                                                 </td>
                                                 <td className="py-2 px-2 text-right font-medium">
                                                     {formatCurrency(calculateLineTotal(item))}
                                                 </td>
                                                 <td className="py-2 px-2">
-                                                    <button 
+                                                    <button
                                                         type="button"
                                                         onClick={() => removeItem(index)}
                                                         disabled={data.items.length === 1}
@@ -228,7 +301,7 @@ export default function OrderCreate() {
                     <div className="space-y-6">
                         <GlassCard>
                             <h2 className="text-lg font-semibold mb-4">Summary</h2>
-                            
+
                             <div className="space-y-3">
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Subtotal</span>

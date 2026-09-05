@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { usePage, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, Pagination } from '@/Components/ui';
+import { GlassCard, PageHeader, Pagination, StatusChips } from '@/Components/ui';
 import { Head, Link } from '@inertiajs/react';
 import { 
     Bell, 
@@ -109,17 +109,17 @@ export default function HrmNoticeboard() {
                 <GlassCard className="lg:col-span-3">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Announcements</h3>
-                        <div className="flex gap-2">
-                            <select 
-                                value={typeFilter}
-                                onChange={(e) => setTypeFilter(e.target.value)}
-                                className="glass-input text-sm"
-                            >
-                                <option value="all">All Types</option>
-                                <option value="announcement">Announcements</option>
-                                <option value="general">General</option>
-                            </select>
-                        </div>
+                        <StatusChips
+                            name="Type"
+                            size="sm"
+                            value={typeFilter}
+                            onChange={setTypeFilter}
+                            options={[
+                                { value: 'all', label: 'All Types' },
+                                { value: 'announcement', label: 'Announcements' },
+                                { value: 'general', label: 'General' },
+                            ]}
+                        />
                     </div>
                     <div className="space-y-4">
                         {notices.filter((n: any) => typeFilter === 'all' || n.type === typeFilter).map((notice: any) => {

@@ -2,7 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import InventoryTabs from '@/Components/InventoryTabs';
 import { Head, usePage, useForm, router } from '@inertiajs/react';
-import { Plus, Search, Package, Calendar, Pencil, Trash2, DollarSign, AlertTriangle, CheckCircle, RefreshCw } from 'lucide-react';
+import { Plus, Search, Package, Calendar, Pencil, Trash2, DollarSign, AlertTriangle, CheckCircle, RefreshCw, X } from 'lucide-react';
 import { useState } from 'react';
 import { useCurrency } from '@/Utils/currency';
 import Swal from 'sweetalert2';
@@ -10,7 +10,7 @@ import Swal from 'sweetalert2';
 type SubTab = 'purchases' | 'levels';
 
 export default function StockIndex() {
-    const { stocks, products, stockLevels, suppliers, categories } = usePage().props as any;
+    const { stocks, products, stockLevels, suppliers, categories, costTypes } = usePage().props as any;
     const formatCurrency = useCurrency();
     const [search, setSearch] = useState('');
     const [subTab, setSubTab] = useState<SubTab>('purchases');
@@ -19,17 +19,35 @@ export default function StockIndex() {
     const [selectedCategory, setSelectedCategory] = useState('');
     const [thresholdModal, setThresholdModal] = useState<{ open: boolean; item: any; value: string; saving: boolean }>({ open: false, item: null, value: '', saving: false });
 
-    const { data, setData, post, put, delete: destroy, processing, errors, reset } = useForm({
+    const emptyForm = {
         product_id: '',
         supplier_id: '',
-        qty_purchased: '',
-        price: '',
+        units_purchased: '1',
+        qty_per_unit: '',
+        material_cost: '',
+        cost_items: [] as { label: string; amount: string }[],
         date_purchased: new Date().toISOString().split('T')[0],
         notes: '',
         purchased_by: '',
-    });
+    };
 
-    const totalCost = Number(data.qty_purchased || 0) * Number(data.price || 0);
+    const { data, setData, post, put, delete: destroy, processing, errors, reset } = useForm(emptyForm);
+
+    const selectedMaterial = (products || []).find((p: any) => p.id === data.product_id);
+    const materialUom = selectedMaterial?.uom || 'Units';
+
+    const qtyPurchased = Number(data.units_purchased || 0) * Number(data.qty_per_unit || 0);
+    const extraCostsTotal = data.cost_items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const totalCost = Number(data.material_cost || 0) + extraCostsTotal;
+    const unitPrice = qtyPurchased > 0 ? totalCost / qtyPurchased : 0;
+
+    const addCostItem = () => setData('cost_items', [...data.cost_items, { label: costTypes?.[0] || '', amount: '' }]);
+    const removeCostItem = (index: number) => setData('cost_items', data.cost_items.filter((_, i) => i !== index));
+    const updateCostItem = (index: number, field: 'label' | 'amount', value: string) => {
+        const items = [...data.cost_items];
+        items[index] = { ...items[index], [field]: value };
+        setData('cost_items', items);
+    };
 
     const filteredProducts = selectedCategory
         ? (products || []).filter((p: any) => p.item_category === selectedCategory)
@@ -89,8 +107,10 @@ export default function StockIndex() {
         setData({
             product_id: stock.product_id,
             supplier_id: stock.supplier_id || '',
-            qty_purchased: stock.qty_purchased,
-            price: stock.price,
+            units_purchased: String(stock.units_purchased ?? 1),
+            qty_per_unit: String(stock.qty_per_unit ?? stock.qty_purchased ?? ''),
+            material_cost: String(stock.material_cost ?? ''),
+            cost_items: (stock.cost_items || []).map((item: any) => ({ label: item.label, amount: String(item.amount) })),
             date_purchased: stock.date_purchased ? stock.date_purchased.split('T')[0] : new Date().toISOString().split('T')[0],
             notes: stock.notes || '',
             purchased_by: stock.purchased_by || '',
@@ -115,16 +135,7 @@ export default function StockIndex() {
     const openCreate = () => {
         setEditingStock(null);
         setSelectedCategory('');
-        reset();
-        setData({
-            product_id: '',
-            supplier_id: '',
-            qty_purchased: '',
-            price: '',
-            date_purchased: new Date().toISOString().split('T')[0],
-            notes: '',
-            purchased_by: '',
-        });
+        setData({ ...emptyForm, date_purchased: new Date().toISOString().split('T')[0] });
         setShowModal(true);
     };
 
@@ -204,7 +215,10 @@ export default function StockIndex() {
                                                 <p className="font-medium text-slate-900">{stock.product?.item_name}</p>
                                                 <p className="text-xs font-mono text-slate-400">{stock.product?.material_id}</p>
                                             </td>
-                                            <td className="py-3 px-4 text-right font-medium text-slate-900">{stock.qty_purchased}</td>
+                                            <td className="py-3 px-4 text-right font-medium text-slate-900">
+                                                {stock.qty_purchased} {stock.product?.uom}
+                                                <span className="block text-xs text-slate-400 font-normal">{stock.units_purchased} × {stock.qty_per_unit}</span>
+                                            </td>
                                             <td className="py-3 px-4 text-right text-slate-600">
                                                 {stock.price ? formatCurrency(Number(stock.price)) : '-'}
                                             </td>
@@ -267,7 +281,7 @@ export default function StockIndex() {
                                     </div>
                                     <div className="space-y-1 text-sm text-slate-600">
                                         <div className="flex justify-between"><span>Date:</span><span>{stock.date_purchased ? new Date(stock.date_purchased).toLocaleDateString() : '-'}</span></div>
-                                        <div className="flex justify-between"><span>Qty:</span><span className="font-medium">{stock.qty_purchased}</span></div>
+                                        <div className="flex justify-between"><span>Qty:</span><span className="font-medium">{stock.qty_purchased} {stock.product?.uom} ({stock.units_purchased} × {stock.qty_per_unit})</span></div>
                                         {stock.price > 0 && <div className="flex justify-between"><span>Price:</span><span>{formatCurrency(Number(stock.price))}</span></div>}
                                         {stock.total_cost > 0 && <div className="flex justify-between"><span>Total:</span><span className="font-semibold">{formatCurrency(Number(stock.total_cost))}</span></div>}
                                         {stock.supplier?.company_name && <div className="flex justify-between"><span>Supplier:</span><span>{stock.supplier.company_name}</span></div>}
@@ -439,46 +453,116 @@ export default function StockIndex() {
                                         ))}
                                     </select>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Date Purchased *</label>
-                                        <input
-                                            type="date"
-                                            value={data.date_purchased}
-                                            onChange={(e) => setData('date_purchased', e.target.value)}
-                                            className="glass-input w-full"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Qty *</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={data.qty_purchased}
-                                            onChange={(e) => setData('qty_purchased', e.target.value)}
-                                            className="glass-input w-full"
-                                            required
-                                        />
-                                    </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Date Purchased *</label>
+                                    <input
+                                        type="date"
+                                        value={data.date_purchased}
+                                        onChange={(e) => setData('date_purchased', e.target.value)}
+                                        className="glass-input w-full"
+                                        required
+                                    />
                                 </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Price ($) *</label>
+                                        <label className="block text-sm font-medium mb-2">Units Purchased *</label>
                                         <input
                                             type="number"
+                                            min="0.01"
                                             step="0.01"
-                                            min="0"
-                                            value={data.price}
-                                            onChange={(e) => setData('price', e.target.value)}
+                                            value={data.units_purchased}
+                                            onChange={(e) => setData('units_purchased', e.target.value)}
                                             className="glass-input w-full"
                                             required
                                         />
+                                        {errors.units_purchased && <p className="text-red-400 text-sm mt-1">{errors.units_purchased}</p>}
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Qty per Unit ({materialUom}) *</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={data.qty_per_unit}
+                                            onChange={(e) => setData('qty_per_unit', e.target.value)}
+                                            className="glass-input w-full"
+                                            required
+                                        />
+                                        {errors.qty_per_unit && <p className="text-red-400 text-sm mt-1">{errors.qty_per_unit}</p>}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Total Quantity Received</label>
+                                    <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
+                                        {qtyPurchased} {materialUom}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Material Cost ($) *</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={data.material_cost}
+                                        onChange={(e) => setData('material_cost', e.target.value)}
+                                        className="glass-input w-full"
+                                        required
+                                    />
+                                    {errors.material_cost && <p className="text-red-400 text-sm mt-1">{errors.material_cost}</p>}
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-sm font-medium">Extra Costs</label>
+                                        <button type="button" onClick={addCostItem} className="text-indigo-600 hover:text-indigo-800 text-sm inline-flex items-center gap-1">
+                                            <Plus className="w-3.5 h-3.5" /> Add cost
+                                        </button>
+                                    </div>
+                                    {data.cost_items.length > 0 && (
+                                        <div className="space-y-2">
+                                            {data.cost_items.map((item, index) => (
+                                                <div key={index} className="flex gap-2 items-center">
+                                                    <select
+                                                        value={item.label}
+                                                        onChange={(e) => updateCostItem(index, 'label', e.target.value)}
+                                                        className="glass-input flex-1"
+                                                        required
+                                                    >
+                                                        <option value="">Select type</option>
+                                                        {(costTypes || []).map((type: string) => (
+                                                            <option key={type} value={type}>{type}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        placeholder="Amount"
+                                                        value={item.amount}
+                                                        onChange={(e) => updateCostItem(index, 'amount', e.target.value)}
+                                                        className="glass-input w-28"
+                                                        required
+                                                    />
+                                                    <button type="button" onClick={() => removeCostItem(index)} className="p-2 text-red-400 hover:bg-slate-100 rounded">
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Total Cost</label>
                                         <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
                                             {formatCurrency(totalCost)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Price per Unit</label>
+                                        <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
+                                            {formatCurrency(unitPrice)} / {materialUom}
                                         </div>
                                     </div>
                                 </div>

@@ -12,7 +12,6 @@ export default function ClientCreate() {
         company_name: '',
         email: '',
         phone: '',
-        status: 'lead',
         industry: '',
         website: '',
         address: '',
@@ -65,31 +64,15 @@ export default function ClientCreate() {
                                 {errors.company_name && <p className="text-red-500 text-sm mt-1">{errors.company_name}</p>}
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Status *</label>
-                                    <select 
-                                        value={data.status}
-                                        onChange={(e) => setData('status', e.target.value)}
-                                        className="glass-input w-full"
-                                    >
-                                        <option value="lead">Lead</option>
-                                        <option value="prospect">Prospect</option>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Industry</label>
-                                    <input 
-                                        type="text"
-                                        value={data.industry}
-                                        onChange={(e) => setData('industry', e.target.value)}
-                                        className="glass-input w-full"
-                                        placeholder="Industry"
-                                    />
-                                </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Industry</label>
+                                <input
+                                    type="text"
+                                    value={data.industry}
+                                    onChange={(e) => setData('industry', e.target.value)}
+                                    className="glass-input w-full"
+                                    placeholder="Industry"
+                                />
                             </div>
 
                             <div>

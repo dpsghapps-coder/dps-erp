@@ -8,9 +8,13 @@ use App\Models\Employee;
 use App\Models\Permission;
 use App\Models\ProductCategory;
 use App\Models\Role;
+use App\Models\Setting;
 use App\Models\StaffLevel;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -226,13 +230,103 @@ class AdminController extends Controller
 
     public function settings()
     {
-        $uoms = \App\Models\Setting::where('key', 'like', 'uom_%')->get();
+        $uoms = Setting::where('key', 'like', 'uom_%')->get();
         $categories = ProductCategory::with('attributes')->orderBy('name')->get();
-        $attributes = \App\Models\Setting::where('key', 'like', 'attr_%')->get();
+        $attributes = Setting::where('key', 'like', 'attr_%')->get();
+        $extraCostTypes = Setting::where('key', 'like', 'extra_cost_%')->get();
         $departments = Department::orderBy('name')->get();
-        $currency = \App\Models\Setting::get('currency', 'GHS');
+        $currency = Setting::get('currency', 'GHS');
 
-        return inertia('Admin/Settings', ['uoms' => $uoms, 'categories' => $categories, 'attributes' => $attributes, 'departments' => $departments, 'currency' => $currency]);
+        return inertia('Admin/Settings', ['uoms' => $uoms, 'categories' => $categories, 'attributes' => $attributes, 'extraCostTypes' => $extraCostTypes, 'departments' => $departments, 'currency' => $currency]);
+    }
+
+    /**
+     * Tables preserved by a factory reset: framework/system infrastructure
+     * (migrations, sessions, queue, cache) and access-control structure
+     * (roles, permissions, settings, users — the latter pruned down to the
+     * admin performing the reset, not left untouched). Everything else is
+     * treated as business/transactional data and wiped.
+     */
+    const FACTORY_RESET_KEPT_TABLES = [
+        'migrations', 'sessions', 'cache', 'cache_locks', 'jobs', 'job_batches',
+        'failed_jobs', 'password_reset_tokens', 'roles', 'permissions',
+        'role_permission', 'settings', 'users', 'sqlite_sequence',
+    ];
+
+    public function factoryReset(Request $request)
+    {
+        $validated = $request->validate([
+            'password' => 'required|string',
+            'confirmation' => 'required|string',
+        ]);
+
+        if ($validated['confirmation'] !== 'RESET') {
+            return back()->withErrors(['confirmation' => 'Type RESET exactly to confirm.']);
+        }
+
+        $admin = auth()->user();
+
+        if (! Hash::check($validated['password'], $admin->password)) {
+            return back()->withErrors(['password' => 'Incorrect password.']);
+        }
+
+        Log::warning("Factory reset initiated by user #{$admin->id} ({$admin->email})");
+
+        $dbPath = config('database.connections.sqlite.database');
+        $backupDir = storage_path('app/backups');
+
+        if (! is_dir($backupDir)) {
+            mkdir($backupDir, 0755, true);
+        }
+
+        $backupPath = $backupDir.'/database-'.now()->format('Y-m-d_His').'.sqlite';
+
+        if (! copy($dbPath, $backupPath)) {
+            Log::error('Factory reset aborted: database backup failed.');
+
+            return back()->withErrors(['password' => 'Backup failed — reset aborted. No data was changed.']);
+        }
+
+        $tables = DB::select("SELECT name FROM sqlite_master WHERE type = 'table'");
+        $hasSequenceTable = collect($tables)->contains(fn ($t) => $t->name === 'sqlite_sequence');
+        $wipedTables = [];
+
+        DB::statement('PRAGMA foreign_keys = OFF');
+
+        DB::transaction(function () use ($tables, $admin, $hasSequenceTable, &$wipedTables) {
+            foreach ($tables as $table) {
+                $name = $table->name;
+
+                if (in_array($name, self::FACTORY_RESET_KEPT_TABLES, true)) {
+                    continue;
+                }
+
+                DB::table($name)->delete();
+
+                if ($hasSequenceTable) {
+                    DB::table('sqlite_sequence')->where('name', $name)->delete();
+                }
+
+                $wipedTables[] = $name;
+            }
+
+            User::where('id', '!=', $admin->id)->delete();
+        });
+
+        DB::statement('PRAGMA foreign_keys = ON');
+
+        AuditLog::create([
+            'user_id' => $admin->id,
+            'action' => 'factory_reset',
+            'new_values' => [
+                'backup_path' => $backupPath,
+                'tables_wiped' => count($wipedTables),
+            ],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return back()->with('success', 'Factory reset complete. Business data has been wiped; a backup was saved on the server before the reset.');
     }
 
     public function settingsUpdate(Request $request)
@@ -242,7 +336,7 @@ class AdminController extends Controller
         ]);
 
         if ($request->has('currency')) {
-            \App\Models\Setting::set('currency', $request->input('currency', 'GHS'));
+            Setting::set('currency', $request->input('currency', 'GHS'));
         }
 
         return back()->with('success', 'Settings saved successfully');
@@ -252,7 +346,7 @@ class AdminController extends Controller
     {
         $validated = $request->validate(['value' => 'required|string|max:50']);
 
-        \App\Models\Setting::create([
+        Setting::create([
             'key' => 'uom_'.Str::slug($validated['value']),
             'value' => $validated['value'],
             'type' => 'string',
@@ -292,11 +386,11 @@ class AdminController extends Controller
 
         $key = 'attr_'.Str::slug($validated['value']);
 
-        if (\App\Models\Setting::where('key', $key)->exists()) {
+        if (Setting::where('key', $key)->exists()) {
             return back()->withErrors(['value' => 'This attribute already exists.']);
         }
 
-        \App\Models\Setting::create([
+        Setting::create([
             'key' => $key,
             'value' => $validated['value'],
             'type' => 'string',
@@ -312,6 +406,34 @@ class AdminController extends Controller
         }
 
         return back()->with('success', 'Attribute deleted');
+    }
+
+    public function storeExtraCostType(Request $request)
+    {
+        $validated = $request->validate(['value' => 'required|string|max:50']);
+
+        $key = 'extra_cost_'.Str::slug($validated['value']);
+
+        if (Setting::where('key', $key)->exists()) {
+            return back()->withErrors(['value' => 'This cost type already exists.']);
+        }
+
+        Setting::create([
+            'key' => $key,
+            'value' => $validated['value'],
+            'type' => 'string',
+        ]);
+
+        return back()->with('success', 'Cost type added successfully');
+    }
+
+    public function deleteExtraCostType(Setting $setting)
+    {
+        if (str_starts_with($setting->key, 'extra_cost_')) {
+            $setting->delete();
+        }
+
+        return back()->with('success', 'Cost type deleted');
     }
 
     public function toggleCategoryAttribute(Request $request)

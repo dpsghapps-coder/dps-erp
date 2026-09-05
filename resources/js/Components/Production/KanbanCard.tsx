@@ -67,7 +67,19 @@ export default function KanbanCard({
             </h4>
 
             {job.order && (
-                <p className="text-xs text-slate-400 mb-1.5">Order: {job.order.order_number}</p>
+                <div className="mb-1.5">
+                    <p className="text-xs text-slate-400">Order: {job.order.order_number}</p>
+                    {job.order.items?.length > 0 && (
+                        <ul className="mt-0.5 text-xs text-slate-500 space-y-0.5">
+                            {job.order.items.slice(0, 2).map((item: any) => (
+                                <li key={item.id} className="truncate">{item.product?.name} × {item.qty}</li>
+                            ))}
+                            {job.order.items.length > 2 && (
+                                <li className="text-slate-400">+{job.order.items.length - 2} more</li>
+                            )}
+                        </ul>
+                    )}
+                </div>
             )}
 
             <div className="flex items-center justify-between text-xs text-slate-400 mb-2">

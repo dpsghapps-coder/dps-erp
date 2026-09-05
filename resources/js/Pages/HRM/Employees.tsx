@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination, StatusChips } from '@/Components/ui';
 import { SlideDrawer } from '@/Components/HRM';
 import { Head, Link } from '@inertiajs/react';
 import { useCurrency } from '@/Utils/currency';
@@ -105,16 +105,15 @@ export default function HrmEmployees() {
                                 className="glass-input w-full pl-10"
                             />
                         </div>
-                        <select 
+                        <StatusChips
+                            name="Department"
                             value={departmentFilter}
-                            onChange={(e) => setDepartmentFilter(e.target.value)}
-                            className="glass-input"
-                        >
-                            <option value="all">All Departments</option>
-                            {departmentsProp.map((d: any) => (
-                                <option key={d.id} value={d.name}>{d.name}</option>
-                            ))}
-                        </select>
+                            onChange={setDepartmentFilter}
+                            options={[
+                                { value: 'all', label: 'All Departments' },
+                                ...departmentsProp.map((d: any) => ({ value: d.name, label: d.name })),
+                            ]}
+                        />
                     </div>
                     <div className="flex items-center gap-2">
                         <button 

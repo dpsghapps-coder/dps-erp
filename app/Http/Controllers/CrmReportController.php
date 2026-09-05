@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Deal;
 use Carbon\Carbon;
 
 class CrmReportController extends Controller
@@ -11,29 +12,29 @@ class CrmReportController extends Controller
     {
         $stats = [
             'total_clients' => Client::count(),
-            'leads' => Client::where('status', 'lead')->count(),
-            'prospects' => Client::where('status', 'prospect')->count(),
-            'active' => Client::where('status', 'active')->count(),
-            'inactive' => Client::where('status', 'inactive')->count(),
+            'bronze' => Client::where('status', 'bronze')->count(),
+            'silver' => Client::where('status', 'silver')->count(),
+            'gold' => Client::where('status', 'gold')->count(),
+            'platinum' => Client::where('status', 'platinum')->count(),
         ];
 
-        $won = Client::where('pipeline_stage', 'converted')->count();
-        $lost = Client::where('pipeline_stage', 'lost')->count();
+        $newBusinessWon = Deal::where('type', 'new_business')->where('stage', 'converted')->count();
+        $repeatBusinessWon = Deal::where('type', 'repeat_business')->where('stage', 'converted')->count();
+        $won = $newBusinessWon + $repeatBusinessWon;
+        $lost = Deal::where('stage', 'lost')->count();
         $conversionRate = $won + $lost > 0
             ? round(($won / ($won + $lost)) * 100, 1)
             : 0;
 
-        $pipelineStages = Client::PIPELINE_STAGES;
         $pipelineFunnel = [];
-        foreach ($pipelineStages as $stage) {
-            $pipelineFunnel[$stage] = Client::where('pipeline_stage', $stage)->count();
+        foreach (Deal::STAGES as $stage) {
+            $pipelineFunnel[$stage] = Deal::where('stage', $stage)->count();
         }
 
-        $openStages = ['new_lead', 'contacted', 'meeting_scheduled', 'proposal_sent', 'negotiating'];
-        $pipelineValue = (float) Client::whereIn('pipeline_stage', $openStages)->sum('estimated_value');
-        $wonValue = (float) Client::where('pipeline_stage', 'converted')->sum('estimated_value');
+        $pipelineValue = (float) Deal::whereIn('stage', Deal::OPEN_STAGES)->sum('estimated_value');
+        $wonValue = (float) Deal::where('stage', 'converted')->sum('estimated_value');
 
-        $lostReasons = Client::where('pipeline_stage', 'lost')
+        $lostReasons = Deal::where('stage', 'lost')
             ->whereNotNull('lost_reason')
             ->selectRaw('lost_reason, count(*) as count')
             ->groupBy('lost_reason')
@@ -76,6 +77,8 @@ class CrmReportController extends Controller
             'stats' => $stats,
             'conversionRate' => $conversionRate,
             'won' => $won,
+            'newBusinessWon' => $newBusinessWon,
+            'repeatBusinessWon' => $repeatBusinessWon,
             'lost' => $lost,
             'pipelineFunnel' => $pipelineFunnel,
             'pipelineValue' => $pipelineValue,

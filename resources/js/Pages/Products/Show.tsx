@@ -113,6 +113,32 @@ export default function ProductShow() {
                         <p className="text-slate-400">No components added to this product.</p>
                     )}
                 </GlassCard>
+
+                <GlassCard className="md:col-span-2">
+                    <h3 className="text-lg font-medium mb-4">Tiered Pricing</h3>
+                    {product.prices?.length > 0 ? (
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-slate-200 dark:border-white/10">
+                                    <th className="text-left py-2 px-4 text-sm font-medium text-slate-400">Min Qty</th>
+                                    <th className="text-left py-2 px-4 text-sm font-medium text-slate-400">Max Qty</th>
+                                    <th className="text-right py-2 px-4 text-sm font-medium text-slate-400">Unit Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {product.prices.map((price: any, index: number) => (
+                                    <tr key={index} className="border-b border-slate-100 dark:border-white/5">
+                                        <td className="py-2 px-4">{price.min_qty}</td>
+                                        <td className="py-2 px-4">{price.max_qty || 'Unlimited'}</td>
+                                        <td className="py-2 px-4 text-right font-mono">{formatCurrency(price.unit_price)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    ) : (
+                        <p className="text-slate-400">No pricing tiers defined.</p>
+                    )}
+                </GlassCard>
             </div>
         </AppLayout>
     );

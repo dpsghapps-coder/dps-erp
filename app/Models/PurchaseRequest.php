@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesDailyCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseRequest extends Model
 {
+    use GeneratesDailyCode;
+
     protected $fillable = [
         'pr_number',
         'job_id',
@@ -49,19 +52,7 @@ class PurchaseRequest extends Model
 
     public static function generatePrNumber(): string
     {
-        $today = now()->format('Ymd');
-        $lastPr = static::where('pr_number', 'like', "PR-{$today}-%")
-            ->orderByDesc('pr_number')
-            ->first();
-
-        if ($lastPr) {
-            $lastSequence = (int) substr($lastPr->pr_number, -3);
-            $nextSequence = str_pad($lastSequence + 1, 3, '0', STR_PAD_LEFT);
-        } else {
-            $nextSequence = '001';
-        }
-
-        return "PR-{$today}-{$nextSequence}";
+        return static::nextDailyCode('PR', 'pr_number', 3);
     }
 
     public function requester(): BelongsTo

@@ -22,7 +22,7 @@ class StudioController extends Controller
 
     public function create()
     {
-        $clients = Client::whereIn('status', ['prospect', 'active'])->get();
+        $clients = Client::where('is_greylisted', false)->get();
         $resources = StudioResource::where('is_available', true)->get();
 
         return inertia('Studio/Create', ['clients' => $clients, 'resources' => $resources]);
@@ -40,6 +40,10 @@ class StudioController extends Controller
             'resource_ids' => 'array',
             'resource_ids.*' => 'exists:studio_resources,id',
         ]);
+
+        if (! empty($validated['client_id']) && Client::find($validated['client_id'])?->is_greylisted) {
+            return back()->withErrors(['client_id' => 'This client is greylisted and cannot receive new bookings.'])->withInput();
+        }
 
         $booking = StudioBooking::create(array_merge($validated, [
             'booking_reference' => StudioBooking::generateBookingReference(),
@@ -62,7 +66,7 @@ class StudioController extends Controller
 
     public function edit(StudioBooking $booking)
     {
-        $clients = Client::whereIn('status', ['prospect', 'active'])->get();
+        $clients = Client::where('is_greylisted', false)->get();
         $resources = StudioResource::where('is_available', true)->get();
 
         return inertia('Studio/Edit', [

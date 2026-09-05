@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, LoadingSpinner } from '@/Components/ui';
+import { GlassCard, PageHeader, LoadingSpinner, StatusChips } from '@/Components/ui';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import { useState } from 'react';
@@ -248,16 +248,16 @@ export default function MeetingCreate({ employees }: Props) {
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium mb-1 text-slate-500">Status *</label>
-                                                <select
-                                                    className="glass-input w-full"
+                                                <StatusChips
                                                     value={attendee.status}
-                                                    onChange={(e) => updateAttendee(index, 'status', e.target.value)}
-                                                    required
-                                                >
-                                                    <option value="present">Present</option>
-                                                    <option value="absent">Absent</option>
-                                                    <option value="apologies">Apologies</option>
-                                                </select>
+                                                    onChange={(v) => updateAttendee(index, 'status', v)}
+                                                    options={[
+                                                        { value: 'present', label: 'Present' },
+                                                        { value: 'absent', label: 'Absent' },
+                                                        { value: 'apologies', label: 'Apologies' },
+                                                    ]}
+                                                    size="sm"
+                                                />
                                             </div>
                                         </div>
                                     </div>

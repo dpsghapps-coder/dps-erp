@@ -1,6 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 
@@ -11,7 +11,7 @@ export default function ProductCatalogEdit() {
     const [attributeValues, setAttributeValues] = useState<Record<string, string>>(productAttributes);
     const [picture, setPicture] = useState<File | null>(null);
 
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, processing, errors } = useForm({
         material_id: product.material_id,
         item_name: product.item_name,
         item_description: product.item_description || '',
@@ -38,8 +38,7 @@ export default function ProductCatalogEdit() {
         if (picture) formData.append('picture', picture);
         formData.append('_method', 'PUT');
 
-        put(`/inventory/materials/${product.id}`, {
-            data: formData,
+        router.post(`/inventory/materials/${product.id}`, formData, {
             onSuccess: () => {
                 window.location.href = `/inventory/materials/${product.id}`;
             }

@@ -56,16 +56,24 @@ export default function HrmIndex() {
                                 className="glass-input w-full pl-10"
                             />
                         </div>
-                        <select 
-                            value={departmentFilter}
-                            onChange={(e) => setDepartmentFilter(e.target.value)}
-                            className="glass-input"
-                        >
-                            <option value="all">All Departments</option>
-                            {(departments || []).map((d: any) => (
-                                <option key={d.id} value={d.id}>{d.name}</option>
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                { value: 'all', label: 'All Departments' },
+                                ...(departments || []).map((d: any) => ({ value: String(d.id), label: d.name })),
+                            ].map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => setDepartmentFilter(opt.value)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                        departmentFilter === opt.value
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
                             ))}
-                        </select>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                             {[
                                 { value: 'all', label: 'All Status' },

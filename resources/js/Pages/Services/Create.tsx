@@ -2,9 +2,19 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { useCurrency } from '@/Utils/currency';
+
+const COST_FIELDS: { key: 'workmanship_cost' | 'machine_maintenance_cost' | 'process_cost' | 'capital_recovery_fee' | 'profit'; label: string; hint?: string }[] = [
+    { key: 'workmanship_cost', label: 'Workmanship' },
+    { key: 'machine_maintenance_cost', label: 'Machine Maintenance' },
+    { key: 'process_cost', label: 'Process Cost', hint: 'Materials, utilities, cutting, packaging' },
+    { key: 'capital_recovery_fee', label: 'Capital Investment Recovery Fee' },
+    { key: 'profit', label: 'Profit' },
+];
 
 export default function ServiceCreate() {
     const { categories, uoms, nextCode } = usePage().props as any;
+    const formatCurrency = useCurrency();
     const { data, setData, post, transform, processing, errors } = useForm({
         code: nextCode || '',
         name: '',
@@ -12,15 +22,22 @@ export default function ServiceCreate() {
         category_id: '',
         unit: (uoms && uoms[0]) || '',
         is_active: true,
+        workmanship_cost: 0,
+        machine_maintenance_cost: 0,
+        process_cost: 0,
+        capital_recovery_fee: 0,
+        profit: 0,
         prices: [{ min_qty: 1, max_qty: '', unit_price: 0 }],
     });
 
+    const calculatedBasePrice = COST_FIELDS.reduce((sum, f) => sum + (parseFloat(String(data[f.key])) || 0), 0);
+
     const addPriceTier = () => {
-        setData('prices', [...data.prices, { min_qty: 1, max_qty: '', unit_price: 0 }]);
+        setData('prices', [...data.prices, { min_qty: 0, max_qty: '', unit_price: 0 }]);
     };
 
     const removePriceTier = (index: number) => {
-        if (data.prices.length > 1) {
+        if (index > 0) {
             setData('prices', data.prices.filter((_: any, i: number) => i !== index));
         }
     };
@@ -32,10 +49,10 @@ export default function ServiceCreate() {
 
     transform((formData: any) => ({
         ...formData,
-        prices: formData.prices.map((p: any) => ({
-            min_qty: parseInt(p.min_qty) || 1,
+        prices: formData.prices.map((p: any, i: number) => ({
+            min_qty: i === 0 ? 1 : (parseInt(p.min_qty) || 1),
             max_qty: p.max_qty !== '' && p.max_qty !== null ? parseInt(p.max_qty) : null,
-            unit_price: parseFloat(p.unit_price) || 0,
+            unit_price: i === 0 ? calculatedBasePrice : (parseFloat(p.unit_price) || 0),
         })),
     }));
 
@@ -54,7 +71,7 @@ export default function ServiceCreate() {
                 </Link>
             </div>
 
-            <PageHeader title="Add Service" subtitle="Create a new service with tiered pricing" />
+            <PageHeader title="Add Service" subtitle="Create a new service with cost-based pricing" />
 
             <form onSubmit={handleSubmit}>
                 <GlassCard>
@@ -73,7 +90,7 @@ export default function ServiceCreate() {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Name *</label>
-                            <input 
+                            <input
                                 type="text"
                                 value={data.name}
                                 onChange={(e) => setData('name', e.target.value)}
@@ -85,7 +102,7 @@ export default function ServiceCreate() {
 
                         <div className="md:col-span-2">
                             <label className="block text-sm font-medium mb-2">Description</label>
-                            <textarea 
+                            <textarea
                                 value={data.description}
                                 onChange={(e) => setData('description', e.target.value)}
                                 className="glass-input w-full h-24"
@@ -125,7 +142,7 @@ export default function ServiceCreate() {
                         <div>
                             <label className="block text-sm font-medium mb-2">Status</label>
                             <label className="flex items-center gap-3 cursor-pointer">
-                                <input 
+                                <input
                                     type="checkbox"
                                     checked={data.is_active}
                                     onChange={(e) => setData('is_active', e.target.checked)}
@@ -136,34 +153,65 @@ export default function ServiceCreate() {
                         </div>
                     </div>
 
+                    {/* Cost of Service Section */}
+                    <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
+                        <h3 className="text-lg font-medium mb-1">Cost of Service</h3>
+                        <p className="text-sm text-slate-500 mb-4">Base price (qty 1+) is calculated automatically from these costs.</p>
+
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {COST_FIELDS.map((f) => (
+                                <div key={f.key}>
+                                    <label className="block text-sm font-medium mb-2">{f.label}</label>
+                                    <input
+                                        type="number"
+                                        value={data[f.key]}
+                                        onChange={(e) => setData(f.key, parseFloat(e.target.value) || 0)}
+                                        className="glass-input w-full"
+                                        min="0"
+                                        step="0.01"
+                                    />
+                                    {f.hint && <p className="text-xs text-slate-500 mt-1">{f.hint}</p>}
+                                    {errors[f.key] && <p className="text-red-400 text-sm mt-1">{errors[f.key]}</p>}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between p-4 bg-emerald-500/10 rounded-lg">
+                            <span className="font-medium">Calculated Base Price</span>
+                            <span className="text-lg font-semibold text-emerald-400">{formatCurrency(calculatedBasePrice)}</span>
+                        </div>
+                    </div>
+
                     {/* Tiered Pricing Section */}
                     <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-medium">Tiered Pricing</h3>
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 onClick={addPriceTier}
                                 className="glass-button flex items-center gap-2"
                             >
-                                <Plus className="w-4 h-4" /> Add Price Tier
+                                <Plus className="w-4 h-4" /> Add Bulk Tier
                             </button>
                         </div>
+                        <p className="text-sm text-slate-500 mb-4">The base tier's price comes from the cost breakdown above. Add extra tiers for bulk-quantity discounts.</p>
 
                         <div className="space-y-3">
                             {data.prices.map((price: any, index: number) => (
                                 <div key={index} className="flex items-center gap-3">
                                     <div className="flex-1">
-                                        <input 
+                                        <input
                                             type="number"
-                                            value={price.min_qty}
+                                            value={index === 0 ? 1 : price.min_qty}
                                             onChange={(e) => updatePriceTier(index, 'min_qty', e.target.value)}
-                                            className="glass-input w-full"
+                                            className="glass-input w-full disabled:opacity-60 disabled:cursor-not-allowed"
                                             placeholder="Min Qty"
                                             min="1"
+                                            disabled={index === 0}
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <input 
+                                        <input
                                             type="number"
                                             value={price.max_qty}
                                             onChange={(e) => updatePriceTier(index, 'max_qty', e.target.value)}
@@ -172,20 +220,21 @@ export default function ServiceCreate() {
                                         />
                                     </div>
                                     <div className="flex-1">
-                                        <input 
+                                        <input
                                             type="number"
-                                            value={price.unit_price}
+                                            value={index === 0 ? calculatedBasePrice.toFixed(2) : price.unit_price}
                                             onChange={(e) => updatePriceTier(index, 'unit_price', e.target.value)}
-                                            className="glass-input w-full"
+                                            className="glass-input w-full disabled:opacity-60 disabled:cursor-not-allowed"
                                             placeholder="Unit Price"
                                             min="0"
                                             step="0.01"
+                                            disabled={index === 0}
                                         />
                                     </div>
-                                    <button 
+                                    <button
                                         type="button"
                                         onClick={() => removePriceTier(index)}
-                                        disabled={data.prices.length === 1}
+                                        disabled={index === 0}
                                         className="p-2 text-red-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded disabled:opacity-50"
                                     >
                                         <Trash2 className="w-4 h-4" />

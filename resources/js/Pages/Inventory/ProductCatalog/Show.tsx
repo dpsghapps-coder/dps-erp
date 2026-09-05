@@ -6,7 +6,7 @@ import { useState } from 'react';
 import WhatsAppLink from '@/Components/WhatsAppLink';
 
 export default function ProductCatalogShow() {
-    const { product, suppliers, users, categories, uoms, attributes, categoryAttributes } = usePage().props as any;
+    const { product, suppliers, users, categories, uoms, attributes, costTypes, categoryAttributes } = usePage().props as any;
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -26,12 +26,29 @@ export default function ProductCatalogShow() {
     const [showPriceModal, setShowPriceModal] = useState(false);
     const [editingPrice, setEditingPrice] = useState<any>(null);
     const [deletePriceTarget, setDeletePriceTarget] = useState<any>(null);
-    const { data: priceData, setData: setPriceData, post: postPrice, put: putPrice, processing: priceProcessing, reset: resetPrice } = useForm({
+    const emptyPriceForm = {
         supplier_id: '',
-        price: '',
+        units_purchased: '1',
+        qty_per_unit: '',
+        material_cost: '',
+        cost_items: [] as { label: string; amount: string }[],
         collected_by: '',
         collection_date: '',
-    });
+    };
+    const { data: priceData, setData: setPriceData, post: postPrice, put: putPrice, processing: priceProcessing, reset: resetPrice, errors: priceErrors } = useForm(emptyPriceForm);
+
+    const priceQty = Number(priceData.units_purchased || 0) * Number(priceData.qty_per_unit || 0);
+    const priceExtraCostsTotal = priceData.cost_items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    const priceTotalCost = Number(priceData.material_cost || 0) + priceExtraCostsTotal;
+    const priceUnitPrice = priceQty > 0 ? priceTotalCost / priceQty : 0;
+
+    const addPriceCostItem = () => setPriceData('cost_items', [...priceData.cost_items, { label: costTypes?.[0] || '', amount: '' }]);
+    const removePriceCostItem = (index: number) => setPriceData('cost_items', priceData.cost_items.filter((_, i) => i !== index));
+    const updatePriceCostItem = (index: number, field: 'label' | 'amount', value: string) => {
+        const items = [...priceData.cost_items];
+        items[index] = { ...items[index], [field]: value };
+        setPriceData('cost_items', items);
+    };
 
     const openAdd = () => {
         reset();
@@ -60,8 +77,8 @@ export default function ProductCatalogShow() {
     };
 
     const openAddPrice = () => {
-        resetPrice();
         setEditingPrice(null);
+        setPriceData({ ...emptyPriceForm });
         setShowPriceModal(true);
     };
 
@@ -69,7 +86,10 @@ export default function ProductCatalogShow() {
         setEditingPrice(price);
         setPriceData({
             supplier_id: price.supplier_id,
-            price: price.price,
+            units_purchased: String(price.units_purchased ?? 1),
+            qty_per_unit: String(price.qty_per_unit ?? price.qty ?? ''),
+            material_cost: String(price.material_cost ?? ''),
+            cost_items: (price.cost_items || []).map((item: any) => ({ label: item.label, amount: String(item.amount) })),
             collected_by: price.collected_by || '',
             collection_date: price.collection_date ? new Date(price.collection_date).toISOString().split('T')[0] : '',
         });
@@ -309,27 +329,34 @@ export default function ProductCatalogShow() {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-slate-200">
-                                    <th className="text-left py-2 font-medium text-slate-500">ID</th>
-                                    <th className="text-left py-2 font-medium text-slate-500">Supplier</th>
-                                    <th className="text-right py-2 font-medium text-slate-500">Price</th>
-                                    <th className="text-left py-2 font-medium text-slate-500">Collected By</th>
-                                    <th className="text-left py-2 font-medium text-slate-500">Collection Date</th>
-                                    <th className="text-left py-2 font-medium text-slate-500">Date Added</th>
-                                    <th className="text-left py-2 font-medium text-slate-500">Added By</th>
-                                    <th className="text-right py-2 font-medium text-slate-500">Actions</th>
+                                    <th className="text-left py-2 px-3 font-medium text-slate-500">ID</th>
+                                    <th className="text-left py-2 px-3 font-medium text-slate-500">Supplier</th>
+                                    <th className="text-right py-2 px-3 font-medium text-slate-500 whitespace-nowrap">Qty</th>
+                                    <th className="text-right py-2 px-3 font-medium text-slate-500 whitespace-nowrap">Total Cost</th>
+                                    <th className="text-right py-2 px-3 font-medium text-slate-500 whitespace-nowrap">Unit Price</th>
+                                    <th className="text-left py-2 px-3 font-medium text-slate-500 whitespace-nowrap">Collected By</th>
+                                    <th className="text-left py-2 px-3 font-medium text-slate-500 whitespace-nowrap">Collection Date</th>
+                                    <th className="text-left py-2 px-3 font-medium text-slate-500 whitespace-nowrap">Date Added</th>
+                                    <th className="text-left py-2 px-3 font-medium text-slate-500 whitespace-nowrap">Added By</th>
+                                    <th className="text-right py-2 px-3 font-medium text-slate-500">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {product.prices.map((p: any) => (
                                     <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
-                                        <td className="py-2 font-mono text-xs">#{p.id}</td>
-                                        <td className="py-2">{p.supplier?.company_name || '-'}</td>
-                                        <td className="py-2 text-right font-medium">GH₵ {Number(p.price).toFixed(2)}</td>
-                                        <td className="py-2 text-slate-600">{p.collected_by?.name || '-'}</td>
-                                        <td className="py-2 text-slate-600">{p.collection_date ? new Date(p.collection_date).toLocaleDateString() : '-'}</td>
-                                        <td className="py-2 text-slate-600">{new Date(p.created_at).toLocaleDateString()}</td>
-                                        <td className="py-2 text-slate-600">{p.added_by?.name || '-'}</td>
-                                        <td className="py-2 text-right">
+                                        <td className="py-2 px-3 font-mono text-xs">#{p.id}</td>
+                                        <td className="py-2 px-3">{p.supplier?.company_name || '-'}</td>
+                                        <td className="py-2 px-3 text-right text-slate-600 whitespace-nowrap">
+                                            {p.qty} {product.uom}
+                                            <span className="block text-xs text-slate-400">{p.units_purchased} × {p.qty_per_unit}</span>
+                                        </td>
+                                        <td className="py-2 px-3 text-right text-slate-600 whitespace-nowrap">GH₵ {Number(p.total_cost).toFixed(2)}</td>
+                                        <td className="py-2 px-3 text-right font-medium whitespace-nowrap">GH₵ {Number(p.price).toFixed(2)}</td>
+                                        <td className="py-2 px-3 text-slate-600 whitespace-nowrap">{p.collected_by?.name || '-'}</td>
+                                        <td className="py-2 px-3 text-slate-600 whitespace-nowrap">{p.collection_date ? new Date(p.collection_date).toLocaleDateString() : '-'}</td>
+                                        <td className="py-2 px-3 text-slate-600 whitespace-nowrap">{new Date(p.created_at).toLocaleDateString()}</td>
+                                        <td className="py-2 px-3 text-slate-600 whitespace-nowrap">{p.added_by?.name || '-'}</td>
+                                        <td className="py-2 px-3 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 <button onClick={() => openEditPrice(p)} className="text-blue-500 hover:text-blue-700">
                                                     <Edit2 className="w-4 h-4" />
@@ -381,18 +408,109 @@ export default function ProductCatalogShow() {
                                         ))}
                                     </select>
                                 </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Units Purchased *</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={priceData.units_purchased}
+                                            onChange={(e) => setPriceData('units_purchased', e.target.value)}
+                                            className="glass-input w-full"
+                                            required
+                                        />
+                                        {priceErrors.units_purchased && <p className="text-red-400 text-sm mt-1">{priceErrors.units_purchased}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Qty per Unit ({product.uom}) *</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={priceData.qty_per_unit}
+                                            onChange={(e) => setPriceData('qty_per_unit', e.target.value)}
+                                            className="glass-input w-full"
+                                            required
+                                        />
+                                        {priceErrors.qty_per_unit && <p className="text-red-400 text-sm mt-1">{priceErrors.qty_per_unit}</p>}
+                                    </div>
+                                </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Price (GH₵) *</label>
+                                    <label className="block text-sm font-medium mb-2">Total Quantity</label>
+                                    <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
+                                        {priceQty} {product.uom}
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Material Cost (GH₵) *</label>
                                     <input
                                         type="number"
                                         step="0.01"
                                         min="0"
-                                        value={priceData.price}
-                                        onChange={(e) => setPriceData('price', e.target.value)}
+                                        value={priceData.material_cost}
+                                        onChange={(e) => setPriceData('material_cost', e.target.value)}
                                         className="glass-input w-full"
                                         placeholder="0.00"
                                         required
                                     />
+                                    {priceErrors.material_cost && <p className="text-red-400 text-sm mt-1">{priceErrors.material_cost}</p>}
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-sm font-medium">Extra Costs</label>
+                                        <button type="button" onClick={addPriceCostItem} className="text-indigo-600 hover:text-indigo-800 text-sm inline-flex items-center gap-1">
+                                            <Plus className="w-3.5 h-3.5" /> Add cost
+                                        </button>
+                                    </div>
+                                    {priceData.cost_items.length > 0 && (
+                                        <div className="space-y-2">
+                                            {priceData.cost_items.map((item, index) => (
+                                                <div key={index} className="flex gap-2 items-center">
+                                                    <select
+                                                        value={item.label}
+                                                        onChange={(e) => updatePriceCostItem(index, 'label', e.target.value)}
+                                                        className="glass-input flex-1"
+                                                        required
+                                                    >
+                                                        <option value="">Select type</option>
+                                                        {(costTypes || []).map((type: string) => (
+                                                            <option key={type} value={type}>{type}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        min="0"
+                                                        placeholder="Amount"
+                                                        value={item.amount}
+                                                        onChange={(e) => updatePriceCostItem(index, 'amount', e.target.value)}
+                                                        className="glass-input w-28"
+                                                        required
+                                                    />
+                                                    <button type="button" onClick={() => removePriceCostItem(index)} className="p-2 text-red-400 hover:bg-slate-100 rounded">
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Total Cost</label>
+                                        <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
+                                            GH₵ {priceTotalCost.toFixed(2)}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Price per Unit</label>
+                                        <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
+                                            GH₵ {priceUnitPrice.toFixed(2)} / {product.uom}
+                                        </div>
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Collected By</label>

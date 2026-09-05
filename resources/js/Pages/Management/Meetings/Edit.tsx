@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, LoadingSpinner } from '@/Components/ui';
+import { GlassCard, PageHeader, LoadingSpinner, StatusChips } from '@/Components/ui';
 import { Head, useForm, Link, router } from '@inertiajs/react';
 import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import { useState } from 'react';
@@ -153,16 +153,16 @@ export default function MeetingEdit({ meeting, employees }: Props) {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-1.5 text-slate-500 dark:text-slate-400">Status</label>
-                                    <select
-                                        className="glass-input w-full"
+                                    <StatusChips
                                         value={data.status}
-                                        onChange={(e) => setData('status', e.target.value)}
-                                    >
-                                        <option value="scheduled">Scheduled</option>
-                                        <option value="in_progress">In Progress</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="cancelled">Cancelled</option>
-                                    </select>
+                                        onChange={(v) => setData('status', v)}
+                                        options={[
+                                            { value: 'scheduled', label: 'Scheduled' },
+                                            { value: 'in_progress', label: 'In Progress' },
+                                            { value: 'completed', label: 'Completed' },
+                                            { value: 'cancelled', label: 'Cancelled' },
+                                        ]}
+                                    />
                                     {errors.status && <p className="text-rose-500 text-xs mt-1.5">{errors.status}</p>}
                                 </div>
                                 <div>
@@ -254,16 +254,16 @@ export default function MeetingEdit({ meeting, employees }: Props) {
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium mb-1 text-slate-500">Status *</label>
-                                                <select
-                                                    className="glass-input w-full"
+                                                <StatusChips
                                                     value={attendee.status}
-                                                    onChange={(e) => updateAttendee(index, 'status', e.target.value)}
-                                                    required
-                                                >
-                                                    <option value="present">Present</option>
-                                                    <option value="absent">Absent</option>
-                                                    <option value="apologies">Apologies</option>
-                                                </select>
+                                                    onChange={(v) => updateAttendee(index, 'status', v)}
+                                                    options={[
+                                                        { value: 'present', label: 'Present' },
+                                                        { value: 'absent', label: 'Absent' },
+                                                        { value: 'apologies', label: 'Apologies' },
+                                                    ]}
+                                                    size="sm"
+                                                />
                                             </div>
                                         </div>
                                     </div>

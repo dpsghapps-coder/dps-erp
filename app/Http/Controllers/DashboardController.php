@@ -15,7 +15,7 @@ class DashboardController extends Controller
     {
         $stats = [
             'total_clients' => Client::count(),
-            'active_clients' => Client::where('status', 'active')->count(),
+            'active_clients' => Client::whereNotNull('first_converted_at')->count(),
             'total_orders' => Order::count(),
             'pending_orders' => Order::where('status', 'draft')->count(),
             'production_jobs' => ProductionJob::whereIn('status', ['queued', 'in_progress'])->count(),

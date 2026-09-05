@@ -170,10 +170,10 @@ export default function GoodsIndex() {
                                         </td>
                                         <td className="py-3 px-4 text-slate-600">{good.uom}</td>
                                         <td className="py-3 px-4 text-right">
-                                            <Link href={`/procurement/goods/${good.id}/edit`} className="text-blue-600 hover:underline mr-3">
+                                            <Link href={`/procurement/goods/${good.id}/edit`} onClick={(e) => e.stopPropagation()} className="text-blue-600 hover:underline mr-3">
                                                 <Pencil className="w-4 h-4 inline" />
                                             </Link>
-                                            <button onClick={() => handleDelete(good.id)} className="text-red-600 hover:underline">
+                                            <button onClick={(e) => { e.stopPropagation(); handleDelete(good.id); }} className="text-red-600 hover:underline">
                                                 <Trash2 className="w-4 h-4 inline" />
                                             </button>
                                         </td>

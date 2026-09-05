@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesSequentialCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Product extends Model
 {
+    use GeneratesSequentialCode;
+
     protected $fillable = [
         'sku',
         'name',
@@ -24,6 +27,8 @@ class Product extends Model
         'is_active' => 'boolean',
     ];
 
+    protected $appends = ['default_price', 'calculated_base_price'];
+
     protected static function boot(): void
     {
         parent::boot();
@@ -37,11 +42,7 @@ class Product extends Model
 
     public static function generateSku(): string
     {
-        $prefix = 'PRD';
-        $latest = static::orderBy('id', 'desc')->first();
-        $nextNumber = $latest ? $latest->id + 1 : 1;
-
-        return $prefix.'-'.str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        return static::nextSequentialCode('PRD', 'sku', 5);
     }
 
     public function category(): BelongsTo
@@ -54,30 +55,35 @@ class Product extends Model
         return $this->hasMany(PriceListItem::class);
     }
 
+    public function prices(): HasMany
+    {
+        return $this->hasMany(ProductPrice::class);
+    }
+
     public function components(): HasMany
     {
         return $this->hasMany(ProductComponent::class);
     }
 
-    public function materials(): HasMany
+    public function materials(): HasManyThrough
     {
         return $this->hasManyThrough(
             InventoryProduct::class,
             ProductComponent::class,
             'product_id',
-            null,
+            'id',
             null,
             'component_id'
         )->where('component_type', InventoryProduct::class);
     }
 
-    public function services(): HasMany
+    public function services(): HasManyThrough
     {
         return $this->hasManyThrough(
             Service::class,
             ProductComponent::class,
             'product_id',
-            null,
+            'id',
             null,
             'component_id'
         )->where('component_type', Service::class);
@@ -85,40 +91,33 @@ class Product extends Model
 
     public function getDefaultPriceAttribute()
     {
-        return $this->priceListItems()
-            ->whereHas('priceList', fn ($q) => $q->where('is_default', true))
+        return $this->prices()
+            ->where('min_qty', '<=', 1)
+            ->orderBy('min_qty', 'desc')
             ->first()?->unit_price ?? 0;
+    }
+
+    public function getCalculatedBasePriceAttribute(): float
+    {
+        return $this->calculateCost();
+    }
+
+    public function getPriceForQuantity(int $quantity): ?float
+    {
+        $price = $this->prices()
+            ->where('min_qty', '<=', $quantity)
+            ->where(function ($q) use ($quantity) {
+                $q->whereNull('max_qty')
+                    ->orWhere('max_qty', '>=', $quantity);
+            })
+            ->orderBy('min_qty', 'desc')
+            ->first();
+
+        return $price?->unit_price;
     }
 
     public function calculateCost(): float
     {
         return (float) $this->components->sum(fn (ProductComponent $component) => $component->unit_price * $component->quantity);
-    }
-}
-
-class ProductComponent extends Model
-{
-    protected $fillable = [
-        'product_id',
-        'component_type',
-        'component_id',
-        'quantity',
-        'unit_price',
-        'notes',
-    ];
-
-    protected $casts = [
-        'quantity' => 'float',
-        'unit_price' => 'decimal:2',
-    ];
-
-    public function product(): BelongsTo
-    {
-        return $this->belongsTo(Product::class);
-    }
-
-    public function component(): MorphTo
-    {
-        return $this->morphTo();
     }
 }

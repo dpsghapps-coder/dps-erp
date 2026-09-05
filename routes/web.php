@@ -5,6 +5,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\CrmLeadController;
 use App\Http\Controllers\CrmReportController;
+use App\Http\Controllers\DealController;
 use App\Http\Controllers\ProformaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FinanceController;
@@ -17,15 +18,18 @@ use App\Http\Controllers\Inventory\StockController;
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderReportController;
 use App\Http\Controllers\Procurement\GoodController;
 use App\Http\Controllers\Procurement\GoodEditController;
 use App\Http\Controllers\Procurement\PurchaseRequestController;
 use App\Http\Controllers\ProcurementController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductionController;
+use App\Http\Controllers\ProductionReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\SetupController;
 use App\Http\Controllers\StudioController;
 use App\Http\Controllers\Marketing\CampaignController;
 use App\Http\Controllers\Management\DashboardController as ManagementDashboardController;
@@ -36,6 +40,9 @@ use App\Http\Controllers\Management\ReviewController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+Route::get('/setup', [SetupController::class, 'show'])->name('setup');
+Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -66,6 +73,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/crm/{client}', [CrmController::class, 'update'])->name('crm.update');
         Route::delete('/crm/{client}', [CrmController::class, 'destroy'])->name('crm.destroy');
         Route::patch('/crm/{client}/status', [CrmController::class, 'updateStatus'])->name('crm.updateStatus');
+        Route::post('/crm/{client}/greylist', [CrmController::class, 'toggleGreylist'])->name('crm.toggleGreylist');
+        Route::post('/crm/{client}/deals', [DealController::class, 'store'])->name('crm.deals.store');
+        Route::patch('/deals/{deal}/status', [DealController::class, 'updateStatus'])->name('deals.updateStatus');
         Route::post('/crm/{client}/interactions', [CrmController::class, 'logInteraction'])->name('crm.interactions');
         Route::post('/crm/{client}/contacts', [CrmController::class, 'storeContact'])->name('crm.contacts.store');
         Route::put('/crm/{client}/contacts/{contact}', [CrmController::class, 'updateContact'])->name('crm.contacts.update');
@@ -145,18 +155,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('permission:orders.view')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
+        Route::get('/orders/reports', [OrderReportController::class, 'index'])->name('orders.reports');
         Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
         Route::get('/orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
         Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
-        Route::post('/orders/{order}/confirm', [OrderController::class, 'confirm'])->name('orders.confirm');
-        Route::post('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+        Route::post('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status.update');
+        Route::post('/orders/{order}/payments', [OrderController::class, 'storePayment'])->name('orders.payments.store');
     });
 
     // Production Routes
     Route::middleware('permission:production.view')->group(function () {
         Route::get('/production', [ProductionController::class, 'index'])->name('production.index');
         Route::get('/production/create', [ProductionController::class, 'create'])->name('production.create');
+        Route::get('/production/reports', [ProductionReportController::class, 'index'])->name('production.reports');
         Route::post('/production', [ProductionController::class, 'store'])->name('production.store');
         Route::get('/production/{job}', [ProductionController::class, 'show'])->name('production.show');
         Route::get('/production/{job}/edit', [ProductionController::class, 'edit'])->name('production.edit');
@@ -340,6 +352,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/admin/settings/attribute', [AdminController::class, 'storeAttribute']);
         Route::delete('/admin/settings/attribute/{setting}', [AdminController::class, 'deleteAttribute']);
         Route::post('/admin/settings/category-attribute', [AdminController::class, 'toggleCategoryAttribute']);
+        Route::post('/admin/settings/extra-cost-type', [AdminController::class, 'storeExtraCostType']);
+        Route::delete('/admin/settings/extra-cost-type/{setting}', [AdminController::class, 'deleteExtraCostType']);
+    });
+
+    // Factory reset — deliberately gated behind its own dedicated permission,
+    // not bundled with general settings management.
+    Route::middleware('permission:admin.factory_reset')->group(function () {
+        Route::post('/admin/settings/factory-reset', [AdminController::class, 'factoryReset'])->name('admin.settings.factory-reset');
     });
 
     // Chat Routes

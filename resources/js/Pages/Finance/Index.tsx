@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusBadge, EmptyState, Pagination } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusBadge, EmptyState, Pagination, StatusChips } from '@/Components/ui';
 import { TableLoading, CardLoading, StatCardSkeleton } from '@/Components/ui/Loading';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Plus, Search, Pencil, Trash2, DollarSign, TrendingUp, TrendingDown } from 'lucide-react';
@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useCurrency } from '@/Utils/currency';
 
 export default function FinanceIndex() {
-    const { transactions, stats } = usePage().props as { transactions: { data: any[] }, stats: { total_income: number, total_expense: number, balance: number } };
+    const { transactions, stats } = usePage().props as unknown as { transactions: { data: any[] }, stats: { total_income: number, total_expense: number, balance: number } };
     const [search, setSearch] = useState('');
     const [typeFilter, setTypeFilter] = useState('all');
     const isLoading = false;
@@ -100,15 +100,16 @@ export default function FinanceIndex() {
                             />
                         </div>
                     </div>
-                    <select 
+                    <StatusChips
+                        name="Type"
                         value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value)}
-                        className="glass-input max-w-[150px]"
-                    >
-                        <option value="all">All Types</option>
-                        <option value="income">Income</option>
-                        <option value="expense">Expense</option>
-                    </select>
+                        onChange={setTypeFilter}
+                        options={[
+                            { value: 'all', label: 'All Types' },
+                            { value: 'income', label: 'Income' },
+                            { value: 'expense', label: 'Expense' },
+                        ]}
+                    />
                 </div>
             </GlassCard>
 

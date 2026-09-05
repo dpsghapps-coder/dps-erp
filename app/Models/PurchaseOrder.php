@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesDailyCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrder extends Model
 {
+    use GeneratesDailyCode;
+
     protected $fillable = [
         'po_number',
         'supplier_id',
@@ -42,18 +45,6 @@ class PurchaseOrder extends Model
 
     public static function generatePoNumber(): string
     {
-        $prefix = 'PO-'.date('Ymd').'-';
-        $lastPo = self::where('po_number', 'like', $prefix.'%')
-            ->orderBy('po_number', 'desc')
-            ->first();
-
-        if (! $lastPo) {
-            return $prefix.'001';
-        }
-
-        $lastNumber = (int) substr($lastPo->po_number, -3);
-        $newNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
-
-        return $prefix.$newNumber;
+        return static::nextDailyCode('PO', 'po_number', 3);
     }
 }

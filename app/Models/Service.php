@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesSequentialCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Service extends Model
 {
+    use GeneratesSequentialCode;
+
     protected $fillable = [
         'name',
         'code',
@@ -15,13 +19,31 @@ class Service extends Model
         'category_id',
         'unit',
         'is_active',
+        'workmanship_cost',
+        'machine_maintenance_cost',
+        'process_cost',
+        'capital_recovery_fee',
+        'profit',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'workmanship_cost' => 'decimal:2',
+        'machine_maintenance_cost' => 'decimal:2',
+        'process_cost' => 'decimal:2',
+        'capital_recovery_fee' => 'decimal:2',
+        'profit' => 'decimal:2',
     ];
 
-    protected $appends = ['default_price'];
+    protected $appends = ['default_price', 'calculated_base_price'];
+
+    const COST_FIELDS = [
+        'workmanship_cost',
+        'machine_maintenance_cost',
+        'process_cost',
+        'capital_recovery_fee',
+        'profit',
+    ];
 
     protected static function boot(): void
     {
@@ -36,11 +58,7 @@ class Service extends Model
 
     public static function generateCode(): string
     {
-        $prefix = 'SRV';
-        $latest = static::orderBy('id', 'desc')->first();
-        $nextNumber = $latest ? $latest->id + 1 : 1;
-
-        return $prefix.'-'.str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+        return static::nextSequentialCode('SRV', 'code', 5);
     }
 
     public function category(): BelongsTo
@@ -51,6 +69,16 @@ class Service extends Model
     public function prices(): HasMany
     {
         return $this->hasMany(ServicePrice::class);
+    }
+
+    public function productComponents(): MorphMany
+    {
+        return $this->morphMany(ProductComponent::class, 'component');
+    }
+
+    public function getCalculatedBasePriceAttribute(): float
+    {
+        return (float) collect(self::COST_FIELDS)->sum(fn ($field) => $this->{$field} ?? 0);
     }
 
     public function getDefaultPriceAttribute()

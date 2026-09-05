@@ -16,8 +16,7 @@ export default function EditDepartment() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.put(`/hrm/settings/departments/${department.id}`, {
-      ...form.data,
+    form.put(`/hrm/settings/departments/${department.id}`, {
       onSuccess: () => {
         // redirect back to settings index
         router.visit(route('hrm.settings.index'));

@@ -3,17 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobStatusHistory;
+use App\Models\Order;
+use App\Models\Product;
 use App\Models\ProductionJob;
+use App\Models\Service;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class ProductionController extends Controller
 {
     public function index()
     {
-        $jobs = ProductionJob::with(['assignedTo', 'order'])
+        $jobs = ProductionJob::with(['assignedTo', 'materials.material', ...$this->orderDetailsForProduction()])
             ->orderBy('created_at', 'desc')
             ->get();
+
+        $this->hideMoneyFromOrderItems($jobs);
 
         $users = User::where('is_active', true)
             ->select('id', 'name')
@@ -23,12 +30,15 @@ class ProductionController extends Controller
         return inertia('Production/Index', [
             'jobs' => $jobs,
             'users' => $users,
+            'orders' => $this->linkableOrders(),
         ]);
     }
 
     public function create()
     {
-        return inertia('Production/Create');
+        return inertia('Production/Create', [
+            'orders' => $this->linkableOrders(),
+        ]);
     }
 
     public function store(Request $request)
@@ -59,12 +69,60 @@ class ProductionController extends Controller
             'notes' => 'Job created',
         ]);
 
+        if ($job->order_id) {
+            $job->populateMaterialsFromOrder($job->order);
+            $job->order->syncStatusWithProduction();
+        }
+
         return back()->with('success', 'Job created successfully');
+    }
+
+    private function linkableOrders()
+    {
+        return Order::whereNotIn('status', ['draft', 'cancelled'])
+            ->with('client:id,company_name')
+            ->orderByDesc('created_at')
+            ->get(['id', 'order_number', 'client_id']);
+    }
+
+    /**
+     * Eager-load specs for an order's production-relevant details, deliberately
+     * excluding money fields (prices, totals, payment status) — production staff
+     * need to know what to make and how many, not what it costs or was paid.
+     */
+    private function orderDetailsForProduction(): array
+    {
+        return [
+            'order:id,order_number,client_id,status,delivery_date,notes,created_at',
+            'order.client:id,company_name',
+            'order.items:id,order_id,product_id,product_type,description,qty',
+            'order.items.product' => fn (MorphTo $morphTo) => $morphTo->morphWith([
+                Product::class => [],
+                Service::class => [],
+            ]),
+        ];
+    }
+
+    /**
+     * default_price/calculated_base_price are always-appended accessors on
+     * Product/Service, so column selection above can't suppress them — hide
+     * them explicitly to keep money out of what production staff see.
+     */
+    private function hideMoneyFromOrderItems(ProductionJob|Collection $jobs): void
+    {
+        $jobs = $jobs instanceof Collection ? $jobs : collect([$jobs]);
+
+        $jobs->each(function (ProductionJob $job) {
+            $job->order?->items?->each(function ($item) {
+                $item->product?->makeHidden(['default_price', 'calculated_base_price']);
+            });
+        });
     }
 
     public function show(ProductionJob $job)
     {
-        $job->load(['assignedTo', 'order', 'tasks', 'materials.product', 'statusHistory.changedBy']);
+        $job->load(['assignedTo', ...$this->orderDetailsForProduction(), 'tasks', 'materials.material', 'statusHistory.changedBy']);
+        $this->hideMoneyFromOrderItems($job);
 
         return inertia('Production/Show', ['job' => $job]);
     }
@@ -94,6 +152,10 @@ class ProductionController extends Controller
         }
 
         $job->update($validated);
+
+        if ($job->order_id) {
+            $job->order->syncStatusWithProduction();
+        }
 
         return redirect()->route('production.show', $job->id)->with('success', 'Job updated successfully');
     }
@@ -131,6 +193,10 @@ class ProductionController extends Controller
             'changed_by' => auth()->id(),
             'notes' => $validated['notes'] ?? null,
         ]);
+
+        if ($job->order_id) {
+            $job->order->syncStatusWithProduction();
+        }
 
         return back()->with('success', 'Status updated');
     }

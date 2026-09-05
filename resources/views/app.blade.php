@@ -11,6 +11,17 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <!-- Theme (set before first paint to avoid flash / inconsistent state) -->
+        <script>
+            (function () {
+                var saved = localStorage.getItem('theme');
+                var theme = saved === 'light' || saved === 'dark'
+                    ? saved
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.classList.add(theme);
+            })();
+        </script>
+
         <!-- Scripts -->
         @routes
         @viteReactRefresh

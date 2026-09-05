@@ -15,7 +15,7 @@ export default function ProductCatalogIndex() {
     const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
     const [picture, setPicture] = useState<File | null>(null);
 
-    const { data, setData, post, delete: destroy, processing, reset } = useForm({
+    const { data, setData, delete: destroy, processing, reset } = useForm({
         item_name: '',
         item_description: '',
         item_category: '',
@@ -47,8 +47,7 @@ export default function ProductCatalogIndex() {
         formData.append('attributes', JSON.stringify(attributeValues));
         if (picture) formData.append('picture', picture);
 
-        post('/inventory/materials', {
-            data: formData,
+        router.post('/inventory/materials', formData, {
             onSuccess: () => {
                 setShowModal(false);
                 setPicture(null);

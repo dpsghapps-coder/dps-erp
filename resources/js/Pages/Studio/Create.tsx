@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import { Head, usePage, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 
@@ -74,14 +74,14 @@ export default function StudioCreate() {
 
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Status *</label>
-                                    <select 
+                                    <StatusChips
                                         value={data.status}
-                                        onChange={(e) => setData('status', e.target.value)}
-                                        className="glass-input w-full"
-                                    >
-                                        <option value="tentative">Tentative</option>
-                                        <option value="confirmed">Confirmed</option>
-                                    </select>
+                                        onChange={(v) => setData('status', v)}
+                                        options={[
+                                            { value: 'tentative', label: 'Tentative' },
+                                            { value: 'confirmed', label: 'Confirmed' },
+                                        ]}
+                                    />
                                 </div>
 
                                 <div>

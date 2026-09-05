@@ -44,12 +44,12 @@ export function GlassCard({
   );
 }
 
-export function PageHeader({ 
-  title, 
+export function PageHeader({
+  title,
   subtitle,
-  action 
-}: { 
-  title: string; 
+  action
+}: {
+  title: React.ReactNode;
   subtitle?: string;
   action?: React.ReactNode;
 }) {
@@ -64,43 +64,102 @@ export function PageHeader({
   );
 }
 
-export function StatusBadge({ 
-  status, 
-  className 
-}: { 
+const statusClasses: Record<string, string> = {
+  lead: 'status-lead',
+  prospect: 'status-prospect',
+  active: 'status-active',
+  inactive: 'status-inactive',
+  bronze: 'status-bronze',
+  silver: 'status-silver',
+  gold: 'status-gold',
+  platinum: 'status-platinum',
+  greylisted: 'status-greylisted',
+  draft: 'status-draft',
+  confirmed: 'status-confirmed',
+  payment_received: 'status-payment_received',
+  in_production: 'status-in_production',
+  ready: 'status-ready',
+  delivered: 'status-delivered',
+  cancelled: 'status-cancelled',
+  queued: 'status-queued',
+  in_progress: 'status-in_progress',
+  paused: 'status-paused',
+  completed: 'status-completed',
+  tentative: 'status-tentative',
+  pending: 'status-pending',
+  approved: 'status-approved',
+  rejected: 'status-rejected',
+  accepted: 'status-accepted',
+  present: 'status-present',
+  absent: 'status-absent',
+  apologies: 'status-apologies',
+  scheduled: 'status-scheduled',
+  sent: 'status-confirmed',
+  partial: 'payment-partial',
+  paid: 'payment-paid',
+  unpaid: 'payment-unpaid',
+  received: 'status-delivered',
+};
+
+export function StatusBadge({
+  status,
+  className
+}: {
   status: string;
   className?: string;
 }) {
-  const statusClasses: Record<string, string> = {
-    lead: 'status-lead',
-    prospect: 'status-prospect',
-    active: 'status-active',
-    inactive: 'status-inactive',
-    draft: 'status-draft',
-    confirmed: 'status-confirmed',
-    in_production: 'status-in_production',
-    ready: 'status-ready',
-    delivered: 'status-delivered',
-    cancelled: 'status-cancelled',
-    queued: 'status-queued',
-    in_progress: 'status-in_progress',
-    paused: 'status-paused',
-    completed: 'status-completed',
-    tentative: 'status-tentative',
-    pending: 'status-pending',
-    approved: 'statusapproved',
-    rejected: 'status-rejected',
-    sent: 'status-confirmed',
-    partial: 'payment-partial',
-    paid: 'payment-paid',
-    unpaid: 'payment-unpaid',
-    received: 'status-delivered',
-  };
-
   return (
     <span className={`status-badge ${statusClasses[status] || 'bg-slate-100 dark:bg-white/10'} ${className || ''}`}>
       {status.replace(/_/g, ' ')}
     </span>
+  );
+}
+
+export interface StatusChipOption {
+  value: string;
+  label: string;
+}
+
+export function StatusChips({
+  value,
+  onChange,
+  options,
+  name,
+  size = 'default',
+  className,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: StatusChipOption[];
+  name?: string;
+  size?: 'default' | 'sm';
+  className?: string;
+}) {
+  return (
+    <div role="radiogroup" aria-label={name} className={cn('flex flex-wrap gap-1.5', className)}>
+      {options.map((opt) => {
+        const selected = opt.value === value;
+        const colorClass = statusClasses[opt.value] || 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400';
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(opt.value)}
+            className={cn(
+              'status-badge border transition-all',
+              size === 'sm' && 'text-[11px] px-2 py-0.5',
+              selected
+                ? cn(colorClass, 'border-transparent ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-slate-900 shadow-sm')
+                : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-500 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-600 dark:hover:text-slate-300'
+            )}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

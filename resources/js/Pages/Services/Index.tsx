@@ -1,8 +1,8 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination, StatusChips } from '@/Components/ui';
 import { Head, usePage, Link, router } from '@inertiajs/react';
 import { Plus, Search, Pencil, Trash2, Wrench } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCurrency } from '@/Utils/currency';
 import Swal from 'sweetalert2';
 
@@ -16,33 +16,47 @@ function sortedPrices(service: any): any[] {
 }
 
 export default function ServicesIndex() {
-    const { services } = usePage().props;
+    const { services, categories, filters } = usePage().props as any;
     const formatCurrency = useCurrency();
-    const [search, setSearch] = useState('');
-    const [categoryFilter, setCategoryFilter] = useState('all');
+    const [search, setSearch] = useState(filters?.search || '');
+    const [categoryFilter, setCategoryFilter] = useState(filters?.category || 'all');
+    const isFirstRender = useRef(true);
 
-    const handleDelete = (id: number) => {
+    useEffect(() => {
+        if (isFirstRender.current) {
+            isFirstRender.current = false;
+            return;
+        }
+        const timeout = setTimeout(() => {
+            router.get('/services', { search, category: categoryFilter }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }, 300);
+        return () => clearTimeout(timeout);
+    }, [search, categoryFilter]);
+
+    const handleDelete = (service: any) => {
+        const usageWarning = service.product_components_count > 0
+            ? `<p class="mt-2">This service is used in ${service.product_components_count} product${service.product_components_count === 1 ? '' : 's'}. Deleting it won't change those products' saved pricing, but it will disappear from their component list.</p>`
+            : '';
+
         Swal.fire({
             title: 'Delete Service?',
-            text: 'This action cannot be undone.',
+            html: `<p>This action cannot be undone.</p>${usageWarning}`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc2626',
             confirmButtonText: 'Delete',
         }).then((res) => {
             if (res.isConfirmed) {
-                router.delete(`/services/${id}`);
+                router.delete(`/services/${service.id}`);
             }
         });
     };
 
-    const categories = [...new Set((services?.data || []).map((s: any) => s.category?.name).filter(Boolean))];
-
-    const filteredServices = (services?.data || []).filter((s: any) => {
-        const matchSearch = !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.code.toLowerCase().includes(search.toLowerCase());
-        const matchCategory = categoryFilter === 'all' || s.category?.name === categoryFilter;
-        return matchSearch && matchCategory;
-    });
+    const filteredServices = services?.data || [];
 
     return (
         <AppLayout>
@@ -73,16 +87,15 @@ export default function ServicesIndex() {
                             />
                         </div>
                     </div>
-                    <select 
+                    <StatusChips
+                        name="Category"
                         value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
-                        className="glass-input"
-                    >
-                        <option value="all">All Categories</option>
-                        {categories.map((cat: any) => (
-                            <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                    </select>
+                        onChange={setCategoryFilter}
+                        options={[
+                            { value: 'all', label: 'All Categories' },
+                            ...(categories || []).map((cat: any) => ({ value: String(cat.id), label: cat.name })),
+                        ]}
+                    />
                 </div>
             </GlassCard>
 
@@ -126,7 +139,7 @@ export default function ServicesIndex() {
                                                 <Link href={`/services/${service.id}/edit`} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors">
                                                     <Pencil className="w-4 h-4" />
                                                 </Link>
-                                                <button onClick={() => handleDelete(service.id)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors text-red-400">
+                                                <button onClick={() => handleDelete(service)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors text-red-400">
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -167,7 +180,7 @@ export default function ServicesIndex() {
                                         <Link href={`/services/${service.id}/edit`} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors">
                                             <Pencil className="w-4 h-4" />
                                         </Link>
-                                        <button onClick={() => handleDelete(service.id)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors text-red-400">
+                                        <button onClick={() => handleDelete(service)} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded transition-colors text-red-400">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>

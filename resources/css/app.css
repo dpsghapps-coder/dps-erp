@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --color-bg: #f8fafc;
@@ -152,6 +154,15 @@
     @apply text-indigo-400;
   }
 
+  .status-payment_received {
+    @apply bg-teal-50 text-teal-700;
+  }
+
+  .dark .status-payment_received {
+    background: rgba(20, 184, 166, 0.12);
+    @apply text-teal-400;
+  }
+
   .status-in_production, .status-in_progress {
     @apply bg-amber-50 text-amber-700;
   }
@@ -210,11 +221,92 @@
     @apply text-amber-400;
   }
 
+  .status-bronze {
+    @apply bg-orange-50 text-orange-700;
+  }
+
+  .dark .status-bronze {
+    background: rgba(234, 88, 12, 0.12);
+    @apply text-orange-400;
+  }
+
+  .status-silver {
+    @apply bg-slate-100 text-slate-600;
+  }
+
+  .dark .status-silver {
+    background: rgba(148, 163, 184, 0.14);
+    @apply text-slate-300;
+  }
+
+  .status-gold {
+    @apply bg-yellow-50 text-yellow-700;
+  }
+
+  .dark .status-gold {
+    background: rgba(234, 179, 8, 0.14);
+    @apply text-yellow-400;
+  }
+
+  .status-platinum {
+    @apply bg-violet-50 text-violet-700;
+  }
+
+  .dark .status-platinum {
+    background: rgba(139, 92, 246, 0.14);
+    @apply text-violet-400;
+  }
+
+  .status-greylisted {
+    @apply bg-red-50 text-red-700 border border-red-200;
+  }
+
+  .dark .status-greylisted {
+    background: rgba(239, 68, 68, 0.14);
+    @apply text-red-400 border-red-500/30;
+  }
+
   .status-tentative {
     @apply bg-slate-100 text-slate-600;
   }
 
   .dark .status-tentative {
+    background: rgba(148, 163, 184, 0.08);
+    @apply text-slate-400;
+  }
+
+  .status-approved, .status-accepted, .status-present, .status-scheduled {
+    @apply bg-emerald-50 text-emerald-700;
+  }
+
+  .dark .status-approved, .dark .status-accepted, .dark .status-present, .dark .status-scheduled {
+    background: rgba(16, 185, 129, 0.12);
+    @apply text-emerald-400;
+  }
+
+  .status-rejected, .status-absent {
+    @apply bg-red-50 text-red-700;
+  }
+
+  .dark .status-rejected, .dark .status-absent {
+    background: rgba(239, 68, 68, 0.12);
+    @apply text-red-400;
+  }
+
+  .status-apologies, .status-queued {
+    @apply bg-amber-50 text-amber-700;
+  }
+
+  .dark .status-apologies, .dark .status-queued {
+    background: rgba(245, 158, 11, 0.12);
+    @apply text-amber-400;
+  }
+
+  .status-paused {
+    @apply bg-slate-100 text-slate-600;
+  }
+
+  .dark .status-paused {
     background: rgba(148, 163, 184, 0.08);
     @apply text-slate-400;
   }

@@ -1,9 +1,9 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { router, useForm } from '@inertiajs/react';
 import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent, useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GlassCard } from '@/Components/ui';
+import { GlassCard, StatusChips } from '@/Components/ui';
 import { User, Link2, Clock, AlertTriangle, Phone, MessageSquare, Calendar, FileText, X, TrendingUp } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 
@@ -15,6 +15,13 @@ const COLUMNS = [
     { id: 'negotiating', label: 'Negotiating', color: 'border-orange-500/30', open: true },
     { id: 'converted', label: 'Converted', color: 'border-green-500/30', open: false },
     { id: 'lost', label: 'Lost', color: 'border-red-500/30', open: false },
+];
+
+const TIER_OPTIONS = [
+    { value: 'bronze', label: 'Bronze' },
+    { value: 'silver', label: 'Silver' },
+    { value: 'gold', label: 'Gold' },
+    { value: 'platinum', label: 'Platinum' },
 ];
 
 const LOST_REASONS = ['Budget', 'Timing', 'Chose competitor', 'No response', 'Other'];
@@ -42,15 +49,16 @@ function daysSince(dateStr: string | null): number | null {
     return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
 }
 
-function PipelineCard({ client, onQuickAction }: { client: any; onQuickAction: (client: any, type: string) => void }) {
+function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal: any, type: string) => void }) {
     const formatCurrency = useCurrency();
+    const client = deal.client || {};
     const daysAgo = daysSince(client.lastInteraction?.occurred_at);
     const isStale = daysAgo !== null && daysAgo > 7;
     const noActivity = daysAgo === null;
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-        id: client.id,
-        data: { type: 'client', stage: client.pipeline_stage },
+        id: deal.id,
+        data: { type: 'deal', stage: deal.stage },
     });
 
     const style = {
@@ -69,10 +77,10 @@ function PipelineCard({ client, onQuickAction }: { client: any; onQuickAction: (
                     </div>
                 </div>
 
-                {client.estimated_value > 0 && (
+                {deal.estimated_value > 0 && (
                     <div className="mb-2">
                         <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                            {formatCurrency(client.estimated_value)}
+                            {formatCurrency(deal.estimated_value)}
                         </span>
                     </div>
                 )}
@@ -90,10 +98,10 @@ function PipelineCard({ client, onQuickAction }: { client: any; onQuickAction: (
                     </div>
                 )}
 
-                {client.pipeline_stage === 'lost' && client.lost_reason && (
+                {deal.stage === 'lost' && deal.lost_reason && (
                     <div className="flex items-center gap-1.5 text-xs text-red-400 mb-1">
                         <AlertTriangle className="w-3 h-3 shrink-0" />
-                        <span className="truncate">Lost: {client.lost_reason}</span>
+                        <span className="truncate">Lost: {deal.lost_reason}</span>
                     </div>
                 )}
 
@@ -115,16 +123,16 @@ function PipelineCard({ client, onQuickAction }: { client: any; onQuickAction: (
                 </div>
 
                 <div className="flex items-center justify-between gap-1 pt-2.5 mt-2 border-t border-slate-200 dark:border-white/10" onClick={(e) => e.stopPropagation()}>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); onQuickAction(client, 'call'); }} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-blue-400 transition-colors" title="Log Call">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); onQuickAction(deal, 'call'); }} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-blue-400 transition-colors" title="Log Call">
                         <Phone className="w-3.5 h-3.5" />
                     </button>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); onQuickAction(client, 'whatsapp'); }} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-emerald-400 transition-colors" title="Log WhatsApp">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); onQuickAction(deal, 'whatsapp'); }} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-emerald-400 transition-colors" title="Log WhatsApp">
                         <MessageSquare className="w-3.5 h-3.5" />
                     </button>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); onQuickAction(client, 'meeting'); }} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-purple-400 transition-colors" title="Schedule Meeting">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); onQuickAction(deal, 'meeting'); }} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-purple-400 transition-colors" title="Schedule Meeting">
                         <Calendar className="w-3.5 h-3.5" />
                     </button>
-                    <button type="button" onClick={(e) => { e.stopPropagation(); onQuickAction(client, 'note'); }} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors" title="Add Note">
+                    <button type="button" onClick={(e) => { e.stopPropagation(); onQuickAction(deal, 'note'); }} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition-colors" title="Add Note">
                         <FileText className="w-3.5 h-3.5" />
                     </button>
                 </div>
@@ -133,18 +141,18 @@ function PipelineCard({ client, onQuickAction }: { client: any; onQuickAction: (
     );
 }
 
-function DroppableColumn({ column, clients, onQuickAction }: { column: typeof COLUMNS[number]; clients: any[]; onQuickAction: (client: any, type: string) => void }) {
+function DroppableColumn({ column, deals, onQuickAction }: { column: typeof COLUMNS[number]; deals: any[]; onQuickAction: (deal: any, type: string) => void }) {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
     const formatCurrency = useCurrency();
 
-    const columnTotal = clients.reduce((sum: number, c: any) => sum + (parseFloat(c.estimated_value) || 0), 0);
+    const columnTotal = deals.reduce((sum: number, d: any) => sum + (parseFloat(d.estimated_value) || 0), 0);
 
     return (
         <div className={`rounded-xl border ${column.color} p-3 transition-colors ${isOver ? 'bg-slate-100 dark:bg-white/10' : 'bg-slate-50 dark:bg-white/5'}`}>
             <div className="flex flex-col mb-3">
                 <div className="flex items-center justify-between">
                     <h3 className="font-medium text-sm">{column.label}</h3>
-                    <span className="text-xs text-slate-400 bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-full">{clients.length}</span>
+                    <span className="text-xs text-slate-400 bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-full">{deals.length}</span>
                 </div>
                 {columnTotal > 0 && (
                     <span className="text-xs text-emerald-400 font-semibold mt-1">
@@ -153,9 +161,9 @@ function DroppableColumn({ column, clients, onQuickAction }: { column: typeof CO
                 )}
             </div>
             <div ref={setNodeRef} className="min-h-[200px] rounded-lg">
-                <SortableContext items={clients.map((c: any) => c.id)} strategy={verticalListSortingStrategy}>
-                    {clients.map((client: any) => (
-                        <PipelineCard key={client.id} client={client} onQuickAction={onQuickAction} />
+                <SortableContext items={deals.map((d: any) => d.id)} strategy={verticalListSortingStrategy}>
+                    {deals.map((deal: any) => (
+                        <PipelineCard key={deal.id} deal={deal} onQuickAction={onQuickAction} />
                     ))}
                 </SortableContext>
             </div>
@@ -163,13 +171,16 @@ function DroppableColumn({ column, clients, onQuickAction }: { column: typeof CO
     );
 }
 
-export default function PipelineBoard({ clients }: { clients: any[] }) {
+export default function PipelineBoard({ deals }: { deals: any[] }) {
     const formatCurrency = useCurrency();
+    const [dealType, setDealType] = useState<'new_business' | 'repeat_business'>('new_business');
     const [activeId, setActiveId] = useState<number | null>(null);
-    const [localClients, setLocalClients] = useState(() => [...clients]);
-    const [modalClient, setModalClient] = useState<any>(null);
+    const [localDeals, setLocalDeals] = useState(() => [...deals]);
+    const [modalDeal, setModalDeal] = useState<any>(null);
     const [modalActionType, setModalActionType] = useState<string>('call');
-    const [lostModalClient, setLostModalClient] = useState<any>(null);
+    const [lostModalDeal, setLostModalDeal] = useState<any>(null);
+    const [convertModalDeal, setConvertModalDeal] = useState<any>(null);
+    const [convertTier, setConvertTier] = useState('bronze');
 
     const interactionForm = useForm({
         type: 'call',
@@ -184,119 +195,151 @@ export default function PipelineBoard({ clients }: { clients: any[] }) {
         lost_note: '',
     });
 
-    const openQuickActionModal = (client: any, type: string) => {
-        setModalClient(client);
+    const openQuickActionModal = (deal: any, type: string) => {
+        setModalDeal(deal);
         setModalActionType(type);
         const actionLabel = type.charAt(0).toUpperCase() + type.slice(1);
         interactionForm.setData({
             type,
-            subject: `${actionLabel} with ${client.company_name}`,
+            subject: `${actionLabel} with ${deal.client?.company_name}`,
             body: '',
             occurred_at: new Date().toISOString().slice(0, 16),
-            next_follow_up_at: client.next_follow_up_at?.split('T')[0] || '',
+            next_follow_up_at: deal.next_follow_up_at?.split('T')[0] || '',
         });
     };
 
     const handleModalSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!modalClient) return;
+        if (!modalDeal) return;
 
-        interactionForm.post(`/crm/${modalClient.id}/interactions`, {
+        interactionForm.post(`/crm/${modalDeal.client.id}/interactions`, {
             onSuccess: () => {
                 if (interactionForm.data.next_follow_up_at) {
-                    router.patch(`/crm/${modalClient.id}/status`, {
+                    router.patch(`/deals/${modalDeal.id}/status`, {
+                        stage: modalDeal.stage,
                         next_follow_up_at: interactionForm.data.next_follow_up_at,
                     }, { preserveScroll: true });
                 }
-                setModalClient(null);
+                setModalDeal(null);
             },
         });
     };
 
-    const clientsByStage = COLUMNS.reduce((acc, col) => {
-        acc[col.id] = localClients.filter((c: any) => (c.pipeline_stage || 'new_lead') === col.id);
+    const dealsForType = useMemo(() => localDeals.filter((d: any) => d.type === dealType), [localDeals, dealType]);
+
+    const dealsByStage = COLUMNS.reduce((acc, col) => {
+        acc[col.id] = dealsForType.filter((d: any) => (d.stage || 'new_lead') === col.id);
         return acc;
     }, {} as Record<string, any[]>);
 
     const totalPipelineValue = COLUMNS.filter(c => c.open).reduce((sum, col) => {
-        return sum + (clientsByStage[col.id] || []).reduce((s: number, c: any) => s + (parseFloat(c.estimated_value) || 0), 0);
+        return sum + (dealsByStage[col.id] || []).reduce((s: number, d: any) => s + (parseFloat(d.estimated_value) || 0), 0);
     }, 0);
 
     const handleDragStart = (event: DragStartEvent) => {
         setActiveId(event.active.id as number);
     };
 
-    const applyStageChange = useCallback((clientId: number, newStage: string, extra?: { lost_reason?: string; lost_note?: string }) => {
-        const client = localClients.find((c: any) => c.id === clientId);
-        const previousStage = client?.pipeline_stage;
+    const applyStageChange = useCallback((dealId: number, newStage: string, extra?: Record<string, any>) => {
+        const deal = localDeals.find((d: any) => d.id === dealId);
+        const previousStage = deal?.stage;
 
-        setLocalClients(prev => prev.map(c =>
-            c.id === clientId ? { ...c, pipeline_stage: newStage, ...(extra || {}) } : c
+        setLocalDeals(prev => prev.map(d =>
+            d.id === dealId ? { ...d, stage: newStage, ...(extra || {}) } : d
         ));
 
-        router.patch(`/crm/${clientId}/status`, { pipeline_stage: newStage, ...(extra || {}) }, {
+        router.patch(`/deals/${dealId}/status`, { stage: newStage, ...(extra || {}) }, {
             preserveScroll: true,
             preserveState: true,
             only: [],
             onError: () => {
-                setLocalClients(prev => prev.map(c =>
-                    c.id === clientId ? { ...c, pipeline_stage: previousStage } : c
+                setLocalDeals(prev => prev.map(d =>
+                    d.id === dealId ? { ...d, stage: previousStage } : d
                 ));
             },
         });
-    }, [localClients]);
+    }, [localDeals]);
 
     const handleDragEnd = useCallback((event: DragEndEvent) => {
         setActiveId(null);
         const { active, over } = event;
         if (!over) return;
 
-        const draggedClient = localClients.find((c: any) => c.id === active.id);
-        if (!draggedClient) return;
+        const draggedDeal = localDeals.find((d: any) => d.id === active.id);
+        if (!draggedDeal) return;
 
         let newStage: string | null = null;
 
         if (COLUMNS.some(col => col.id === over.id)) {
             newStage = over.id as string;
         } else {
-            const overClient = localClients.find((c: any) => c.id === over.id);
-            if (overClient) {
-                newStage = overClient.pipeline_stage;
+            const overDeal = localDeals.find((d: any) => d.id === over.id);
+            if (overDeal) {
+                newStage = overDeal.stage;
             }
         }
 
-        const currentStage = draggedClient.pipeline_stage || 'new_lead';
+        const currentStage = draggedDeal.stage || 'new_lead';
         if (newStage && newStage !== currentStage) {
             if (newStage === 'lost') {
                 lostForm.setData({ lost_reason: LOST_REASONS[0], lost_note: '' });
-                setLostModalClient(draggedClient);
+                setLostModalDeal(draggedDeal);
                 return;
             }
-            applyStageChange(draggedClient.id, newStage);
+            if (newStage === 'converted' && draggedDeal.type === 'new_business') {
+                setConvertTier('bronze');
+                setConvertModalDeal(draggedDeal);
+                return;
+            }
+            applyStageChange(draggedDeal.id, newStage);
         }
-    }, [localClients, applyStageChange]);
+    }, [localDeals, applyStageChange]);
 
     const handleLostSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!lostModalClient) return;
-        applyStageChange(lostModalClient.id, 'lost', {
+        if (!lostModalDeal) return;
+        applyStageChange(lostModalDeal.id, 'lost', {
             lost_reason: lostForm.data.lost_reason,
             lost_note: lostForm.data.lost_note,
         });
-        setLostModalClient(null);
+        setLostModalDeal(null);
     };
 
-    const activeClient = localClients.find((c: any) => c.id === activeId);
+    const handleConvertSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!convertModalDeal) return;
+        applyStageChange(convertModalDeal.id, 'converted', { status: convertTier });
+        setConvertModalDeal(null);
+    };
+
+    const activeDeal = localDeals.find((d: any) => d.id === activeId);
 
     return (
         <>
-            <div className="flex items-center gap-2 mb-4">
-                <div className="w-9 h-9 bg-emerald-500/20 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="w-4.5 h-4.5 text-emerald-400" />
+            <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+                <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 bg-emerald-500/20 rounded-lg flex items-center justify-center">
+                        <TrendingUp className="w-4.5 h-4.5 text-emerald-400" />
+                    </div>
+                    <div>
+                        <p className="text-lg font-semibold text-emerald-400">{formatCurrency(totalPipelineValue)}</p>
+                        <p className="text-xs text-slate-500">Total pipeline value (open stages)</p>
+                    </div>
                 </div>
-                <div>
-                    <p className="text-lg font-semibold text-emerald-400">{formatCurrency(totalPipelineValue)}</p>
-                    <p className="text-xs text-slate-500">Total pipeline value (open stages)</p>
+
+                <div className="flex bg-slate-100 dark:bg-white/10 rounded-lg p-0.5">
+                    <button
+                        onClick={() => setDealType('new_business')}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${dealType === 'new_business' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        New Business
+                    </button>
+                    <button
+                        onClick={() => setDealType('repeat_business')}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${dealType === 'repeat_business' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        Repeat Business
+                    </button>
                 </div>
             </div>
 
@@ -307,15 +350,15 @@ export default function PipelineBoard({ clients }: { clients: any[] }) {
             >
                 <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-7 gap-4 min-h-[600px]">
                     {COLUMNS.map((col) => (
-                        <DroppableColumn key={col.id} column={col} clients={clientsByStage[col.id] || []} onQuickAction={openQuickActionModal} />
+                        <DroppableColumn key={col.id} column={col} deals={dealsByStage[col.id] || []} onQuickAction={openQuickActionModal} />
                     ))}
                 </div>
 
                 <DragOverlay>
-                    {activeClient ? (
+                    {activeDeal ? (
                         <div className="w-[280px] opacity-90 rotate-2">
                             <GlassCard className="p-3 shadow-xl border border-indigo-500/30">
-                                <h4 className="font-medium text-sm">{activeClient.company_name}</h4>
+                                <h4 className="font-medium text-sm">{activeDeal.client?.company_name}</h4>
                             </GlassCard>
                         </div>
                     ) : null}
@@ -323,17 +366,17 @@ export default function PipelineBoard({ clients }: { clients: any[] }) {
             </DndContext>
 
             {/* Quick Action Modal */}
-            {modalClient && (
+            {modalDeal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
                         <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
                             <div>
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white capitalize">
-                                    Log {modalActionType} — {modalClient.company_name}
+                                    Log {modalActionType} — {modalDeal.client?.company_name}
                                 </h3>
                                 <p className="text-xs text-slate-400">Quick log interaction and set follow-up date</p>
                             </div>
-                            <button onClick={() => setModalClient(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                            <button onClick={() => setModalDeal(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -384,7 +427,7 @@ export default function PipelineBoard({ clients }: { clients: any[] }) {
                             <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/10">
                                 <button
                                     type="button"
-                                    onClick={() => setModalClient(null)}
+                                    onClick={() => setModalDeal(null)}
                                     className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 text-sm transition-colors"
                                 >
                                     Cancel
@@ -403,15 +446,15 @@ export default function PipelineBoard({ clients }: { clients: any[] }) {
             )}
 
             {/* Lost Reason Modal */}
-            {lostModalClient && (
+            {lostModalDeal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
                         <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
                             <div>
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Mark as Lost</h3>
-                                <p className="text-xs text-slate-400">{lostModalClient.company_name}</p>
+                                <p className="text-xs text-slate-400">{lostModalDeal.client?.company_name}</p>
                             </div>
-                            <button onClick={() => setLostModalClient(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                            <button onClick={() => setLostModalDeal(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -441,7 +484,7 @@ export default function PipelineBoard({ clients }: { clients: any[] }) {
                             <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/10">
                                 <button
                                     type="button"
-                                    onClick={() => setLostModalClient(null)}
+                                    onClick={() => setLostModalDeal(null)}
                                     className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 text-sm transition-colors"
                                 >
                                     Cancel
@@ -451,6 +494,45 @@ export default function PipelineBoard({ clients }: { clients: any[] }) {
                                     className="glass-button text-sm font-medium bg-red-600/80 hover:bg-red-600"
                                 >
                                     Mark Lost
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Convert & Assign Tier Modal */}
+            {convertModalDeal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Convert & Assign Tier</h3>
+                                <p className="text-xs text-slate-400">{convertModalDeal.client?.company_name} — new client won</p>
+                            </div>
+                            <button onClick={() => setConvertModalDeal(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleConvertSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-2">Tier *</label>
+                                <StatusChips value={convertTier} onChange={setConvertTier} options={TIER_OPTIONS} />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={() => setConvertModalDeal(null)}
+                                    className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 text-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="glass-button text-sm font-medium bg-emerald-600/80 hover:bg-emerald-600"
+                                >
+                                    Convert Client
                                 </button>
                             </div>
                         </form>

@@ -2,19 +2,24 @@ import { Fragment } from 'react';
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
 import { useForm } from '@inertiajs/react';
 import { X } from 'lucide-react';
+import { StatusChips } from '@/Components/ui';
 
 interface NewJobModalProps {
     open: boolean;
     onClose: () => void;
     users: any[];
+    orders?: any[];
     defaultStatus?: string;
+    defaultOrderId?: number | string;
 }
 
-export default function NewJobModal({ open, onClose, users, defaultStatus = 'new_jobs' }: NewJobModalProps) {
+export default function NewJobModal({ open, onClose, users, orders = [], defaultStatus = 'new_jobs', defaultOrderId }: NewJobModalProps) {
+    const lockedOrder = defaultOrderId ? orders.find((o: any) => String(o.id) === String(defaultOrderId)) : null;
+
     const { data, setData, post, processing, errors, reset } = useForm({
-        title: '',
+        title: lockedOrder ? `Order ${lockedOrder.order_number}` : '',
         description: '',
-        order_id: '',
+        order_id: defaultOrderId ? String(defaultOrderId) : '',
         priority: 'normal',
         assigned_to: '',
         due_date: '',
@@ -93,6 +98,32 @@ export default function NewJobModal({ open, onClose, users, defaultStatus = 'new
                                         />
                                     </div>
 
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Order</label>
+                                        {lockedOrder ? (
+                                            <p className="glass-input w-full flex items-center text-slate-400">{lockedOrder.order_number}</p>
+                                        ) : (
+                                            <select
+                                                value={data.order_id}
+                                                onChange={(e) => {
+                                                    const orderId = e.target.value;
+                                                    setData('order_id', orderId);
+                                                    if (!data.title) {
+                                                        const picked = orders.find((o: any) => String(o.id) === orderId);
+                                                        if (picked) setData((prev: any) => ({ ...prev, order_id: orderId, title: `Order ${picked.order_number}` }));
+                                                    }
+                                                }}
+                                                className="glass-input w-full"
+                                            >
+                                                <option value="">No linked order</option>
+                                                {orders.map((o: any) => (
+                                                    <option key={o.id} value={o.id}>{o.order_number} — {o.client?.company_name}</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                        {errors.order_id && <p className="text-red-400 text-xs mt-1">{errors.order_id}</p>}
+                                    </div>
+
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-300 mb-1">Priority</label>
@@ -110,14 +141,14 @@ export default function NewJobModal({ open, onClose, users, defaultStatus = 'new
 
                                         <div>
                                             <label className="block text-sm font-medium text-slate-300 mb-1">Starting Column</label>
-                                            <select
+                                            <StatusChips
                                                 value={data.status}
-                                                onChange={(e) => setData('status', e.target.value)}
-                                                className="glass-input w-full"
-                                            >
-                                                <option value="new_jobs">New Jobs</option>
-                                                <option value="design">Design</option>
-                                            </select>
+                                                onChange={(v) => setData('status', v)}
+                                                options={[
+                                                    { value: 'new_jobs', label: 'New Jobs' },
+                                                    { value: 'design', label: 'Design' },
+                                                ]}
+                                            />
                                         </div>
                                     </div>
 

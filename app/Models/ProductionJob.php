@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesDailyCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ProductionJob extends Model
 {
+    use GeneratesDailyCode;
+
     const STATUS_NEW_JOBS = 'new_jobs';
 
     const STATUS_DESIGN = 'design';
@@ -102,10 +105,17 @@ class ProductionJob extends Model
 
     public static function generateJobNumber(): string
     {
-        $last = static::orderBy('id', 'desc')->first();
-        $number = $last ? (int) substr($last->job_number, 4) + 1 : 1;
+        return static::nextDailyCode('JOB', 'job_number', 3);
+    }
 
-        return 'JOB-'.str_pad((string) $number, 6, '0', STR_PAD_LEFT);
+    public function populateMaterialsFromOrder(Order $order): void
+    {
+        foreach ($order->materialRequirements() as $materialId => $requiredQty) {
+            $this->materials()->create([
+                'material_id' => $materialId,
+                'required_qty' => $requiredQty,
+            ]);
+        }
     }
 }
 
@@ -143,7 +153,7 @@ class ProductionMaterial extends Model
 {
     protected $fillable = [
         'production_job_id',
-        'product_id',
+        'material_id',
         'required_qty',
         'consumed_qty',
     ];
@@ -158,8 +168,8 @@ class ProductionMaterial extends Model
         return $this->belongsTo(ProductionJob::class);
     }
 
-    public function product(): BelongsTo
+    public function material(): BelongsTo
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(InventoryProduct::class, 'material_id');
     }
 }

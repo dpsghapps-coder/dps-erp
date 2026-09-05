@@ -30,7 +30,9 @@ class DecisionHubSeeder extends Seeder
             DecisionCategory::firstOrCreate(['slug' => $cat['slug']], $cat);
         }
 
-        $admin = User::where('email', 'admin@dps-erp.com')->first();
+        $admin = User::whereHas('role', fn ($q) => $q->where('name', 'admin'))->first()
+            ?? User::where('email', 'admin@dps-erp.com')->first();
+
         if (! $admin) {
             return;
         }

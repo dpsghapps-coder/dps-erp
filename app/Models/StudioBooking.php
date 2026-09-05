@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesDailyCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -18,6 +19,8 @@ class StudioResource extends Model
 
 class StudioBooking extends Model
 {
+    use GeneratesDailyCode;
+
     protected $fillable = [
         'booking_reference',
         'order_id',
@@ -64,9 +67,6 @@ class StudioBooking extends Model
 
     public static function generateBookingReference(): string
     {
-        $last = static::orderBy('id', 'desc')->first();
-        $number = $last ? (int) substr($last->booking_reference, 3) + 1 : 1;
-
-        return 'BK-'.str_pad((string) $number, 6, '0', STR_PAD_LEFT);
+        return static::nextDailyCode('BK', 'booking_reference', 3);
     }
 }

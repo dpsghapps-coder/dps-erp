@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
@@ -135,12 +135,16 @@ export default function ProformaEdit() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Status</label>
-                                    <select value={data.status} onChange={(e) => setData('status', e.target.value)} className="glass-input w-full">
-                                        <option value="draft">Draft</option>
-                                        <option value="sent">Sent</option>
-                                        <option value="accepted">Accepted</option>
-                                        <option value="rejected">Rejected</option>
-                                    </select>
+                                    <StatusChips
+                                        value={data.status}
+                                        onChange={(v) => setData('status', v)}
+                                        options={[
+                                            { value: 'draft', label: 'Draft' },
+                                            { value: 'sent', label: 'Sent' },
+                                            { value: 'accepted', label: 'Accepted' },
+                                            { value: 'rejected', label: 'Rejected' },
+                                        ]}
+                                    />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Sales Rep</label>

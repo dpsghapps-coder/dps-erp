@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Client extends Model
@@ -17,14 +18,9 @@ class Client extends Model
         'city',
         'country',
         'status',
-        'pipeline_stage',
-        'lost_reason',
-        'lost_note',
-        'estimated_value',
         'source',
         'notes',
         'location',
-        'next_follow_up_at',
         'linkedin',
         'facebook',
         'instagram',
@@ -34,30 +30,12 @@ class Client extends Model
 
     protected $casts = [
         'status' => 'string',
-        'pipeline_stage' => 'string',
-        'estimated_value' => 'decimal:2',
-        'next_follow_up_at' => 'datetime',
+        'first_converted_at' => 'datetime',
+        'is_greylisted' => 'boolean',
+        'greylisted_at' => 'datetime',
     ];
 
-    public const PIPELINE_STAGES = [
-        'new_lead',
-        'contacted',
-        'meeting_scheduled',
-        'proposal_sent',
-        'negotiating',
-        'converted',
-        'lost',
-    ];
-
-    public static function pipelineStageForStatus(string $status): string
-    {
-        return match ($status) {
-            'active' => 'converted',
-            'inactive' => 'lost',
-            'prospect' => 'negotiating',
-            default => 'new_lead',
-        };
-    }
+    public const TIERS = ['bronze', 'silver', 'gold', 'platinum'];
 
     public function contacts(): HasMany
     {
@@ -79,6 +57,16 @@ class Client extends Model
         return $this->hasMany(Proforma::class);
     }
 
+    public function deals(): HasMany
+    {
+        return $this->hasMany(Deal::class);
+    }
+
+    public function greylistedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'greylisted_by');
+    }
+
     public function primaryContact()
     {
         return $this->hasOne(Contact::class)->oldest();
@@ -87,5 +75,15 @@ class Client extends Model
     public function lastInteraction()
     {
         return $this->hasOne(Interaction::class)->latestOfMany('occurred_at');
+    }
+
+    public function isExistingClient(): bool
+    {
+        return ! is_null($this->first_converted_at);
+    }
+
+    public function hasOpenDeal(): bool
+    {
+        return $this->deals()->whereIn('stage', Deal::OPEN_STAGES)->exists();
     }
 }

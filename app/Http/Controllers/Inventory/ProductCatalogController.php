@@ -11,6 +11,7 @@ use App\Models\Setting;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ProductCatalogController extends Controller
@@ -157,13 +158,14 @@ class ProductCatalogController extends Controller
 
     public function show(InventoryProduct $product)
     {
-        $product->load(['supplierPrices.supplier.branches', 'supplierPrices.createdBy', 'prices.supplier', 'prices.collectedBy', 'prices.addedBy', 'approvedRequisitions', 'stocks']);
+        $product->load(['supplierPrices.supplier.branches', 'supplierPrices.createdBy', 'prices.supplier', 'prices.collectedBy', 'prices.addedBy', 'prices.costItems', 'approvedRequisitions', 'stocks']);
 
         $suppliers = Supplier::with('branches')->where('is_active', true)->orderBy('company_name')->get();
         $users = User::orderBy('name')->get(['id', 'name']);
         $categories = ProductCategory::with('attributes')->orderBy('name')->get(['id', 'name']);
         $uoms = Setting::where('key', 'like', 'uom_%')->pluck('value');
         $attributes = Setting::where('key', 'like', 'attr_%')->pluck('value');
+        $costTypes = Setting::where('key', 'like', 'extra_cost_%')->pluck('value');
         $categoryAttributes = ProductCategory::with('attributes')->get()->mapWithKeys(function ($cat) {
             return [$cat->name => $cat->attributes->pluck('value')];
         });
@@ -175,6 +177,7 @@ class ProductCatalogController extends Controller
             'categories' => $categories,
             'uoms' => $uoms,
             'attributes' => $attributes,
+            'costTypes' => $costTypes,
             'categoryAttributes' => $categoryAttributes,
         ]);
     }
@@ -214,12 +217,7 @@ class ProductCatalogController extends Controller
 
     public function storePrice(Request $request, InventoryProduct $product)
     {
-        $validated = $request->validate([
-            'supplier_id' => 'required|exists:suppliers,id',
-            'price' => 'required|numeric|min:0',
-            'collected_by' => 'nullable|exists:users,id',
-            'collection_date' => 'required|date',
-        ]);
+        $validated = $this->validatePriceCollection($request);
 
         $exists = $product->prices()
             ->where('supplier_id', $validated['supplier_id'])
@@ -230,25 +228,67 @@ class ProductCatalogController extends Controller
             return back()->withErrors(['supplier_id' => 'A price for this supplier on this collection date already exists.'])->withInput();
         }
 
-        $product->prices()->create(array_merge($validated, [
-            'added_by' => auth()->id(),
-        ]));
+        DB::transaction(function () use ($validated, $product) {
+            $price = $product->prices()->create([
+                ...$this->priceFields($validated),
+                'added_by' => auth()->id(),
+            ]);
+
+            foreach ($validated['cost_items'] ?? [] as $item) {
+                $price->costItems()->create($item);
+            }
+        });
 
         return back()->with('success', 'Price added successfully');
     }
 
     public function updatePrice(Request $request, MaterialPrice $price)
     {
-        $validated = $request->validate([
+        $validated = $this->validatePriceCollection($request);
+
+        DB::transaction(function () use ($validated, $price) {
+            $price->update($this->priceFields($validated));
+
+            $price->costItems()->delete();
+            foreach ($validated['cost_items'] ?? [] as $item) {
+                $price->costItems()->create($item);
+            }
+        });
+
+        return back()->with('success', 'Price updated successfully');
+    }
+
+    private function validatePriceCollection(Request $request): array
+    {
+        return $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
-            'price' => 'required|numeric|min:0',
+            'units_purchased' => 'required|numeric|min:0.01',
+            'qty_per_unit' => 'required|numeric|min:0.01',
+            'material_cost' => 'required|numeric|min:0',
+            'cost_items' => 'nullable|array',
+            'cost_items.*.label' => 'required|string|max:100',
+            'cost_items.*.amount' => 'required|numeric|min:0',
             'collected_by' => 'nullable|exists:users,id',
             'collection_date' => 'required|date',
         ]);
+    }
 
-        $price->update($validated);
+    private function priceFields(array $validated): array
+    {
+        $qty = $validated['units_purchased'] * $validated['qty_per_unit'];
+        $totalCost = $validated['material_cost'] + collect($validated['cost_items'] ?? [])->sum('amount');
 
-        return back()->with('success', 'Price updated successfully');
+        return [
+            'supplier_id' => $validated['supplier_id'],
+            'units_purchased' => $validated['units_purchased'],
+            'qty_per_unit' => $validated['qty_per_unit'],
+            'qty' => $qty,
+            'material_cost' => $validated['material_cost'],
+            'total_cost' => $totalCost,
+            'price' => $qty > 0 ? round($totalCost / $qty, 2) : 0,
+            'collected_by' => $validated['collected_by'] ?? null,
+            'collection_date' => $validated['collection_date'],
+        ];
     }
 
     public function destroyPrice(MaterialPrice $price)

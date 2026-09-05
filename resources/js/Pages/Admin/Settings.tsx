@@ -1,17 +1,28 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, Plus, Trash2, Package, Tag, List, X, Check } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Package, Tag, List, X, Check, Receipt, AlertTriangle, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
+import Swal from 'sweetalert2';
 
 export default function Settings() {
-    const { uoms, categories, attributes, currency: savedCurrency } = usePage().props as any;
-    const [activeTab, setActiveTab] = useState<'general' | 'uom' | 'categories' | 'attributes'>('general');
+    const page = usePage().props as any;
+    const { uoms, categories, attributes, extraCostTypes, currency: savedCurrency } = page;
+    const isAdmin = page.auth?.user?.role?.name === 'admin';
+    const permissions = (page.auth?.permissions as string[]) || [];
+    const canFactoryReset = isAdmin || permissions.includes('*') || permissions.includes('admin.factory_reset');
+    const [activeTab, setActiveTab] = useState<'general' | 'uom' | 'categories' | 'attributes' | 'extraCosts' | 'dangerZone'>('general');
     const [newUom, setNewUom] = useState('');
     const [newCategory, setNewCategory] = useState('');
     const [newAttribute, setNewAttribute] = useState('');
+    const [newExtraCostType, setNewExtraCostType] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
     const [togglingAttr, setTogglingAttr] = useState<number | null>(null);
+
+    const { data: resetData, setData: setResetData, post: postReset, processing: resetProcessing, errors: resetErrors, reset: resetResetForm } = useForm({
+        password: '',
+        confirmation: '',
+    });
 
     const { data, setData, put, processing } = useForm({
         company_name: 'DPS-ERP',
@@ -75,6 +86,34 @@ export default function Settings() {
         }
     };
 
+    const handleAddExtraCostType = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (newExtraCostType.trim()) {
+            router.post('/admin/settings/extra-cost-type', { value: newExtraCostType }, {
+                onSuccess: () => setNewExtraCostType(''),
+            });
+        }
+    };
+
+    const handleFactoryReset = (e: React.FormEvent) => {
+        e.preventDefault();
+        Swal.fire({
+            title: 'Absolutely sure?',
+            html: 'This will <b>permanently wipe all business data</b> — clients, orders, products, services, inventory, production, HRM, finance, everything except your login and system roles/permissions.<br/><br/>A backup is saved on the server first, but restoring it requires manual server access.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Yes, wipe everything',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                postReset('/admin/settings/factory-reset', {
+                    onSuccess: () => resetResetForm(),
+                });
+            }
+        });
+    };
+
     return (
         <AppLayout>
             <Head title="Settings" />
@@ -116,6 +155,20 @@ export default function Settings() {
                 >
                     <List className="w-4 h-4 inline mr-2" />Attributes
                 </button>
+                <button
+                    onClick={() => setActiveTab('extraCosts')}
+                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'extraCosts' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                >
+                    <Receipt className="w-4 h-4 inline mr-2" />Extra Cost Types
+                </button>
+                {canFactoryReset && (
+                    <button
+                        onClick={() => setActiveTab('dangerZone')}
+                        className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'dangerZone' ? 'bg-red-600 text-white' : 'text-red-400 hover:text-red-300'}`}
+                    >
+                        <ShieldAlert className="w-4 h-4 inline mr-2" />Danger Zone
+                    </button>
+                )}
             </div>
 
             {activeTab === 'general' && (
@@ -204,6 +257,33 @@ export default function Settings() {
                 </div>
             )}
 
+            {activeTab === 'extraCosts' && (
+                <div className="max-w-3xl">
+                    <GlassCard>
+                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Receipt className="w-5 h-5" /> Extra Cost Types
+                        </h2>
+                        <p className="text-sm text-slate-400 mb-4">Manage the landed-cost types (e.g. Transport, Sewing) staff can add when recording a stock purchase.</p>
+
+                        <form onSubmit={handleAddExtraCostType} className="flex gap-2 mb-6">
+                            <input type="text" value={newExtraCostType} onChange={(e) => setNewExtraCostType(e.target.value)} placeholder="New cost type" className="glass-input flex-1" />
+                            <button type="submit" className="glass-button flex items-center gap-2"><Plus className="w-4 h-4" /> Add</button>
+                        </form>
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {(extraCostTypes || []).map((type: any) => (
+                                <div key={type.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                    <span>{type.value}</span>
+                                    <Link href={`/admin/settings/extra-cost-type/${type.id}`} method="delete" as="button" className="text-red-400 hover:text-red-300">
+                                        <Trash2 className="w-4 h-4" />
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+                    </GlassCard>
+                </div>
+            )}
+
             {activeTab === 'categories' && (
                 <div className="max-w-3xl">
                     <GlassCard>
@@ -237,6 +317,55 @@ export default function Settings() {
                                 </div>
                             ))}
                         </div>
+                    </GlassCard>
+                </div>
+            )}
+
+            {activeTab === 'dangerZone' && canFactoryReset && (
+                <div className="max-w-3xl">
+                    <GlassCard className="border border-red-500/30">
+                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2 text-red-400">
+                            <AlertTriangle className="w-5 h-5" /> Factory Reset
+                        </h2>
+                        <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 mb-6 text-sm text-red-300 space-y-1">
+                            <p className="font-medium">This permanently wipes all business data:</p>
+                            <p>Clients, orders, products, services, inventory, production, HRM, finance, marketing, studio, chat — everything except your login and the system's roles/permissions.</p>
+                            <p>A timestamped backup of the full database is saved on the server before anything is deleted, but restoring it requires manual server access — this is not a self-service undo.</p>
+                        </div>
+
+                        <form onSubmit={handleFactoryReset} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Confirm your password</label>
+                                <input
+                                    type="password"
+                                    value={resetData.password}
+                                    onChange={(e) => setResetData('password', e.target.value)}
+                                    className="glass-input w-full"
+                                    autoComplete="current-password"
+                                    required
+                                />
+                                {resetErrors.password && <p className="text-red-400 text-sm mt-1">{resetErrors.password}</p>}
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Type <span className="font-mono font-bold">RESET</span> to confirm</label>
+                                <input
+                                    type="text"
+                                    value={resetData.confirmation}
+                                    onChange={(e) => setResetData('confirmation', e.target.value)}
+                                    className="glass-input w-full font-mono"
+                                    placeholder="RESET"
+                                    required
+                                />
+                                {resetErrors.confirmation && <p className="text-red-400 text-sm mt-1">{resetErrors.confirmation}</p>}
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={resetProcessing || resetData.confirmation !== 'RESET' || !resetData.password}
+                                className="glass-button bg-red-600 hover:bg-red-700 text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                                <AlertTriangle className="w-4 h-4" /> {resetProcessing ? 'Wiping...' : 'Factory Reset'}
+                            </button>
+                        </form>
                     </GlassCard>
                 </div>
             )}

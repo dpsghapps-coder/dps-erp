@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class Stock extends Model
@@ -27,7 +28,10 @@ class Stock extends Model
         'id',
         'product_id',
         'supplier_id',
+        'units_purchased',
+        'qty_per_unit',
         'qty_purchased',
+        'material_cost',
         'price',
         'total_cost',
         'date_purchased',
@@ -37,7 +41,10 @@ class Stock extends Model
     ];
 
     protected $casts = [
-        'qty_purchased' => 'integer',
+        'units_purchased' => 'decimal:2',
+        'qty_per_unit' => 'decimal:2',
+        'qty_purchased' => 'decimal:2',
+        'material_cost' => 'decimal:2',
         'price' => 'decimal:2',
         'total_cost' => 'decimal:2',
         'date_purchased' => 'date',
@@ -51,6 +58,11 @@ class Stock extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function costItems(): HasMany
+    {
+        return $this->hasMany(StockCostItem::class);
     }
 
     public function resolveRouteBinding($value, $field = null)

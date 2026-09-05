@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { Head, usePage, Link } from '@inertiajs/react';
-import { Plus, Search, Building, User, MapPin, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Building, User, MapPin, Pencil, Trash2, Rocket } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import Swal from 'sweetalert2';
 import { router } from '@inertiajs/react';
@@ -34,6 +34,10 @@ export default function CrmIndex() {
         });
         return counts;
     }, [clientsList]);
+
+    const handleStartCampaign = (id: string) => {
+        router.post(`/crm/${id}/deals`, {}, { preserveScroll: true });
+    };
 
     const handleDelete = (id: string) => {
         Swal.fire({
@@ -111,7 +115,7 @@ export default function CrmIndex() {
                                 </div>
                             </div>
                             <div className="flex gap-2 flex-wrap">
-                                {['all', 'lead', 'prospect', 'active', 'inactive'].map((s) => (
+                                {['all', 'bronze', 'silver', 'gold', 'platinum'].map((s) => (
                                     <button
                                         key={s}
                                         onClick={() => setStatusFilter(s)}
@@ -174,7 +178,10 @@ export default function CrmIndex() {
                                             <h3 className="font-semibold text-lg group-hover:text-indigo-400 transition-colors truncate min-w-0">
                                                 {client.company_name}
                                             </h3>
-                                            <StatusBadge status={client.status} className="shrink-0" />
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                {client.is_greylisted && <StatusBadge status="greylisted" />}
+                                                {client.status && <StatusBadge status={client.status} />}
+                                            </div>
                                         </div>
 
                                         {client.industry && (
@@ -198,19 +205,29 @@ export default function CrmIndex() {
                                             </div>
                                         )}
 
-                                        <div className="flex gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); router.visit(`/crm/${client.id}/edit`); }}
-                                                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                                            >
-                                                <Pencil className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); handleDelete(client.id); }}
-                                                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-red-400 transition-colors"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                        <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
+                                            {!client.has_open_deal ? (
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStartCampaign(client.id); }}
+                                                    className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600/20 border border-indigo-500/20 transition-colors"
+                                                >
+                                                    <Rocket className="w-3.5 h-3.5" /> Start Sale Campaign
+                                                </button>
+                                            ) : <span />}
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.visit(`/crm/${client.id}/edit`); }}
+                                                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(client.id); }}
+                                                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-red-400 transition-colors"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </GlassCard>
                                 </Link>

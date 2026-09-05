@@ -3,7 +3,7 @@ import { Head, usePage } from '@inertiajs/react';
 import KanbanBoard from '@/Components/Production/KanbanBoard';
 
 export default function ProductionIndex() {
-    const { jobs, users } = usePage().props;
+    const { jobs, users, orders } = usePage().props;
 
     return (
         <AppLayout>
@@ -14,7 +14,7 @@ export default function ProductionIndex() {
                 <p className="text-sm text-slate-400">Manage production jobs and workflow</p>
             </div>
 
-            <KanbanBoard jobs={jobs as any[]} users={users as any[]} />
+            <KanbanBoard jobs={jobs as any[]} users={users as any[]} orders={orders as any[]} />
         </AppLayout>
     );
 }

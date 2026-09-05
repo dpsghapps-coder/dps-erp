@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { Head, usePage, Link } from '@inertiajs/react';
-import { Users, TrendingUp, UserCheck, UserX, Target, BarChart3, ArrowRight, DollarSign, Trophy } from 'lucide-react';
+import { Users, TrendingUp, BarChart3, ArrowRight, DollarSign, Trophy, Medal, Award, Crown, Gem } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 
 const STAGE_LABELS: Record<string, string> = {
@@ -20,8 +20,8 @@ export default function Reports() {
 
     const statCards = [
         { label: 'Total Clients', value: stats.total_clients, icon: Users, color: 'bg-slate-500/20 text-slate-400' },
-        { label: 'Active', value: stats.active, icon: UserCheck, color: 'bg-green-500/20 text-green-400' },
-        { label: 'Inactive', value: stats.inactive, icon: UserX, color: 'bg-red-500/20 text-red-400' },
+        { label: 'Gold', value: stats.gold, icon: Award, color: 'bg-yellow-500/20 text-yellow-400' },
+        { label: 'Platinum', value: stats.platinum, icon: Crown, color: 'bg-violet-500/20 text-violet-400' },
         { label: 'Win Rate', value: `${conversionRate}%`, icon: TrendingUp, color: 'bg-indigo-500/20 text-indigo-400' },
         { label: 'Pipeline Value', value: formatCurrency(pipelineValue || 0), icon: DollarSign, color: 'bg-emerald-500/20 text-emerald-400' },
         { label: 'Won Revenue', value: formatCurrency(wonValue || 0), icon: Trophy, color: 'bg-amber-500/20 text-amber-400' },
@@ -83,37 +83,37 @@ export default function Reports() {
                     </div>
                 </GlassCard>
 
-                {/* Status Breakdown */}
+                {/* Tier Breakdown */}
                 <GlassCard>
-                    <h2 className="text-lg font-semibold mb-4">Status Breakdown</h2>
+                    <h2 className="text-lg font-semibold mb-4">Tier Breakdown</h2>
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between p-3 bg-blue-500/10 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-orange-500/10 rounded-lg">
                             <div className="flex items-center gap-3">
-                                <Target className="w-5 h-5 text-blue-400" />
-                                <span className="font-medium">Leads</span>
+                                <Medal className="w-5 h-5 text-orange-400" />
+                                <span className="font-medium">Bronze</span>
                             </div>
-                            <span className="text-xl font-semibold text-blue-400">{stats.leads}</span>
+                            <span className="text-xl font-semibold text-orange-400">{stats.bronze}</span>
+                        </div>
+                        <div className="flex items-center justify-between p-3 bg-slate-500/10 rounded-lg">
+                            <div className="flex items-center gap-3">
+                                <Gem className="w-5 h-5 text-slate-400" />
+                                <span className="font-medium">Silver</span>
+                            </div>
+                            <span className="text-xl font-semibold text-slate-400">{stats.silver}</span>
                         </div>
                         <div className="flex items-center justify-between p-3 bg-yellow-500/10 rounded-lg">
                             <div className="flex items-center gap-3">
-                                <TrendingUp className="w-5 h-5 text-yellow-400" />
-                                <span className="font-medium">Prospects</span>
+                                <Award className="w-5 h-5 text-yellow-400" />
+                                <span className="font-medium">Gold</span>
                             </div>
-                            <span className="text-xl font-semibold text-yellow-400">{stats.prospects}</span>
+                            <span className="text-xl font-semibold text-yellow-400">{stats.gold}</span>
                         </div>
-                        <div className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg">
+                        <div className="flex items-center justify-between p-3 bg-violet-500/10 rounded-lg">
                             <div className="flex items-center gap-3">
-                                <UserCheck className="w-5 h-5 text-green-400" />
-                                <span className="font-medium">Active</span>
+                                <Crown className="w-5 h-5 text-violet-400" />
+                                <span className="font-medium">Platinum</span>
                             </div>
-                            <span className="text-xl font-semibold text-green-400">{stats.active}</span>
-                        </div>
-                        <div className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg">
-                            <div className="flex items-center gap-3">
-                                <UserX className="w-5 h-5 text-red-400" />
-                                <span className="font-medium">Inactive</span>
-                            </div>
-                            <span className="text-xl font-semibold text-red-400">{stats.inactive}</span>
+                            <span className="text-xl font-semibold text-violet-400">{stats.platinum}</span>
                         </div>
                     </div>
                 </GlassCard>

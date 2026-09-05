@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AuditLog;
 use App\Models\Client;
 use App\Models\Contact;
+use App\Models\Deal;
 use Illuminate\Http\Request;
 
 class CrmController extends Controller
@@ -12,6 +13,7 @@ class CrmController extends Controller
     public function index()
     {
         $clients = Client::with(['primaryContact'])
+            ->withExists(['deals as has_open_deal' => fn ($q) => $q->whereIn('stage', Deal::OPEN_STAGES)])
             ->orderBy('company_name')
             ->get();
 
@@ -29,7 +31,6 @@ class CrmController extends Controller
             'company_name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:clients,email',
             'phone' => ['nullable', 'string', 'max:10', 'regex:/^0[0-9]{9}$/'],
-            'status' => 'required|in:lead,prospect,active,inactive',
             'estimated_value' => 'nullable|numeric|min:0',
             'industry' => 'nullable|string|max:100',
             'website' => 'nullable|url',
@@ -46,9 +47,17 @@ class CrmController extends Controller
             'tiktok' => 'nullable|url',
         ]);
 
-        $validated['pipeline_stage'] = Client::pipelineStageForStatus($validated['status']);
+        $estimatedValue = $validated['estimated_value'] ?? 0;
+        unset($validated['estimated_value']);
 
-        Client::create($validated);
+        $client = Client::create($validated);
+
+        $client->deals()->create([
+            'type' => 'new_business',
+            'stage' => 'new_lead',
+            'estimated_value' => $estimatedValue,
+            'created_by' => auth()->id(),
+        ]);
 
         return redirect()->route('crm.index')->with('success', 'Client created successfully');
     }
@@ -61,6 +70,7 @@ class CrmController extends Controller
             'orders.items',
             'orders.createdBy',
             'proformas',
+            'deals' => fn ($q) => $q->orderBy('created_at', 'desc'),
         ]);
 
         $auditLogs = AuditLog::with('user')
@@ -86,8 +96,7 @@ class CrmController extends Controller
             'company_name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:clients,email,'.$client->id,
             'phone' => ['nullable', 'string', 'max:10', 'regex:/^0[0-9]{9}$/'],
-            'status' => 'required|in:lead,prospect,active,inactive',
-            'estimated_value' => 'nullable|numeric|min:0',
+            'status' => 'nullable|in:'.implode(',', Client::TIERS),
             'industry' => 'nullable|string|max:100',
             'website' => 'nullable|url',
             'address' => 'nullable|string',
@@ -118,63 +127,60 @@ class CrmController extends Controller
     public function updateStatus(Request $request, Client $client)
     {
         $validated = $request->validate([
-            'status' => 'sometimes|required|in:lead,prospect,active,inactive',
-            'pipeline_stage' => 'sometimes|required|in:'.implode(',', Client::PIPELINE_STAGES),
-            'next_follow_up_at' => 'nullable|date',
-            'lost_reason' => 'nullable|string|max:100',
-            'lost_note' => 'nullable|string',
+            'status' => 'required|in:'.implode(',', Client::TIERS),
         ]);
 
-        $wasActive = $client->status === 'active';
-        $previousPipelineStage = $client->pipeline_stage;
-
-        $update = [];
-        if (array_key_exists('next_follow_up_at', $validated)) {
-            $update['next_follow_up_at'] = $validated['next_follow_up_at'];
-        }
-
-        if (isset($validated['pipeline_stage'])) {
-            $update['pipeline_stage'] = $validated['pipeline_stage'];
-            if ($validated['pipeline_stage'] === 'converted') {
-                $update['status'] = 'active';
-            } elseif ($validated['pipeline_stage'] === 'lost') {
-                $update['status'] = 'inactive';
-                $update['lost_reason'] = $validated['lost_reason'] ?? null;
-                $update['lost_note'] = $validated['lost_note'] ?? null;
-            }
-        } elseif (isset($validated['status'])) {
-            $update['status'] = $validated['status'];
-            if ($validated['status'] === 'active' && $client->pipeline_stage !== 'converted') {
-                $update['pipeline_stage'] = 'converted';
-            } elseif ($validated['status'] === 'inactive' && $client->pipeline_stage !== 'lost') {
-                $update['pipeline_stage'] = 'lost';
-            }
-        }
-
-        $client->update($update);
-
-        if (! $wasActive && $client->status === 'active') {
-            $client->interactions()->create([
-                'user_id' => auth()->id(),
-                'type' => 'note',
-                'subject' => 'Lead converted to active',
-                'body' => 'Status changed to active',
-                'occurred_at' => now(),
-            ]);
-        }
-
-        if (($validated['pipeline_stage'] ?? null) === 'lost' && $previousPipelineStage !== 'lost') {
-            $client->interactions()->create([
-                'user_id' => auth()->id(),
-                'type' => 'note',
-                'subject' => 'Lead marked as lost',
-                'body' => 'Reason: ' . ($validated['lost_reason'] ?? 'Not specified')
-                    . (! empty($validated['lost_note']) ? ' — ' . $validated['lost_note'] : ''),
-                'occurred_at' => now(),
-            ]);
-        }
+        $client->update($validated);
 
         return back()->with('success', 'Status updated successfully');
+    }
+
+    public function toggleGreylist(Request $request, Client $client)
+    {
+        $validated = $request->validate([
+            'greylisted' => 'required|boolean',
+            'reason' => 'nullable|string|max:255',
+        ]);
+
+        if ($validated['greylisted']) {
+            $client->update([
+                'is_greylisted' => true,
+                'greylisted_at' => now(),
+                'greylisted_by' => auth()->id(),
+                'greylist_reason' => $validated['reason'] ?? null,
+            ]);
+
+            $client->interactions()->create([
+                'user_id' => auth()->id(),
+                'type' => 'note',
+                'subject' => 'Client greylisted',
+                'body' => $validated['reason'] ?? 'No reason given',
+                'occurred_at' => now(),
+            ]);
+
+            return back()->with('success', 'Client greylisted');
+        }
+
+        if (! auth()->user()->hasPermission('crm.approve-greylist')) {
+            return back()->with('error', 'Only a manager can approve removing a greylist.');
+        }
+
+        $client->update([
+            'is_greylisted' => false,
+            'greylisted_at' => null,
+            'greylisted_by' => null,
+            'greylist_reason' => null,
+        ]);
+
+        $client->interactions()->create([
+            'user_id' => auth()->id(),
+            'type' => 'note',
+            'subject' => 'Greylist lifted',
+            'body' => 'Client approved and greylist removed.',
+            'occurred_at' => now(),
+        ]);
+
+        return back()->with('success', 'Greylist lifted');
     }
 
     public function updateBulk(Request $request)
@@ -182,20 +188,23 @@ class CrmController extends Controller
         $validated = $request->validate([
             'ids' => 'required|array|min:1',
             'ids.*' => 'exists:clients,id',
-            'status' => 'nullable|in:lead,prospect,active,inactive',
+            'status' => 'nullable|in:'.implode(',', Client::TIERS),
             'next_follow_up_at' => 'nullable|date',
         ]);
 
-        $data = array_filter([
-            'status' => $validated['status'] ?? null,
-            'next_follow_up_at' => $validated['next_follow_up_at'] ?? null,
-        ], fn($v) => $v !== null);
-
-        if (empty($data)) {
+        if (empty($validated['status']) && empty($validated['next_follow_up_at'])) {
             return back()->with('error', 'No update provided');
         }
 
-        Client::whereIn('id', $validated['ids'])->update($data);
+        if (! empty($validated['status'])) {
+            Client::whereIn('id', $validated['ids'])->update(['status' => $validated['status']]);
+        }
+
+        if (! empty($validated['next_follow_up_at'])) {
+            Deal::whereIn('client_id', $validated['ids'])
+                ->whereIn('stage', Deal::OPEN_STAGES)
+                ->update(['next_follow_up_at' => $validated['next_follow_up_at']]);
+        }
 
         return back()->with('success', count($validated['ids']) . ' leads updated');
     }

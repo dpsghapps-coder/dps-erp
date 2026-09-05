@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\GeneratesSequentialCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -9,6 +10,8 @@ use Illuminate\Support\Str;
 
 class InventoryProduct extends Model
 {
+    use GeneratesSequentialCode;
+
     protected $table = 'inventory_products';
 
     protected $keyType = 'string';
@@ -21,11 +24,21 @@ class InventoryProduct extends Model
             if (empty($model->id)) {
                 $model->id = (string) Str::uuid();
             }
+
+            if (empty($model->code)) {
+                $model->code = static::generateCode();
+            }
         });
+    }
+
+    public static function generateCode(): string
+    {
+        return static::nextSequentialCode('MAT', 'code', 5);
     }
 
     protected $fillable = [
         'id',
+        'code',
         'material_id',
         'item_name',
         'item_description',
@@ -44,7 +57,7 @@ class InventoryProduct extends Model
         'attributes' => 'array',
     ];
 
-    protected $appends = ['available_stock', 'default_price', 'primary_supplier'];
+    protected $appends = ['available_stock', 'default_price', 'primary_supplier', 'unit_cost'];
 
     public function supplier(): BelongsTo
     {
@@ -89,6 +102,14 @@ class InventoryProduct extends Model
         return $this->prices()
             ->orderBy('collection_date', 'desc')
             ->first()?->price ?? 0;
+    }
+
+    public function getUnitCostAttribute(): float
+    {
+        return (float) ($this->stocks()
+            ->orderBy('date_purchased', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->first()?->price ?? 0);
     }
 
     public function getPrimarySupplierAttribute()

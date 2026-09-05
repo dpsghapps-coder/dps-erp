@@ -11,8 +11,7 @@ export default function EditEmploymentType() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    router.put(`/hrm/settings/employment-types/${employmentType.id}`, {
-      ...form.data,
+    form.put(`/hrm/settings/employment-types/${employmentType.id}`, {
       onSuccess: () => router.visit(route('hrm.settings.index')),
     });
   };

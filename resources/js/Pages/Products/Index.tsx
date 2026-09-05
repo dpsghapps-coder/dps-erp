@@ -1,10 +1,19 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusBadge, EmptyState, Pagination } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusBadge, EmptyState, Pagination, StatusChips } from '@/Components/ui';
 import { Head, usePage, Link, router } from '@inertiajs/react';
 import { Plus, Search, Pencil, Trash2, Package, Wrench, X } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useCurrency } from '@/Utils/currency';
 import Swal from 'sweetalert2';
+
+function tierLabel(price: any): string {
+    if (price.max_qty) return `${price.min_qty}-${price.max_qty}`;
+    return `${price.min_qty}+`;
+}
+
+function sortedPrices(product: any): any[] {
+    return [...(product.prices || [])].sort((a: any, b: any) => a.min_qty - b.min_qty);
+}
 
 export default function ProductsIndex() {
     const { products, categories } = usePage().props;
@@ -70,26 +79,33 @@ export default function ProductsIndex() {
                             />
                         </div>
                     </div>
-                    <select 
+                </div>
+                <div className="flex flex-wrap items-center gap-4 mt-4">
+                    <StatusChips
+                        name="Type"
                         value={typeFilter}
-                        onChange={(e) => setTypeFilter(e.target.value)}
-                        className="glass-input"
-                    >
-                        <option value="all">All Types</option>
-                        <option value="physical">Physical</option>
-                        <option value="service">Service</option>
-                        <option value="digital">Digital</option>
-                    </select>
-                    <select 
-                        value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
-                        className="glass-input"
-                    >
-                        <option value="all">All Categories</option>
-                        {(categories || []).map((c: any) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                    </select>
+                        onChange={setTypeFilter}
+                        options={[
+                            { value: 'all', label: 'All Types' },
+                            { value: 'physical', label: 'Physical' },
+                            { value: 'service', label: 'Service' },
+                            { value: 'digital', label: 'Digital' },
+                        ]}
+                    />
+                    {(categories || []).length > 0 && (
+                        <>
+                            <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+                            <StatusChips
+                                name="Category"
+                                value={categoryFilter}
+                                onChange={setCategoryFilter}
+                                options={[
+                                    { value: 'all', label: 'All Categories' },
+                                    ...(categories || []).map((c: any) => ({ value: String(c.id), label: c.name })),
+                                ]}
+                            />
+                        </>
+                    )}
                 </div>
             </GlassCard>
 
@@ -104,6 +120,7 @@ export default function ProductsIndex() {
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Category</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Type</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Unit</th>
+                                <th className="text-left py-3 px-4 text-sm font-medium text-slate-400">Tiered Pricing</th>
                                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Total Value</th>
                                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-400">Actions</th>
                             </tr>
@@ -125,6 +142,19 @@ export default function ProductsIndex() {
                                             </span>
                                         </td>
                                         <td className="py-3 px-4 text-slate-400">{product.unit}</td>
+                                        <td className="py-3 px-4">
+                                            {sortedPrices(product).length > 0 ? (
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {sortedPrices(product).map((price: any) => (
+                                                        <span key={price.id} className="text-xs px-2 py-0.5 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-300 whitespace-nowrap">
+                                                            {tierLabel(price)}: <span className="text-emerald-400 font-medium">{formatCurrency(price.unit_price)}</span>
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-500 text-sm">No pricing set</span>
+                                            )}
+                                        </td>
                                         <td className="py-3 px-4 text-right text-emerald-400 font-medium">{formatCurrency(product.total_value || 0)}</td>
                                         <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex items-center justify-end gap-2">
@@ -140,7 +170,7 @@ export default function ProductsIndex() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={7} className="py-8">
+                                    <td colSpan={8} className="py-8">
                                         <EmptyState
                                             icon={Package}
                                             title="No products found"
@@ -186,7 +216,18 @@ export default function ProductsIndex() {
                                     <span className={`status-badge type-${product.type}`}>{product.type}</span>
                                     <span>{product.unit}</span>
                                 </div>
-                                <p className="text-sm text-emerald-400 font-medium">{formatCurrency(product.total_value || 0)}</p>
+                                <p className="text-sm text-emerald-400 font-medium mb-2">{formatCurrency(product.total_value || 0)}</p>
+                                {sortedPrices(product).length > 0 ? (
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {sortedPrices(product).map((price: any) => (
+                                            <span key={price.id} className="text-xs px-2 py-0.5 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-300 whitespace-nowrap">
+                                                {tierLabel(price)}: <span className="text-emerald-400 font-medium">{formatCurrency(price.unit_price)}</span>
+                                            </span>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <span className="text-slate-500 text-xs">No pricing set</span>
+                                )}
                             </div>
                         ))
                     ) : (
@@ -277,6 +318,21 @@ export default function ProductsIndex() {
                         ) : (
                             <p className="text-slate-400 text-sm">No components added to this product.</p>
                         )}
+
+                        <div className="mt-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                            <h4 className="text-sm font-medium mb-3">Tiered Pricing</h4>
+                            {sortedPrices(selectedProduct).length > 0 ? (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {sortedPrices(selectedProduct).map((price: any) => (
+                                        <span key={price.id} className="text-xs px-2 py-0.5 rounded-md bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-300 whitespace-nowrap">
+                                            {tierLabel(price)}: <span className="text-emerald-400 font-medium">{formatCurrency(price.unit_price)}</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-slate-400 text-sm">No pricing tiers defined.</p>
+                            )}
+                        </div>
 
                         <div className="flex justify-end gap-2 pt-4 mt-4 border-t border-slate-200 dark:border-white/10">
                             <Link href={`/products/${selectedProduct.id}`} className="glass-button text-sm">

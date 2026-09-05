@@ -139,16 +139,24 @@ export default function HrmLeaves() {
                                 </button>
                             ))}
                         </div>
-                        <select
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            className="glass-input"
-                        >
-                            <option value="all">All Types</option>
-                            {leaveTypes.map((lt: any) => (
-                                <option key={lt.id} value={lt.name.toLowerCase()}>{lt.name}</option>
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                { value: 'all', label: 'All Types' },
+                                ...leaveTypes.map((lt: any) => ({ value: lt.name.toLowerCase(), label: lt.name })),
+                            ].map((opt) => (
+                                <button
+                                    key={opt.value}
+                                    onClick={() => setTypeFilter(opt.value)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                                        typeFilter === opt.value
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/20'
+                                    }`}
+                                >
+                                    {opt.label}
+                                </button>
                             ))}
-                        </select>
+                        </div>
                     </div>
                 </div>
             </GlassCard>

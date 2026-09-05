@@ -77,20 +77,19 @@ export default function ProformaIndex() {
                                     <span className="text-lg font-semibold">{formatCurrency(p.total)}</span>
                                     <div className="flex gap-2">
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); window.open(`/crm/${client.id}/proformas/${p.id}`, '_blank'); }}
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.open(`/crm/${client.id}/proformas/${p.id}`, '_blank'); }}
                                             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                                         >
                                             <Printer className="w-4 h-4" />
                                         </button>
-                                        <Link
-                                            href={`/crm/${client.id}/proformas/${p.id}/edit`}
-                                            onClick={(e) => e.stopPropagation()}
+                                        <button
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.visit(`/crm/${client.id}/proformas/${p.id}/edit`); }}
                                             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                                         >
                                             <Pencil className="w-4 h-4" />
-                                        </Link>
+                                        </button>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); handleDelete(p.id); }}
+                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(p.id); }}
                                             className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-red-400 transition-colors"
                                         >
                                             <Trash2 className="w-4 h-4" />

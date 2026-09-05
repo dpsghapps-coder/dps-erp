@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips, StatusBadge } from '@/Components/ui';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { ArrowLeft, Pencil, MapPin, Plus, Clock, X, History as HistoryIcon, DollarSign, ShoppingBag, FileText, Calendar, Star, ArrowRight, ShoppingCart, Trash2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Pencil, MapPin, Plus, Clock, X, History as HistoryIcon, DollarSign, ShoppingBag, FileText, Calendar, Star, ArrowRight, ShoppingCart, Trash2, AlertTriangle, Rocket, ShieldAlert, ShieldCheck, Briefcase } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 import { useState, useMemo } from 'react';
 import GPSMapPicker from '@/Components/GPSMapPicker';
@@ -18,7 +18,9 @@ const STAGE_LABELS: Record<string, string> = {
     lost: 'Lost',
 };
 
-const TABS = ['Details', 'Interactions', 'Proforma', 'Orders', 'History'] as const;
+const OPEN_PIPELINE_STAGES = ['new_lead', 'contacted', 'meeting_scheduled', 'proposal_sent', 'negotiating'];
+
+const TABS = ['Details', 'Deals', 'Interactions', 'Proforma', 'Orders', 'History'] as const;
 type Tab = typeof TABS[number];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -130,14 +132,40 @@ function renderValuesDiff(entry: any) {
 }
 
 export default function ClientShow() {
-    const { client, auditLogs } = usePage().props as any;
+    const page = usePage().props as any;
+    const { client, auditLogs } = page;
     const historyList = auditLogs || [];
+    const permissions = (page.auth?.permissions as string[]) || [];
+    const canApproveGreylist = permissions.includes('*') || permissions.includes('crm.approve-greylist');
     const formatCurrency = useCurrency();
     const [activeTab, setActiveTab] = useState<Tab>('Details');
     const [showContactForm, setShowContactForm] = useState(false);
     const [showGpsModal, setShowGpsModal] = useState(false);
     const [editingContact, setEditingContact] = useState<any>(null);
     const [interactionTypeFilter, setInteractionTypeFilter] = useState('all');
+
+    const deals = client?.deals || [];
+    const openDeal = useMemo(() => deals.find((d: any) => OPEN_PIPELINE_STAGES.includes(d.stage)), [deals]);
+
+    const handleGreylistToggle = () => {
+        if (client.is_greylisted) {
+            router.post(`/crm/${client.id}/greylist`, { greylisted: false }, { preserveScroll: true });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Greylist this client?',
+            input: 'text',
+            inputPlaceholder: 'Reason (optional)',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Greylist',
+        }).then((res) => {
+            if (res.isConfirmed) {
+                router.post(`/crm/${client.id}/greylist`, { greylisted: true, reason: res.value || null }, { preserveScroll: true });
+            }
+        });
+    };
 
     const ltv = useMemo(() => {
         if (!client?.orders?.length) return 0;
@@ -250,12 +278,45 @@ export default function ClientShow() {
             </div>
 
             <PageHeader
-                title={client?.company_name}
+                title={
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span>{client?.company_name}</span>
+                        {client?.is_greylisted && <StatusBadge status="greylisted" />}
+                        {client?.status && <StatusBadge status={client.status} />}
+                    </div>
+                }
                 subtitle={client?.industry}
                 action={
-                    <Link href={`/crm/${client?.id}/edit`} className="glass-button flex items-center gap-2">
-                        <Pencil className="w-4 h-4" /> Edit
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        {!openDeal && (
+                            <button
+                                onClick={() => router.post(`/crm/${client?.id}/deals`, {}, { preserveScroll: true })}
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600/20 border border-indigo-500/20 transition-colors text-sm font-medium"
+                            >
+                                <Rocket className="w-4 h-4" /> Start Sale Campaign
+                            </button>
+                        )}
+                        {client?.is_greylisted ? (
+                            <button
+                                onClick={handleGreylistToggle}
+                                disabled={!canApproveGreylist}
+                                title={!canApproveGreylist ? 'Only a manager can approve removing a greylist' : undefined}
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600/10 text-emerald-400 hover:bg-emerald-600/20 border border-emerald-500/20 transition-colors text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <ShieldCheck className="w-4 h-4" /> Approve & Lift Greylist
+                            </button>
+                        ) : (
+                            <button
+                                onClick={handleGreylistToggle}
+                                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600/10 text-red-400 hover:bg-red-600/20 border border-red-500/20 transition-colors text-sm font-medium"
+                            >
+                                <ShieldAlert className="w-4 h-4" /> Greylist Client
+                            </button>
+                        )}
+                        <Link href={`/crm/${client?.id}/edit`} className="glass-button flex items-center gap-2">
+                            <Pencil className="w-4 h-4" /> Edit
+                        </Link>
+                    </div>
                 }
             />
 
@@ -308,7 +369,7 @@ export default function ClientShow() {
                         <div>
                             <p className="text-xs text-slate-400 font-medium">Next Follow-Up</p>
                             <p className="text-sm font-semibold text-slate-900 dark:text-white mt-0.5">
-                                {client?.next_follow_up_at ? new Date(client.next_follow_up_at).toLocaleDateString() : 'Not set'}
+                                {openDeal?.next_follow_up_at ? new Date(openDeal.next_follow_up_at).toLocaleDateString() : 'Not set'}
                             </p>
                         </div>
                     </div>
@@ -328,6 +389,9 @@ export default function ClientShow() {
                         }`}
                     >
                         {tab}
+                        {tab === 'Deals' && deals.length > 0 && (
+                            <span className="ml-1.5 text-xs bg-slate-200 dark:bg-white/20 px-1.5 py-0.5 rounded-full">{deals.length}</span>
+                        )}
                         {tab === 'Proforma' && client?.proformas?.length > 0 && (
                             <span className="ml-1.5 text-xs bg-slate-200 dark:bg-white/20 px-1.5 py-0.5 rounded-full">{client.proformas.length}</span>
                         )}
@@ -350,45 +414,33 @@ export default function ClientShow() {
                             <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div>
-                                    <p className="text-xs text-slate-500 mb-1">Status</p>
-                                    <select
-                                        className="glass-input w-full"
-                                        defaultValue={client?.status}
-                                        onChange={(e) => {
-                                            router.patch(`/crm/${client?.id}/status`, { status: e.target.value }, { preserveScroll: true });
+                                    <p className="text-xs text-slate-500 mb-1">Tier</p>
+                                    <StatusChips
+                                        value={client?.status}
+                                        onChange={(v) => {
+                                            router.patch(`/crm/${client?.id}/status`, { status: v }, { preserveScroll: true });
                                         }}
-                                    >
-                                        <option value="lead">Lead</option>
-                                        <option value="prospect">Prospect</option>
-                                        <option value="active">Active</option>
-                                        <option value="inactive">Inactive</option>
-                                    </select>
+                                        options={[
+                                            { value: 'bronze', label: 'Bronze' },
+                                            { value: 'silver', label: 'Silver' },
+                                            { value: 'gold', label: 'Gold' },
+                                            { value: 'platinum', label: 'Platinum' },
+                                        ]}
+                                    />
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500 mb-1">Pipeline Stage</p>
-                                    {client?.pipeline_stage ? (
-                                        <span className={`status-badge text-xs ${client.pipeline_stage === 'lost' ? 'bg-red-500/20 text-red-400' : client.pipeline_stage === 'converted' ? 'bg-green-500/20 text-green-400' : 'bg-indigo-500/20 text-indigo-400'}`}>
-                                            {STAGE_LABELS[client.pipeline_stage] || client.pipeline_stage}
+                                    <p className="text-xs text-slate-500 mb-1">Current Deal</p>
+                                    {openDeal ? (
+                                        <span className="status-badge text-xs bg-indigo-500/20 text-indigo-400">
+                                            {openDeal.type === 'repeat_business' ? 'Repeat' : 'New'} — {STAGE_LABELS[openDeal.stage] || openDeal.stage}
                                         </span>
                                     ) : (
-                                        <span className="text-slate-600">—</span>
+                                        <span className="text-slate-600">No active deal</span>
                                     )}
                                 </div>
                                 <DetailRow label="Company Name">{client?.company_name}</DetailRow>
                                 <DetailRow label="Industry">{client?.industry}</DetailRow>
                                 <DetailRow label="Source">{client?.source}</DetailRow>
-                                <DetailRow label="Estimated Value">
-                                    {client?.estimated_value > 0 && <span className="text-emerald-400 font-medium">{formatCurrency(client.estimated_value)}</span>}
-                                </DetailRow>
-                                {client?.pipeline_stage === 'lost' && client?.lost_reason && (
-                                    <div className="md:col-span-2">
-                                        <p className="text-xs text-slate-500 mb-1">Lost Reason</p>
-                                        <div className="flex items-start gap-2 text-red-400 text-sm">
-                                            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                                            <span>{client.lost_reason}{client.lost_note ? ` — ${client.lost_note}` : ''}</span>
-                                        </div>
-                                    </div>
-                                )}
                                 <DetailRow label="Website">
                                     {client?.website && (
                                         <a href={client.website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
@@ -613,6 +665,76 @@ export default function ClientShow() {
                 </div>
             )}
 
+            {activeTab === 'Deals' && (
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 className="text-lg font-semibold">Deal History</h2>
+                            <p className="text-sm text-slate-400">Every sales campaign run for this client, from first contact to won or lost</p>
+                        </div>
+                        {!openDeal && (
+                            <button
+                                onClick={() => router.post(`/crm/${client?.id}/deals`, {}, { preserveScroll: true })}
+                                className="glass-button flex items-center gap-2 text-sm"
+                            >
+                                <Rocket className="w-4 h-4" /> Start Sale Campaign
+                            </button>
+                        )}
+                    </div>
+
+                    {deals.length > 0 ? (
+                        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {deals.map((deal: any) => {
+                                const outcomeStyle =
+                                    deal.stage === 'converted'
+                                        ? 'bg-emerald-500/20 text-emerald-400'
+                                        : deal.stage === 'lost'
+                                        ? 'bg-red-500/20 text-red-400'
+                                        : 'bg-indigo-500/20 text-indigo-400';
+
+                                return (
+                                    <GlassCard key={deal.id} className="h-full">
+                                        <div className="flex items-start justify-between gap-2 mb-3">
+                                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                                                <Briefcase className="w-3 h-3" /> {deal.type === 'repeat_business' ? 'Repeat Business' : 'New Business'}
+                                            </span>
+                                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${outcomeStyle}`}>
+                                                {STAGE_LABELS[deal.stage] || deal.stage}
+                                            </span>
+                                        </div>
+
+                                        {deal.estimated_value > 0 && (
+                                            <p className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{formatCurrency(deal.estimated_value)}</p>
+                                        )}
+
+                                        {deal.stage === 'lost' && deal.lost_reason && (
+                                            <div className="flex items-start gap-2 text-red-400 text-sm mb-2">
+                                                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                                                <span>{deal.lost_reason}{deal.lost_note ? ` — ${deal.lost_note}` : ''}</span>
+                                            </div>
+                                        )}
+
+                                        <p className="text-xs text-slate-500 pt-2 border-t border-slate-200 dark:border-white/10 mt-2">
+                                            Started {new Date(deal.created_at).toLocaleDateString()}
+                                            {deal.converted_at && <> • Won {new Date(deal.converted_at).toLocaleDateString()}</>}
+                                            {deal.lost_at && <> • Lost {new Date(deal.lost_at).toLocaleDateString()}</>}
+                                        </p>
+                                    </GlassCard>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <GlassCard>
+                            <div className="text-center py-12">
+                                <Briefcase className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                                <p className="text-slate-400 text-lg font-medium">No deals yet</p>
+                                <p className="text-slate-500 text-sm mt-1">Start a sale campaign to begin tracking a deal for this client</p>
+                            </div>
+                        </GlassCard>
+                    )}
+                </div>
+            )}
+
             {activeTab === 'Interactions' && (
                 <div className="max-w-4xl space-y-6">
                     <GlassCard>
@@ -756,13 +878,12 @@ export default function ClientShow() {
                                         </div>
                                         <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between gap-2">
                                             <span className="text-lg font-semibold">{formatCurrency(p.total)}</span>
-                                            <Link
-                                                href={`/orders/create?client_id=${client.id}&proforma_id=${p.id}`}
-                                                onClick={(e) => e.stopPropagation()}
+                                            <button
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.visit(`/orders/create?client_id=${client.id}&proforma_id=${p.id}`); }}
                                                 className="text-xs px-2.5 py-1 rounded-lg bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/40 border border-indigo-500/30 transition-colors flex items-center gap-1 shrink-0"
                                             >
                                                 Convert <ArrowRight className="w-3 h-3" />
-                                            </Link>
+                                            </button>
                                         </div>
                                     </GlassCard>
                                 </Link>

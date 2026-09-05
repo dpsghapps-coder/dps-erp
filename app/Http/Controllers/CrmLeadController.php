@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Deal;
 use Illuminate\Http\Request;
 
 class CrmLeadController extends Controller
@@ -12,41 +13,46 @@ class CrmLeadController extends Controller
         $filter = $request->get('filter', 'all');
         $view = $request->get('view', 'list');
 
-        $query = Client::with(['lastInteraction', 'primaryContact'])
-            ->withCount('interactions')
-            ->orderBy('company_name');
+        $engagedStages = ['contacted', 'meeting_scheduled', 'proposal_sent', 'negotiating'];
+
+        $query = Deal::with(['client' => function ($q) {
+            $q->withCount('interactions')->with(['lastInteraction', 'primaryContact']);
+        }]);
 
         if ($view === 'board') {
-            // Board view needs all statuses
+            // Board view needs every deal, both types, all stages
         } else {
-            $query->whereIn('status', ['lead', 'prospect']);
+            $query->where('type', 'new_business')->whereIn('stage', Deal::OPEN_STAGES);
+
+            if ($filter === 'lead') {
+                $query->where('stage', 'new_lead');
+            } elseif ($filter === 'prospect') {
+                $query->whereIn('stage', $engagedStages);
+            }
         }
 
-        if ($filter === 'lead') {
-            $query->where('status', 'lead');
-        } elseif ($filter === 'prospect') {
-            $query->where('status', 'prospect');
-        }
+        $deals = $query->get();
 
-        $clients = $query->get();
+        $eligibleForCampaign = Client::whereDoesntHave('deals', fn ($q) => $q->whereIn('stage', Deal::OPEN_STAGES))
+            ->orderBy('company_name')
+            ->get(['id', 'company_name', 'first_converted_at']);
 
-        $openStages = ['new_lead', 'contacted', 'meeting_scheduled', 'proposal_sent', 'negotiating'];
+        $newBusinessOpen = Deal::where('type', 'new_business')->whereIn('stage', Deal::OPEN_STAGES);
 
         $stats = [
-            'total' => Client::whereIn('status', ['lead', 'prospect'])->count(),
-            'leads' => Client::where('status', 'lead')->count(),
-            'prospects' => Client::where('status', 'prospect')->count(),
-            'dueToday' => Client::whereIn('status', ['lead', 'prospect'])
-                ->whereDate('next_follow_up_at', today())
-                ->count(),
-            'pipelineValue' => (float) Client::whereIn('pipeline_stage', $openStages)->sum('estimated_value'),
-            'openDeals' => Client::whereIn('pipeline_stage', $openStages)->count(),
-            'won' => Client::where('pipeline_stage', 'converted')->count(),
-            'lost' => Client::where('pipeline_stage', 'lost')->count(),
+            'total' => (clone $newBusinessOpen)->count(),
+            'leads' => Deal::where('type', 'new_business')->where('stage', 'new_lead')->count(),
+            'prospects' => Deal::where('type', 'new_business')->whereIn('stage', $engagedStages)->count(),
+            'dueToday' => (clone $newBusinessOpen)->whereDate('next_follow_up_at', today())->count(),
+            'pipelineValue' => (float) (clone $newBusinessOpen)->sum('estimated_value'),
+            'openDeals' => (clone $newBusinessOpen)->count(),
+            'won' => Deal::where('stage', 'converted')->count(),
+            'lost' => Deal::where('stage', 'lost')->count(),
         ];
 
         return inertia('CRM/Leads', [
-            'clients' => $clients,
+            'deals' => $deals,
+            'eligibleForCampaign' => $eligibleForCampaign,
             'stats' => $stats,
             'currentFilter' => $filter,
             'currentView' => $view,

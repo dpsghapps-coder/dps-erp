@@ -143,7 +143,14 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const [showResults, setShowResults] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    // A blocking inline script in app.blade.php already applies the correct
+    // class to <html> before first paint, so read it here instead of
+    // defaulting to 'light' (which would flash the wrong toggle icon).
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => (
+        typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+            ? 'dark'
+            : 'light'
+    ));
     const searchRef = useRef<HTMLDivElement>(null);
     const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
@@ -155,18 +162,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
       document.documentElement.classList.add(newTheme);
       localStorage.setItem('theme', newTheme);
     };
-
-    // Load theme on mount
-    useEffect(() => {
-      const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-      if (savedTheme) {
-        setTheme(savedTheme);
-        document.documentElement.classList.add(savedTheme);
-      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setTheme('dark');
-        document.documentElement.classList.add('dark');
-      }
-    }, []);
 
     // Flash success messages
     const page = usePage();
@@ -562,44 +557,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 Dashboard
                             </Link>
 
-                            {hasModulePermission('products') && (
-                            <div className="mb-2">
-                                <button
-                                    onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
-                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                                        isProductsPage
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Package className="w-5 h-5" />
-                                        Prices
-                                    </div>
-                                    <ChevronDown className={`w-4 h-4 transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                {productsDropdownOpen && (
-                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
-                                        {productsSubItemsFull.map((item) => (
-                                            <Link
-                                                key={item.href}
-                                                href={item.href}
-                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                    currentPath === item.href
-                                                        ? 'bg-slate-100 text-slate-900 font-medium'
-                                                        : 'text-slate-500 hover:bg-slate-50'
-                                                }`}
-                                                onClick={() => setMobileMenuOpen(false)}
-                                            >
-                                                <item.icon className="w-4 h-4" />
-                                                {item.name}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            )}
-
                             {hasModulePermission('orders') && (
                             <div className="mb-2">
                                 <button
@@ -689,6 +646,50 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 <ShoppingBag className="w-5 h-5" />
                                 Procurement
                             </Link>
+                            )}
+
+                            {hasModulePermission('products') && (
+                            <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
+                                <span className="text-xs text-slate-400 uppercase font-medium">Sales</span>
+                            </div>
+                            )}
+
+                            {hasModulePermission('products') && (
+                            <div className="mb-2">
+                                <button
+                                    onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
+                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                        isProductsPage
+                                            ? 'bg-slate-900 text-white'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Package className="w-5 h-5" />
+                                        Pricing
+                                    </div>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {productsDropdownOpen && (
+                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
+                                        {productsSubItemsFull.map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                                    currentPath === item.href
+                                                        ? 'bg-slate-100 text-slate-900 font-medium'
+                                                        : 'text-slate-500 hover:bg-slate-50'
+                                                }`}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                <item.icon className="w-4 h-4" />
+                                                {item.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             )}
 
                             {(hasModulePermission('hrm') || hasModulePermission('finance') || hasModulePermission('decision_hub')) && (
@@ -995,56 +996,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             <LayoutDashboard className="w-5 h-5 flex-shrink-0" />
                             {sidebarOpen && <span>Dashboard</span>}
                         </Link>
-                        
-                        {/* Prices Dropdown */}
-                        {hasModulePermission('products') && <div className="space-y-1">
-                            {sidebarOpen ? (
-                                <button
-                                    onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
-                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                                        isProductsPage
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Package className="w-5 h-5 flex-shrink-0" />
-                                        <span>Prices</span>
-                                    </div>
-                                    <ChevronDown className={`w-4 h-4 transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                            ) : (
-                                <Link
-                                    href="/products"
-                                    className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors ${
-                                        isProductsPage
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    <Package className="w-5 h-5" />
-                                </Link>
-                            )}
-                            {productsDropdownOpen && sidebarOpen && (
-                                <div className="mt-1 space-y-1 ml-4 border-l-2 border-slate-200 pl-2">
-                                    {productsSubItemsFull.map((item) => (
-                                        <Link
-                                            key={item.href}
-                                            href={item.href}
-                                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                currentPath === item.href
-                                                    ? 'bg-slate-100 text-slate-900 font-medium'
-                                                    : 'text-slate-500 hover:bg-slate-50'
-                                            }`}
-                                        >
-                                            <item.icon className="w-4 h-4" />
-                                            {item.name}
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                        </div>}
-                        
+
                         {/* Orders Dropdown */}
                         {hasModulePermission('orders') && <div className="space-y-1">
                             {sidebarOpen ? (
@@ -1143,7 +1095,59 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             )}
                         </div>}
                     </div>
-                    
+
+                    {/* SALES Section */}
+                    {hasModulePermission('products') && <div className="px-3 mt-6 mb-2">
+                        {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Sales</span>}
+                    </div>}
+                    {hasModulePermission('products') && <div className="px-3 space-y-1">
+                        {sidebarOpen ? (
+                            <button
+                                onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                    isProductsPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <Package className="w-5 h-5 flex-shrink-0" />
+                                    <span>Pricing</span>
+                                </div>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                        ) : (
+                            <Link
+                                href="/products"
+                                className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors ${
+                                    isProductsPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                                <Package className="w-5 h-5" />
+                            </Link>
+                        )}
+                        {productsDropdownOpen && sidebarOpen && (
+                            <div className="mt-1 space-y-1 ml-4 border-l-2 border-slate-200 pl-2">
+                                {productsSubItemsFull.map((item) => (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                            currentPath === item.href
+                                                ? 'bg-slate-100 text-slate-900 font-medium'
+                                                : 'text-slate-500 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <item.icon className="w-4 h-4" />
+                                        {item.name}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>}
+
                     {/* MANAGEMENT Section */}
                     {(hasModulePermission('hrm') || hasModulePermission('finance') || hasModulePermission('decision_hub')) && <div className="px-3 mt-6 mb-2">
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Management</span>}
@@ -1528,7 +1532,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     }`}
                 >
                     <Package className="w-5 h-5" />
-                    <span className="text-[10px] font-medium">Prices</span>
+                    <span className="text-[10px] font-medium">Pricing</span>
                 </button>
                 )}
                 {hasModulePermission('orders') && (
@@ -1665,8 +1669,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                         <Package className="w-5 h-5 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900">Prices</h3>
-                                        <p className="text-xs text-slate-500">Manage Prices</p>
+                                        <h3 className="font-semibold text-slate-900">Pricing</h3>
+                                        <p className="text-xs text-slate-500">Manage Pricing</p>
                                     </div>
                                 </div>
                                 <button 

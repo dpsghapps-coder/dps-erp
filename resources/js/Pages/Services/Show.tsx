@@ -1,12 +1,32 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
-import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Wrench } from 'lucide-react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
+import { ArrowLeft, Pencil, Trash2, Wrench } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
+import Swal from 'sweetalert2';
 
 export default function ServiceShow() {
-    const { service } = usePage().props;
+    const { service } = usePage().props as any;
     const formatCurrency = useCurrency();
+
+    const handleDelete = () => {
+        const usageWarning = service.product_components_count > 0
+            ? `<p class="mt-2">This service is used in ${service.product_components_count} product${service.product_components_count === 1 ? '' : 's'}. Deleting it won't change those products' saved pricing, but it will disappear from their component list.</p>`
+            : '';
+
+        Swal.fire({
+            title: 'Delete Service?',
+            html: `<p>This action cannot be undone.</p>${usageWarning}`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Delete',
+        }).then((res) => {
+            if (res.isConfirmed) {
+                router.delete(`/services/${service.id}`);
+            }
+        });
+    };
 
     return (
         <AppLayout>
@@ -18,13 +38,18 @@ export default function ServiceShow() {
                 </Link>
             </div>
 
-            <PageHeader 
-                title={service.name} 
+            <PageHeader
+                title={service.name}
                 subtitle={`Code: ${service.code}`}
                 action={
-                    <Link href={`/services/${service.id}/edit`} className="glass-button flex items-center gap-2">
-                        <Pencil className="w-4 h-4" /> Edit Service
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link href={`/services/${service.id}/edit`} className="glass-button flex items-center gap-2">
+                            <Pencil className="w-4 h-4" /> Edit Service
+                        </Link>
+                        <button onClick={handleDelete} className="glass-button flex items-center gap-2 bg-red-500/20 text-red-400">
+                            <Trash2 className="w-4 h-4" /> Delete
+                        </button>
+                    </div>
                 }
             />
 
@@ -56,6 +81,36 @@ export default function ServiceShow() {
                 <GlassCard>
                     <h3 className="text-lg font-medium mb-4">Description</h3>
                     <p className="text-slate-400">{service.description || 'No description provided.'}</p>
+                </GlassCard>
+
+                <GlassCard className="md:col-span-2">
+                    <h3 className="text-lg font-medium mb-4">Cost of Service</h3>
+                    <div className="space-y-3">
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Workmanship</span>
+                            <span>{formatCurrency(service.workmanship_cost || 0)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Machine Maintenance</span>
+                            <span>{formatCurrency(service.machine_maintenance_cost || 0)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Process Cost</span>
+                            <span>{formatCurrency(service.process_cost || 0)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Capital Investment Recovery Fee</span>
+                            <span>{formatCurrency(service.capital_recovery_fee || 0)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-slate-400">Profit</span>
+                            <span>{formatCurrency(service.profit || 0)}</span>
+                        </div>
+                        <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-white/10 font-medium">
+                            <span>Calculated Base Price</span>
+                            <span className="text-emerald-400">{formatCurrency(service.calculated_base_price || 0)}</span>
+                        </div>
+                    </div>
                 </GlassCard>
 
                 <GlassCard className="md:col-span-2">

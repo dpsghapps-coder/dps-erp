@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\InventoryProduct;
+use App\Models\Setting;
 use App\Models\Stock;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StockController extends Controller
 {
@@ -14,7 +16,7 @@ class StockController extends Controller
     {
         $search = $request->get('search', '');
 
-        $stocks = Stock::with(['product', 'supplier'])
+        $stocks = Stock::with(['product', 'supplier', 'costItems'])
             ->when($search, function ($query) use ($search) {
                 $query->whereHas('product', function ($q) use ($search) {
                     $q->where('item_name', 'like', "%{$search}%")
@@ -61,50 +63,50 @@ class StockController extends Controller
             ->filter()
             ->values();
 
+        $costTypes = Setting::where('key', 'like', 'extra_cost_%')->pluck('value');
+
         return inertia('Inventory/Stock/Index', [
             'stocks' => $stocks,
             'products' => $products,
             'stockLevels' => $stockLevels,
             'suppliers' => $suppliers,
             'categories' => $categories,
+            'costTypes' => $costTypes,
         ]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:inventory_products,id',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'qty_purchased' => 'required|integer|min:1',
-            'price' => 'required|numeric|min:0',
-            'date_purchased' => 'required|date',
-            'notes' => 'nullable|string',
-            'purchased_by' => 'nullable|string|max:255',
-        ]);
+        $validated = $this->validateStock($request);
 
-        $validated['total_cost'] = $validated['qty_purchased'] * $validated['price'];
-        $validated['added_by'] = auth()->user()->name ?? auth()->user()->email;
+        $stock = DB::transaction(function () use ($validated) {
+            $stock = Stock::create([
+                ...$this->stockFields($validated),
+                'added_by' => auth()->user()->name ?? auth()->user()->email,
+            ]);
 
-        Stock::create($validated);
+            foreach ($validated['cost_items'] ?? [] as $item) {
+                $stock->costItems()->create($item);
+            }
+
+            return $stock;
+        });
 
         return back()->with('success', 'Stock added successfully');
     }
 
     public function update(Request $request, Stock $stock)
     {
-        $validated = $request->validate([
-            'product_id' => 'required|exists:inventory_products,id',
-            'supplier_id' => 'nullable|exists:suppliers,id',
-            'qty_purchased' => 'required|integer|min:1',
-            'price' => 'required|numeric|min:0',
-            'date_purchased' => 'required|date',
-            'notes' => 'nullable|string',
-            'purchased_by' => 'nullable|string|max:255',
-        ]);
+        $validated = $this->validateStock($request);
 
-        $validated['total_cost'] = $validated['qty_purchased'] * $validated['price'];
+        DB::transaction(function () use ($validated, $stock) {
+            $stock->update($this->stockFields($validated));
 
-        $stock->update($validated);
+            $stock->costItems()->delete();
+            foreach ($validated['cost_items'] ?? [] as $item) {
+                $stock->costItems()->create($item);
+            }
+        });
 
         return back()->with('success', 'Stock updated successfully');
     }
@@ -114,5 +116,42 @@ class StockController extends Controller
         $stock->delete();
 
         return back()->with('success', 'Stock record deleted');
+    }
+
+    private function validateStock(Request $request): array
+    {
+        return $request->validate([
+            'product_id' => 'required|exists:inventory_products,id',
+            'supplier_id' => 'nullable|exists:suppliers,id',
+            'units_purchased' => 'required|numeric|min:0.01',
+            'qty_per_unit' => 'required|numeric|min:0.01',
+            'material_cost' => 'required|numeric|min:0',
+            'cost_items' => 'nullable|array',
+            'cost_items.*.label' => 'required|string|max:100',
+            'cost_items.*.amount' => 'required|numeric|min:0',
+            'date_purchased' => 'required|date',
+            'notes' => 'nullable|string',
+            'purchased_by' => 'nullable|string|max:255',
+        ]);
+    }
+
+    private function stockFields(array $validated): array
+    {
+        $qtyPurchased = $validated['units_purchased'] * $validated['qty_per_unit'];
+        $totalCost = $validated['material_cost'] + collect($validated['cost_items'] ?? [])->sum('amount');
+
+        return [
+            'product_id' => $validated['product_id'],
+            'supplier_id' => $validated['supplier_id'] ?? null,
+            'units_purchased' => $validated['units_purchased'],
+            'qty_per_unit' => $validated['qty_per_unit'],
+            'qty_purchased' => $qtyPurchased,
+            'material_cost' => $validated['material_cost'],
+            'total_cost' => $totalCost,
+            'price' => $qtyPurchased > 0 ? round($totalCost / $qtyPurchased, 2) : 0,
+            'date_purchased' => $validated['date_purchased'],
+            'notes' => $validated['notes'] ?? null,
+            'purchased_by' => $validated['purchased_by'] ?? null,
+        ];
     }
 }

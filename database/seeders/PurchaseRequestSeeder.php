@@ -21,10 +21,11 @@ class PurchaseRequestSeeder extends Seeder
         $now = Carbon::now();
 
         // -- Users -----------------------------------------------------------
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@dps-erp.com'],
-            ['name' => 'Admin User', 'password' => bcrypt('password'), 'is_active' => true]
-        );
+        $admin = User::whereHas('role', fn ($q) => $q->where('name', 'admin'))->first()
+            ?? User::firstOrCreate(
+                ['email' => 'admin@dps-erp.com'],
+                ['name' => 'Admin User', 'password' => bcrypt('password'), 'is_active' => true]
+            );
 
         $requester1 = User::firstOrCreate(
             ['email' => 'sarah.mensah@dps-erp.com'],

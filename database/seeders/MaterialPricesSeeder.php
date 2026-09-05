@@ -14,7 +14,8 @@ class MaterialPricesSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminUser = User::where('email', 'admin@dps-erp.com')->first();
+        $adminUser = User::whereHas('role', fn ($q) => $q->where('name', 'admin'))->first()
+            ?? User::where('email', 'admin@dps-erp.com')->first();
         $userId = $adminUser?->id;
 
         $newSuppliers = [

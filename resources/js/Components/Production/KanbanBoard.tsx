@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 interface KanbanBoardProps {
     jobs: any[];
     users: any[];
+    orders?: any[];
 }
 
 const STATUS_FLOW: Record<string, string> = {
@@ -44,7 +45,7 @@ const PAUSED_CANCELLED_COLUMNS = [
     { id: 'cancelled', label: 'CANCELLED', color: 'border-red-500' },
 ];
 
-export default function KanbanBoard({ jobs, users }: KanbanBoardProps) {
+export default function KanbanBoard({ jobs, users, orders = [] }: KanbanBoardProps) {
     const [activeTab, setActiveTab] = useState<'active' | 'paused'>('active');
     const [search, setSearch] = useState('');
     const [priorityFilter, setPriorityFilter] = useState('all');
@@ -238,6 +239,7 @@ export default function KanbanBoard({ jobs, users }: KanbanBoardProps) {
                 open={showNewJobModal}
                 onClose={() => setShowNewJobModal(false)}
                 users={users}
+                orders={orders}
                 defaultStatus={newJobDefaultStatus}
             />
         </>

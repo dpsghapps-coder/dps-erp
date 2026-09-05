@@ -19,6 +19,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'crm.delete_clients', 'module' => 'crm', 'description' => 'Delete clients'],
             ['name' => 'crm.view_leads', 'module' => 'crm', 'description' => 'View leads'],
             ['name' => 'crm.view_reports', 'module' => 'crm', 'description' => 'View CRM reports'],
+            ['name' => 'crm.approve-greylist', 'module' => 'crm', 'description' => 'Lift a client greylist status'],
 
             // Products
             ['name' => 'products.view', 'module' => 'products', 'description' => 'View products'],
@@ -45,6 +46,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'orders.edit', 'module' => 'orders', 'description' => 'Edit orders'],
             ['name' => 'orders.delete', 'module' => 'orders', 'description' => 'Delete orders'],
             ['name' => 'orders.approve', 'module' => 'orders', 'description' => 'Approve/cancel orders'],
+            ['name' => 'orders.manage_status', 'module' => 'orders', 'description' => 'Advance order status through its lifecycle (confirm, payment received, production, ready, delivered)'],
+            ['name' => 'orders.record_payment', 'module' => 'orders', 'description' => 'Record payments received on orders'],
+            ['name' => 'orders.apply_discount', 'module' => 'orders', 'description' => 'Enter a discount percentage on order line items'],
+            ['name' => 'orders.override_payment_check', 'module' => 'orders', 'description' => 'Move an order into production before it is fully paid'],
 
             // Production
             ['name' => 'production.view', 'module' => 'production', 'description' => 'View production'],
@@ -102,6 +107,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'admin.manage_roles', 'module' => 'admin', 'description' => 'Manage roles and permissions'],
             ['name' => 'admin.view_audit_logs', 'module' => 'admin', 'description' => 'View audit logs'],
             ['name' => 'admin.manage_settings', 'module' => 'admin', 'description' => 'Manage system settings'],
+            ['name' => 'admin.factory_reset', 'module' => 'admin', 'description' => 'Wipe all business data back to a clean install (irreversible without the backup)'],
 
             // Chat
             ['name' => 'chat.view', 'module' => 'chat', 'description' => 'View and use chat'],

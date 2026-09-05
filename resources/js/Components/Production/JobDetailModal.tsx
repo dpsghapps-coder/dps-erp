@@ -126,6 +126,34 @@ export default function JobDetailModal({ open, onClose, job }: JobDetailModalPro
                                         )}
                                     </div>
 
+                                    {job.order?.items?.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-slate-300 mb-2">Items to Produce</h4>
+                                            <div className="space-y-1.5">
+                                                {job.order.items.map((item: any) => (
+                                                    <div key={item.id} className="flex items-center justify-between text-sm bg-slate-50 dark:bg-white/5 rounded-lg px-3 py-2">
+                                                        <span>{item.product?.name}</span>
+                                                        <span className="text-slate-400">× {item.qty}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {job.materials?.length > 0 && (
+                                        <div>
+                                            <h4 className="text-sm font-medium text-slate-300 mb-2">Materials Needed</h4>
+                                            <div className="space-y-1.5">
+                                                {job.materials.map((m: any) => (
+                                                    <div key={m.id} className="flex items-center justify-between text-sm bg-slate-50 dark:bg-white/5 rounded-lg px-3 py-2">
+                                                        <span>{m.material?.item_name}</span>
+                                                        <span className="text-slate-400">{m.required_qty} {m.material?.uom}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {job.status_history && job.status_history.length > 0 && (
                                         <div>
                                             <h4 className="text-sm font-medium text-slate-300 mb-2">Audit History</h4>
