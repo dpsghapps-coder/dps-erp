@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -236,8 +237,17 @@ class AdminController extends Controller
         $extraCostTypes = Setting::where('key', 'like', 'extra_cost_%')->get();
         $departments = Department::orderBy('name')->get();
         $currency = Setting::get('currency', 'GHS');
+        $companyLogo = Setting::get('company_logo');
 
-        return inertia('Admin/Settings', ['uoms' => $uoms, 'categories' => $categories, 'attributes' => $attributes, 'extraCostTypes' => $extraCostTypes, 'departments' => $departments, 'currency' => $currency]);
+        return inertia('Admin/Settings', [
+            'uoms' => $uoms,
+            'categories' => $categories,
+            'attributes' => $attributes,
+            'extraCostTypes' => $extraCostTypes,
+            'departments' => $departments,
+            'currency' => $currency,
+            'companyLogo' => $companyLogo ? Storage::url($companyLogo) : null,
+        ]);
     }
 
     /**
@@ -333,10 +343,26 @@ class AdminController extends Controller
     {
         $validated = $request->validate([
             'currency' => 'nullable|string|in:USD,GHS,EUR,GBP,NGN',
+            'company_logo' => 'nullable|image|max:2048',
+            'remove_logo' => 'nullable|boolean',
         ]);
 
         if ($request->has('currency')) {
             Setting::set('currency', $request->input('currency', 'GHS'));
+        }
+
+        if ($request->hasFile('company_logo')) {
+            $oldLogo = Setting::get('company_logo');
+            if ($oldLogo) {
+                Storage::disk('public')->delete($oldLogo);
+            }
+            Setting::set('company_logo', $request->file('company_logo')->store('logos', 'public'));
+        } elseif ($request->boolean('remove_logo')) {
+            $oldLogo = Setting::get('company_logo');
+            if ($oldLogo) {
+                Storage::disk('public')->delete($oldLogo);
+            }
+            Setting::set('company_logo', '');
         }
 
         return back()->with('success', 'Settings saved successfully');

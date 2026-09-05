@@ -21,10 +21,13 @@ Manages the entire business lifecycle — from client acquisition and orders to 
 
 ## Features
 
-- **12 Business Modules** — CRM, Orders, Production, Inventory, Procurement, HRM, Finance, Studio, Decision Hub, Chat, Admin, and more
+- **14 Business Modules** — CRM, Marketing, Orders, Production, Inventory, Procurement, HRM, Finance, Studio, Decision Hub, Chat, Admin, and more
+- **Sales Pipeline & Deal Tracking** — Kanban-based deal pipeline separating New Business (lead → converted) from Repeat Business (existing clients, new deal), with per-deal history, tier assignment on conversion, and client greylisting for credit/service holds
 - **Kanban Production Board** — Drag-and-drop job tracking across 8 workflow stages with real-time metrics
 - **Multi-Step Procurement** — Full purchase request → approval → PO → receipt → inspection workflow
-- **Role-Based Access Control** — 54 granular permissions across 12 modules, 11 predefined roles
+- **Role-Based Access Control** — 80+ granular permissions across 14 modules, 11 predefined roles
+- **Guided Setup Wizard** — First-run deployment flow to configure company info, currency, and either seed demo data or start with a clean install
+- **Factory Reset** — Admin-only backup-and-wipe tool to reset business data back to a clean install without losing the database structure
 - **Decision Hub** — Meeting management, decision tracking, action items, and reviews
 - **Real-Time Chat** — Direct messages, group conversations, file attachments, and read receipts
 - **Global Search** — Cross-module search via `Ctrl+K` / `Cmd+K`
@@ -55,7 +58,8 @@ Manages the entire business lifecycle — from client acquisition and orders to 
 
 | Module | Description | Key Features |
 |---|---|---|
-| **CRM** | Client & lead management | Contacts, interaction logging, lead pipeline, reports |
+| **CRM** | Client & deal management | Contacts, interaction logging, client tiers (Bronze–Platinum), greylisting, Sales Pipeline Kanban (New Business / Repeat Business deals), reports |
+| **Marketing** | Campaign management | Campaign creation, scheduling, status tracking |
 | **Orders** | Order lifecycle | Order creation, confirmation, payment tracking, line items |
 | **Production** | Job shop floor | Kanban board, 8-stage workflow, drag-and-drop, status history |
 | **Inventory** | Material management | Product catalog, stock levels, restock alerts, material categories |
@@ -65,7 +69,7 @@ Manages the entire business lifecycle — from client acquisition and orders to 
 | **Studio** | Booking management | Studio session scheduling |
 | **Decision Hub** | Governance | Meetings, decisions, action items, reviews |
 | **Chat** | Communication | Direct messages, groups, file sharing, read receipts |
-| **Admin** | System config | Users, roles, permissions, settings, audit logs |
+| **Admin** | System config | Users, roles, permissions, settings, audit logs, factory reset |
 | **Dashboard** | Overview | Cross-module metrics and quick links |
 
 ---
@@ -144,7 +148,13 @@ php artisan queue:listen   # Queue worker
 php artisan pail           # Real-time logs
 ```
 
+### First-Run Setup Wizard
+
+On a fresh install with no users yet, visiting the app redirects to `/setup` — a guided wizard for configuring company info and currency, then choosing to either seed demo data (for evaluation/demos) or start with a clean database. This is the recommended path for a new deployment instead of `migrate --seed`.
+
 ### Default Credentials
+
+When seeded via `php artisan migrate --seed` (rather than the Setup Wizard):
 
 | Email | Password | Role |
 |---|---|---|
@@ -157,18 +167,18 @@ php artisan pail           # Real-time logs
 ```
 dps-erp/
 ├── app/
-│   ├── Http/Controllers/     # 16+ controllers across all modules
-│   ├── Models/               # 40+ Eloquent models
+│   ├── Http/Controllers/     # 45+ controllers across all modules
+│   ├── Models/               # 65+ Eloquent models
 │   └── Notifications/        # Module-specific notification classes
 ├── database/
-│   ├── migrations/           # 85 migration files
+│   ├── migrations/           # 130+ migration files
 │   └── seeders/              # 10 seeders with sample data
 ├── resources/
 │   ├── css/                  # Tailwind + glassmorphism component styles
 │   └── js/
 │       ├── Components/       # Reusable UI (Chat/, HRM/, Production/, ui/)
 │       ├── Layouts/          # AppLayout with permission-gated sidebar
-│       ├── Pages/            # 16 page modules (Admin through Welcome)
+│       ├── Pages/            # 18 page modules (Admin through Welcome, incl. Setup)
 │       └── Utils/            # Currency formatting (GHS)
 ├── routes/
 │   └── web.php               # All route definitions with permission middleware
@@ -193,7 +203,7 @@ dps-erp/
                          │
 ┌────────────────────────┴────────────────────────────────┐
 │              SQLite / MySQL / PostgreSQL                 │
-│   85 migrations ─── 40+ tables ─── Seeders              │
+│   130+ migrations ─── 86 tables ─── Seeders             │
 └─────────────────────────────────────────────────────────┘
 ```
 

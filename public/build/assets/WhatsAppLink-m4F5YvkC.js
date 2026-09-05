@@ -1,0 +1,1 @@
+import{j as n}from"./app-Dkuq4BMY.js";function s(e){const r=e.replace(/\D/g,"");return`https://wa.me/${r.startsWith("0")?`233${r.slice(1)}`:r}`}function o({phone:e,className:r,children:t}){return n.jsx("a",{href:s(e),target:"_blank",rel:"noopener noreferrer",className:r,children:t||e})}export{o as W};

@@ -1,13 +1,13 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, Plus, Trash2, Package, Tag, List, X, Check, Receipt, AlertTriangle, ShieldAlert } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Package, Tag, List, X, Check, Receipt, AlertTriangle, ShieldAlert, Upload, ImageOff } from 'lucide-react';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 
 export default function Settings() {
     const page = usePage().props as any;
-    const { uoms, categories, attributes, extraCostTypes, currency: savedCurrency } = page;
+    const { uoms, categories, attributes, extraCostTypes, currency: savedCurrency, companyLogo } = page;
     const isAdmin = page.auth?.user?.role?.name === 'admin';
     const permissions = (page.auth?.permissions as string[]) || [];
     const canFactoryReset = isAdmin || permissions.includes('*') || permissions.includes('admin.factory_reset');
@@ -33,7 +33,21 @@ export default function Settings() {
         date_format: 'Y-m-d',
         currency: savedCurrency || 'GHS',
         fiscal_year_start: '01-01',
+        company_logo: null as File | null,
+        remove_logo: false,
     });
+
+    const [logoPreview, setLogoPreview] = useState<string | null>(companyLogo || null);
+
+    const handleLogoChange = (file: File | null) => {
+        setData((prev) => ({ ...prev, company_logo: file, remove_logo: false }));
+        setLogoPreview(file ? URL.createObjectURL(file) : companyLogo || null);
+    };
+
+    const handleLogoRemove = () => {
+        setData((prev) => ({ ...prev, company_logo: null, remove_logo: true }));
+        setLogoPreview(null);
+    };
 
     const handleSaveSettings = () => {
         put('/admin/settings');
@@ -193,6 +207,34 @@ export default function Settings() {
                                 </select>
                             </div>
                         </div>
+                    </GlassCard>
+
+                    <GlassCard className="mb-6">
+                        <h2 className="text-lg font-semibold mb-4">Company Logo</h2>
+                        <div className="flex items-center gap-4">
+                            <div className="w-16 h-16 rounded-lg border border-dashed border-slate-300 dark:border-white/10 flex items-center justify-center overflow-hidden bg-slate-50 dark:bg-white/5 shrink-0">
+                                {logoPreview ? (
+                                    <img src={logoPreview} alt="Company logo" className="w-full h-full object-contain" />
+                                ) : (
+                                    <ImageOff className="w-5 h-5 text-slate-300" />
+                                )}
+                            </div>
+                            <label className="glass-button-secondary flex items-center gap-2 cursor-pointer">
+                                <Upload className="w-4 h-4" /> {logoPreview ? 'Change logo' : 'Upload logo'}
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => handleLogoChange(e.target.files?.[0] || null)}
+                                />
+                            </label>
+                            {logoPreview && (
+                                <button type="button" onClick={handleLogoRemove} className="text-sm text-slate-400 hover:text-red-500">
+                                    Remove
+                                </button>
+                            )}
+                        </div>
+                        <p className="text-xs text-slate-400 mt-2">PNG or JPG, up to 2MB. Click "Save Settings" below to apply changes.</p>
                     </GlassCard>
 
                     <div className="flex gap-3">

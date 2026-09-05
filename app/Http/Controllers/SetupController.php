@@ -30,7 +30,9 @@ class SetupController extends Controller
             return redirect()->route('login');
         }
 
-        return inertia('Setup/Index');
+        return inertia('Setup/Index', [
+            'timezones' => \DateTimeZone::listIdentifiers(),
+        ]);
     }
 
     public function store(Request $request)
@@ -50,6 +52,7 @@ class SetupController extends Controller
             'company_email' => 'nullable|email|max:255',
             'company_phone' => 'nullable|string|max:50',
             'company_address' => 'nullable|string|max:500',
+            'company_logo' => 'nullable|image|max:2048',
 
             'currency' => 'required|string|in:USD,GHS,EUR,GBP,NGN',
             'timezone' => 'nullable|string|max:100',
@@ -64,7 +67,11 @@ class SetupController extends Controller
             'departments.*' => 'string|max:100',
         ]);
 
-        $admin = DB::transaction(function () use ($validated) {
+        $logoPath = $request->hasFile('company_logo')
+            ? $request->file('company_logo')->store('logos', 'public')
+            : null;
+
+        $admin = DB::transaction(function () use ($validated, $logoPath) {
             (new PermissionSeeder)->run();
             (new RoleSeeder)->run();
 
@@ -82,6 +89,9 @@ class SetupController extends Controller
             Setting::set('company_email', $validated['company_email'] ?? '');
             Setting::set('company_phone', $validated['company_phone'] ?? '');
             Setting::set('company_address', $validated['company_address'] ?? '');
+            if ($logoPath) {
+                Setting::set('company_logo', $logoPath);
+            }
             Setting::set('currency', $validated['currency']);
             Setting::set('timezone', $validated['timezone'] ?? 'UTC');
             Setting::set('date_format', $validated['date_format'] ?? 'Y-m-d');

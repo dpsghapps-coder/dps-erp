@@ -266,9 +266,41 @@ class ClientSeeder extends Seeder
         foreach ($clients as $clientData) {
             $contacts = $clientData['contacts'] ?? [];
             $interactions = $clientData['interactions'] ?? [];
-            unset($clientData['contacts'], $clientData['interactions']);
+            $stage = $clientData['pipeline_stage'] ?? 'new_lead';
+            $lostReason = $clientData['lost_reason'] ?? null;
+            $lostNote = $clientData['lost_note'] ?? null;
+            $nextFollowUpAt = $clientData['next_follow_up_at'] ?? null;
+            unset(
+                $clientData['contacts'],
+                $clientData['interactions'],
+                $clientData['pipeline_stage'],
+                $clientData['lost_reason'],
+                $clientData['lost_note'],
+                $clientData['next_follow_up_at'],
+            );
+
+            // Tier is only earned by converting a deal; clients still in the pipeline
+            // or who lost their deal have no tier yet.
+            if ($stage !== 'converted') {
+                $clientData['status'] = null;
+            }
 
             $client = Client::create($clientData);
+
+            if ($stage === 'converted') {
+                $client->update(['first_converted_at' => now()->subMonths(2)]);
+            }
+
+            $client->deals()->create([
+                'type' => 'new_business',
+                'stage' => $stage,
+                'next_follow_up_at' => $stage === 'converted' || $stage === 'lost' ? null : $nextFollowUpAt,
+                'converted_at' => $stage === 'converted' ? now()->subMonths(2) : null,
+                'lost_at' => $stage === 'lost' ? now()->subMonths(1) : null,
+                'lost_reason' => $lostReason,
+                'lost_note' => $lostNote,
+                'created_by' => $user->id,
+            ]);
 
             foreach ($contacts as $contactData) {
                 $client->contacts()->create($contactData);
