@@ -32,6 +32,7 @@ class CrmController extends Controller
             'email' => 'nullable|email|unique:clients,email',
             'phone' => ['nullable', 'string', 'max:10', 'regex:/^0[0-9]{9}$/'],
             'estimated_value' => 'nullable|numeric|min:0',
+            'next_follow_up_at' => 'nullable|date',
             'industry' => 'nullable|string|max:100',
             'website' => 'nullable|url',
             'address' => 'nullable|string',
@@ -48,7 +49,8 @@ class CrmController extends Controller
         ]);
 
         $estimatedValue = $validated['estimated_value'] ?? 0;
-        unset($validated['estimated_value']);
+        $nextFollowUpAt = $validated['next_follow_up_at'] ?? null;
+        unset($validated['estimated_value'], $validated['next_follow_up_at']);
 
         $client = Client::create($validated);
 
@@ -56,6 +58,7 @@ class CrmController extends Controller
             'type' => 'new_business',
             'stage' => 'new_lead',
             'estimated_value' => $estimatedValue,
+            'next_follow_up_at' => $nextFollowUpAt,
             'created_by' => auth()->id(),
         ]);
 

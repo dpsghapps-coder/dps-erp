@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusBadge, StatusChips } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import PipelineBoard from '@/Components/PipelineBoard';
 import { Head, usePage, Link, router, useForm } from '@inertiajs/react';
 import { Plus, Search, Users, TrendingUp, Target, Clock, AlertTriangle, User, MapPin, ChevronDown, ChevronUp, Link2, Check, X, LayoutGrid, List, DollarSign, XCircle, Rocket } from 'lucide-react';
@@ -219,7 +219,7 @@ export default function LeadsIndex() {
 
             <PageHeader
                 title="Lead Management"
-                subtitle={`${clientsList.length} leads & prospects`}
+                subtitle={`${dealsList.length} leads & prospects`}
                 action={
                     <div className="flex items-center gap-3">
                         <div className="flex bg-slate-100 dark:bg-white/10 rounded-lg p-0.5">
@@ -466,12 +466,12 @@ export default function LeadsIndex() {
                     </GlassCard>
 
                     {viewMode === 'list' ? (
-                        filteredClients.length > 0 ? (
+                        filteredDeals.length > 0 ? (
                             <>
                                 <div className="flex items-center gap-3 mb-3">
                                     <input
                                         type="checkbox"
-                                        checked={selectedIds.size === filteredClients.length && filteredClients.length > 0}
+                                        checked={selectedIds.size === filteredDeals.length && filteredDeals.length > 0}
                                         onChange={selectAll}
                                         className="rounded border-slate-300 dark:border-white/20 bg-slate-100 dark:bg-white/10 text-indigo-500 focus:ring-indigo-500/50"
                                     />
@@ -480,16 +480,17 @@ export default function LeadsIndex() {
                                     </span>
                                 </div>
                                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-                            {filteredClients.map((client: any) => {
+                            {filteredDeals.map((deal: any) => {
+                                const client = deal.client || {};
                                 const daysAgo = daysSince(client.lastInteraction?.occurred_at);
                                 const isStale = daysAgo !== null && daysAgo > 7;
                                 const noActivity = daysAgo === null;
                                 const score = calculateScore(client);
-                                const isDueToday = client.next_follow_up_at && client.next_follow_up_at.startsWith(new Date().toISOString().split('T')[0]);
-                                const isOverdue = client.next_follow_up_at && new Date(client.next_follow_up_at) < new Date() && !isDueToday;
+                                const isDueToday = deal.next_follow_up_at && deal.next_follow_up_at.startsWith(new Date().toISOString().split('T')[0]);
+                                const isOverdue = deal.next_follow_up_at && new Date(deal.next_follow_up_at) < new Date() && !isDueToday;
 
                                 return (
-                                    <div key={client.id} className="relative">
+                                    <div key={deal.id} className="relative">
                                         <div className={`border rounded-xl transition-colors ${selectedIds.has(client.id) ? 'border-indigo-500/50 bg-indigo-500/5' : 'border-transparent'}`}>
                                             <GlassCard variant="interactive" className="h-full">
                                                 <div className="flex items-start gap-3 mb-3">
@@ -521,6 +522,9 @@ export default function LeadsIndex() {
                                                             }`}>
                                                                 {score}
                                                             </div>
+                                                            {client.is_greylisted && (
+                                                                <span className="status-badge text-xs status-greylisted shrink-0">Greylisted</span>
+                                                            )}
                                                         </div>
                                                     </Link>
                                                 </div>
@@ -579,47 +583,34 @@ export default function LeadsIndex() {
                                                     )}
                                                 </div>
 
-                                                {/* Quick status change */}
+                                                {/* Stage + follow-up */}
                                                 <div className="relative">
                                                     <button
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             e.preventDefault();
-                                                            setOpenStatusId(openStatusId === client.id ? null : client.id);
+                                                            setOpenStatusId(openStatusId === deal.id ? null : deal.id);
                                                         }}
                                                         className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors text-sm"
                                                     >
-                                                        <StatusBadge status={client.status} />
+                                                        <span className="status-badge text-xs bg-indigo-500/20 text-indigo-400">
+                                                            {deal.stage === 'new_lead' ? 'New Lead' : deal.stage === 'contacted' ? 'Contacted' : deal.stage === 'meeting_scheduled' ? 'Meeting Scheduled' : deal.stage === 'proposal_sent' ? 'Proposal Sent' : deal.stage === 'negotiating' ? 'Negotiating' : deal.stage}
+                                                        </span>
                                                         <ChevronDown className="w-4 h-4 text-slate-400" />
                                                     </button>
-                                                    {openStatusId === client.id && (
-                                                        <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl z-10 overflow-hidden">
-                                                            {STATUS_OPTIONS.filter(o => o.value !== client.status).map((option) => (
-                                                                <button
-                                                                    key={option.value}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        e.preventDefault();
-                                                                        handleStatusChange(client.id, option.value);
-                                                                    }}
-                                                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
-                                                                >
-                                                                    <span className={`w-2 h-2 rounded-full ${option.color.split(' ')[0]}`} />
-                                                                    {option.label}
-                                                                </button>
-                                                            ))}
-                                                            <div className="border-t border-slate-200 dark:border-white/10 px-3 py-2">
-                                                                <label className="text-xs text-slate-400 block mb-1">Next follow-up</label>
-                                                                <input
-                                                                    type="date"
-                                                                    defaultValue={client.next_follow_up_at?.split('T')[0] || ''}
-                                                                    onChange={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleStatusChange(client.id, client.status, e.target.value);
-                                                                    }}
-                                                                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-sm text-slate-900 dark:text-white"
-                                                                />
-                                                            </div>
+                                                    {openStatusId === deal.id && (
+                                                        <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl z-10 overflow-hidden p-3">
+                                                            <label className="text-xs text-slate-400 block mb-1">Next follow-up</label>
+                                                            <input
+                                                                type="date"
+                                                                defaultValue={deal.next_follow_up_at?.split('T')[0] || ''}
+                                                                onChange={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleFollowUpChange(deal, e.target.value);
+                                                                }}
+                                                                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-sm text-slate-900 dark:text-white"
+                                                            />
+                                                            <p className="text-[11px] text-slate-500 mt-2">Change the pipeline stage from the Sales Pipeline board.</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -639,7 +630,7 @@ export default function LeadsIndex() {
                             </GlassCard>
                         )
                     ) : (
-                        <PipelineBoard clients={clientsList} />
+                        <PipelineBoard deals={dealsList} />
                     )}
                 </div>
             </div>
@@ -654,15 +645,22 @@ export default function LeadsIndex() {
                         options={STATUS_OPTIONS}
                         size="sm"
                     />
+                    <input
+                        type="date"
+                        value={bulkFollowUpDate}
+                        onChange={(e) => setBulkFollowUpDate(e.target.value)}
+                        title="Set follow-up date on each selected client's open deal"
+                        className="glass-input text-sm py-1.5"
+                    />
                     <button
                         onClick={handleBulkUpdate}
-                        disabled={!bulkStatus}
+                        disabled={!bulkStatus && !bulkFollowUpDate}
                         className="glass-button text-sm disabled:opacity-40"
                     >
                         Apply
                     </button>
                     <button
-                        onClick={() => { setSelectedIds(new Set()); setBulkStatus(''); }}
+                        onClick={() => { setSelectedIds(new Set()); setBulkStatus(''); setBulkFollowUpDate(''); }}
                         className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                     >
                         <X className="w-4 h-4" />
@@ -790,28 +788,17 @@ export default function LeadsIndex() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs text-slate-400 mb-1">Tier</label>
-                                    <StatusChips
-                                        value={quickLeadForm.data.status}
-                                        onChange={(v) => quickLeadForm.setData('status', v)}
-                                        options={STATUS_OPTIONS}
-                                        size="sm"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-xs text-slate-400 mb-1">Source</label>
-                                    <select
-                                        value={quickLeadForm.data.source}
-                                        onChange={(e) => quickLeadForm.setData('source', e.target.value)}
-                                        className="glass-input w-full text-sm"
-                                    >
-                                        {SOURCES.map(s => (
-                                            <option key={s} value={s}>{s}</option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Source</label>
+                                <select
+                                    value={quickLeadForm.data.source}
+                                    onChange={(e) => quickLeadForm.setData('source', e.target.value)}
+                                    className="glass-input w-full text-sm"
+                                >
+                                    {SOURCES.map(s => (
+                                        <option key={s} value={s}>{s}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">

@@ -15,7 +15,7 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 export default function Reports() {
-    const { stats, conversionRate, won, lost, pipelineFunnel, pipelineValue, wonValue, lostReasons, monthlyClients, sources, industries, recentClients } = usePage().props as any;
+    const { stats, conversionRate, won, newBusinessWon, repeatBusinessWon, lost, pipelineFunnel, pipelineValue, wonValue, lostReasons, monthlyClients, sources, industries, recentClients } = usePage().props as any;
     const formatCurrency = useCurrency();
 
     const statCards = [
@@ -126,6 +126,10 @@ export default function Reports() {
                         <h2 className="text-lg font-semibold">Sales Funnel</h2>
                         <span className="text-sm text-slate-500">{won} won · {lost} lost</span>
                     </div>
+                    <div className="flex items-center gap-4 mb-4 text-sm">
+                        <span className="text-emerald-400 font-medium">{newBusinessWon || 0} new business won</span>
+                        <span className="text-indigo-400 font-medium">{repeatBusinessWon || 0} repeat deals won</span>
+                    </div>
                     <div className="space-y-2">
                         {Object.entries(pipelineFunnel || {}).map(([stage, count]) => (
                             <div key={stage} className="flex items-center gap-3">
@@ -224,7 +228,7 @@ export default function Reports() {
                                         </Link>
                                     </td>
                                     <td className="py-3 px-4">
-                                        <StatusBadge status={client.status} />
+                                        {client.status ? <StatusBadge status={client.status} /> : <span className="text-slate-500 text-sm">—</span>}
                                     </td>
                                     <td className="py-3 px-4 text-slate-500">
                                         {new Date(client.created_at).toLocaleDateString()}

@@ -173,7 +173,7 @@ function DroppableColumn({ column, deals, onQuickAction }: { column: typeof COLU
 
 export default function PipelineBoard({ deals }: { deals: any[] }) {
     const formatCurrency = useCurrency();
-    const [dealType, setDealType] = useState<'new_business' | 'repeat_business'>('new_business');
+    const [dealType, setDealType] = useState<'new_business' | 'repeat_business'>('repeat_business');
     const [activeId, setActiveId] = useState<number | null>(null);
     const [localDeals, setLocalDeals] = useState(() => [...deals]);
     const [modalDeal, setModalDeal] = useState<any>(null);
@@ -329,16 +329,16 @@ export default function PipelineBoard({ deals }: { deals: any[] }) {
 
                 <div className="flex bg-slate-100 dark:bg-white/10 rounded-lg p-0.5">
                     <button
-                        onClick={() => setDealType('new_business')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${dealType === 'new_business' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        New Business
-                    </button>
-                    <button
                         onClick={() => setDealType('repeat_business')}
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${dealType === 'repeat_business' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
                     >
                         Repeat Business
+                    </button>
+                    <button
+                        onClick={() => setDealType('new_business')}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${dealType === 'new_business' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    >
+                        New Business
                     </button>
                 </div>
             </div>

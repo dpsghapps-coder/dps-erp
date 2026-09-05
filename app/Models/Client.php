@@ -26,6 +26,11 @@ class Client extends Model
         'instagram',
         'twitter',
         'tiktok',
+        'first_converted_at',
+        'is_greylisted',
+        'greylisted_at',
+        'greylisted_by',
+        'greylist_reason',
     ];
 
     protected $casts = [
