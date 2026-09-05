@@ -1,10 +1,10 @@
-import { useState, useCallback, useMemo } from 'react';
-import { router, useForm } from '@inertiajs/react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { router, useForm, Link } from '@inertiajs/react';
 import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent, useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GlassCard, StatusChips } from '@/Components/ui';
-import { User, Link2, Clock, AlertTriangle, Phone, MessageSquare, Calendar, FileText, X, TrendingUp } from 'lucide-react';
+import { User, Link2, Clock, AlertTriangle, Phone, MessageSquare, Calendar, FileText, X, TrendingUp, ExternalLink } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 
 const COLUMNS = [
@@ -52,7 +52,7 @@ function daysSince(dateStr: string | null): number | null {
 function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal: any, type: string) => void }) {
     const formatCurrency = useCurrency();
     const client = deal.client || {};
-    const daysAgo = daysSince(client.lastInteraction?.occurred_at);
+    const daysAgo = daysSince(client.last_interaction?.occurred_at);
     const isStale = daysAgo !== null && daysAgo > 7;
     const noActivity = daysAgo === null;
 
@@ -75,6 +75,15 @@ function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal
                         <h4 className="font-medium text-sm truncate">{client.company_name}</h4>
                         {client.industry && <p className="text-xs text-slate-400 truncate">{client.industry}</p>}
                     </div>
+                    <Link
+                        href={`/crm/${client.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-indigo-400 transition-colors shrink-0"
+                        title="View client details"
+                    >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
                 </div>
 
                 {deal.estimated_value > 0 && (
@@ -85,10 +94,10 @@ function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal
                     </div>
                 )}
 
-                {client.primaryContact && (
+                {client.primary_contact && (
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
                         <User className="w-3 h-3 shrink-0" />
-                        <span className="truncate">{client.primaryContact.first_name} {client.primaryContact.last_name}</span>
+                        <span className="truncate">{client.primary_contact.first_name} {client.primary_contact.last_name}</span>
                     </div>
                 )}
                 {client.source && (
@@ -112,17 +121,21 @@ function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal
                         </div>
                     ) : isStale ? (
                         <div className="flex items-center gap-1.5 text-xs text-amber-400">
-                            <Clock className="w-3 h-3" /><span>{timeAgo(client.lastInteraction.occurred_at)} — stale</span>
+                            <Clock className="w-3 h-3" /><span>{timeAgo(client.last_interaction.occurred_at)} — stale</span>
                         </div>
                     ) : (
                         <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                            <span>{INTERACTION_ICONS[client.lastInteraction.type] || '📋'}</span>
-                            <span>{timeAgo(client.lastInteraction.occurred_at)}</span>
+                            <span>{INTERACTION_ICONS[client.last_interaction.type] || '📋'}</span>
+                            <span>{timeAgo(client.last_interaction.occurred_at)}</span>
                         </div>
                     )}
                 </div>
 
-                <div className="flex items-center justify-between gap-1 pt-2.5 mt-2 border-t border-slate-200 dark:border-white/10" onClick={(e) => e.stopPropagation()}>
+                <div
+                    className="flex items-center justify-between gap-1 pt-2.5 mt-2 border-t border-slate-200 dark:border-white/10"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                >
                     <button type="button" onClick={(e) => { e.stopPropagation(); onQuickAction(deal, 'call'); }} className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-blue-400 transition-colors" title="Log Call">
                         <Phone className="w-3.5 h-3.5" />
                     </button>
@@ -176,6 +189,10 @@ export default function PipelineBoard({ deals }: { deals: any[] }) {
     const [dealType, setDealType] = useState<'new_business' | 'repeat_business'>('repeat_business');
     const [activeId, setActiveId] = useState<number | null>(null);
     const [localDeals, setLocalDeals] = useState(() => [...deals]);
+
+    useEffect(() => {
+        setLocalDeals([...deals]);
+    }, [deals]);
     const [modalDeal, setModalDeal] = useState<any>(null);
     const [modalActionType, setModalActionType] = useState<string>('call');
     const [lostModalDeal, setLostModalDeal] = useState<any>(null);
@@ -213,6 +230,7 @@ export default function PipelineBoard({ deals }: { deals: any[] }) {
         if (!modalDeal) return;
 
         interactionForm.post(`/crm/${modalDeal.client.id}/interactions`, {
+            preserveScroll: true,
             onSuccess: () => {
                 if (interactionForm.data.next_follow_up_at) {
                     router.patch(`/deals/${modalDeal.id}/status`, {

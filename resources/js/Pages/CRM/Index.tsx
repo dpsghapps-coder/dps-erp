@@ -191,10 +191,10 @@ export default function CrmIndex() {
                                             </div>
                                         )}
 
-                                        {client.primaryContact && (
+                                        {client.primary_contact && (
                                             <div className="flex items-center gap-2 text-sm text-slate-400 mb-2">
                                                 <User className="w-4 h-4 shrink-0" />
-                                                <span>{client.primaryContact.first_name} {client.primaryContact.last_name}</span>
+                                                <span>{client.primary_contact.first_name} {client.primary_contact.last_name}</span>
                                             </div>
                                         )}
 

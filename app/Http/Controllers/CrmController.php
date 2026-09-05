@@ -69,7 +69,7 @@ class CrmController extends Controller
     {
         $client->load([
             'contacts' => fn ($q) => $q->orderBy('id'),
-            'interactions.user',
+            'interactions' => fn ($q) => $q->with('user')->orderBy('occurred_at', 'desc'),
             'orders.items',
             'orders.createdBy',
             'proformas',

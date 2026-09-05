@@ -58,7 +58,7 @@ const SOURCE_WEIGHTS: Record<string, number> = {
 
 function calculateScore(client: any): number {
     let score = 0;
-    const daysAgo = daysSince(client.lastInteraction?.occurred_at);
+    const daysAgo = daysSince(client.last_interaction?.occurred_at);
     if (daysAgo !== null) {
         if (daysAgo <= 1) score += 40;
         else if (daysAgo <= 3) score += 30;
@@ -179,8 +179,8 @@ export default function LeadsIndex() {
                 c.email?.toLowerCase().includes(search.toLowerCase()) ||
                 c.phone?.includes(search) ||
                 c.city?.toLowerCase().includes(search.toLowerCase()) ||
-                c.primaryContact?.first_name?.toLowerCase().includes(search.toLowerCase()) ||
-                c.primaryContact?.last_name?.toLowerCase().includes(search.toLowerCase());
+                c.primary_contact?.first_name?.toLowerCase().includes(search.toLowerCase()) ||
+                c.primary_contact?.last_name?.toLowerCase().includes(search.toLowerCase());
             const matchLetter = !letterFilter || c.company_name.charAt(0).toUpperCase() === letterFilter;
             const matchSource = sourceFilter === 'all' || c.source === sourceFilter;
             const matchDueToday = !dueTodayOnly || (d.next_follow_up_at && d.next_follow_up_at.split('T')[0] <= today);
@@ -482,7 +482,7 @@ export default function LeadsIndex() {
                                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
                             {filteredDeals.map((deal: any) => {
                                 const client = deal.client || {};
-                                const daysAgo = daysSince(client.lastInteraction?.occurred_at);
+                                const daysAgo = daysSince(client.last_interaction?.occurred_at);
                                 const isStale = daysAgo !== null && daysAgo > 7;
                                 const noActivity = daysAgo === null;
                                 const score = calculateScore(client);
@@ -529,10 +529,10 @@ export default function LeadsIndex() {
                                                     </Link>
                                                 </div>
 
-                                                {client.primaryContact && (
+                                                {client.primary_contact && (
                                                     <div className="flex items-center gap-2 text-sm text-slate-400 mb-1">
                                                         <User className="w-3.5 h-3.5 shrink-0" />
-                                                        <span className="truncate">{client.primaryContact.first_name} {client.primaryContact.last_name}</span>
+                                                        <span className="truncate">{client.primary_contact.first_name} {client.primary_contact.last_name}</span>
                                                     </div>
                                                 )}
                                                 {client.city && (
@@ -558,14 +558,14 @@ export default function LeadsIndex() {
                                                     ) : isStale ? (
                                                         <div className="flex items-center gap-2 text-sm text-amber-400">
                                                             <Clock className="w-4 h-4" />
-                                                            <span>Last contact {timeAgo(client.lastInteraction.occurred_at)} — stale</span>
+                                                            <span>Last contact {timeAgo(client.last_interaction.occurred_at)} — stale</span>
                                                         </div>
                                                     ) : (
                                                         <div className="flex items-center gap-2 text-sm text-slate-400">
-                                                            <span>{INTERACTION_ICONS[client.lastInteraction.type] || '📋'}</span>
+                                                            <span>{INTERACTION_ICONS[client.last_interaction.type] || '📋'}</span>
                                                             <span>
-                                                                {client.lastInteraction.type.charAt(0).toUpperCase() + client.lastInteraction.type.slice(1)}
-                                                                {' '}{timeAgo(client.lastInteraction.occurred_at)}
+                                                                {client.last_interaction.type.charAt(0).toUpperCase() + client.last_interaction.type.slice(1)}
+                                                                {' '}{timeAgo(client.last_interaction.occurred_at)}
                                                             </span>
                                                         </div>
                                                     )}
