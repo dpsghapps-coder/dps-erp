@@ -7,15 +7,21 @@ use App\Models\ProductCategory;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\ChatSeeder;
 use Database\Seeders\ClientSeeder;
 use Database\Seeders\DecisionHubSeeder;
 use Database\Seeders\HrmSeeder;
 use Database\Seeders\InventorySeeder;
+use Database\Seeders\MarketingSeeder;
 use Database\Seeders\MaterialPricesSeeder;
+use Database\Seeders\OrderSeeder;
 use Database\Seeders\PermissionSeeder;
+use Database\Seeders\ProductionSeeder;
+use Database\Seeders\ProductServiceSeeder;
 use Database\Seeders\PurchaseRequestSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\ServiceSeeder;
+use Database\Seeders\StudioSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -105,6 +111,12 @@ class SetupController extends Controller
                 (new HrmSeeder)->run();
                 (new PurchaseRequestSeeder)->run();
                 (new DecisionHubSeeder)->run();
+                (new ProductServiceSeeder)->run();
+                (new OrderSeeder)->run();
+                (new ProductionSeeder)->run();
+                (new MarketingSeeder)->run();
+                (new StudioSeeder)->run();
+                (new ChatSeeder)->run();
             } else {
                 foreach ($validated['uoms'] ?? [] as $uom) {
                     Setting::firstOrCreate(
