@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\GeneratesDailyCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProductionJob extends Model
 {
-    use GeneratesDailyCode;
+    use Auditable, GeneratesDailyCode, SoftDeletes;
 
     const STATUS_NEW_JOBS = 'new_jobs';
 

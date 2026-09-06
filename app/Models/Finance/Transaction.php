@@ -2,6 +2,7 @@
 
 namespace App\Models\Finance;
 
+use App\Models\Concerns\Auditable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transaction extends Model
 {
-    use SoftDeletes;
+    use Auditable, SoftDeletes;
 
     protected $fillable = [
         'type',

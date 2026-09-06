@@ -2,14 +2,18 @@
 
 namespace App\Models\Finance;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Bill extends Model
 {
+    use Auditable, SoftDeletes;
+
     const STATUSES = ['draft', 'submitted', 'partially_paid', 'paid', 'cancelled'];
 
     protected $fillable = [

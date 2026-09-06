@@ -2,15 +2,19 @@
 
 namespace App\Models\Finance;
 
+use App\Models\Concerns\Auditable;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
 class Account extends Model
 {
+    use Auditable, SoftDeletes;
+
     const TYPES = ['asset', 'liability', 'equity', 'income', 'expense'];
 
     const SUBTYPES = ['cash', 'bank', 'mobile_money', 'receivable', 'inventory', 'fixed_asset', 'other'];
