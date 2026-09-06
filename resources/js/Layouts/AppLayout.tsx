@@ -1595,13 +1595,13 @@ export default function AppLayout({ children }: PropsWithChildren) {
             </div>
 
             {/* Mobile Bottom Navigation */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] bg-white/95 backdrop-blur-lg border-t border-slate-200/50 h-16 flex items-center justify-around px-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-[70] bg-white/95 dark:bg-[#13161f]/95 backdrop-blur-lg border-t border-slate-200/50 dark:border-white/[0.06] h-16 flex items-center justify-around px-2 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
                 <Link
                     href="/dashboard"
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                         currentPath === '/dashboard' 
-                            ? 'text-indigo-600 bg-indigo-50' 
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                            ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/10'
+                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:text-slate-300 dark:hover:bg-white/5'
                     }`}
                 >
                     <LayoutDashboard className="w-5 h-5" />
@@ -1612,8 +1612,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     onClick={() => setCrmSlideUpOpen(true)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                         isCrmPage 
-                            ? 'text-indigo-600 bg-indigo-50' 
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                            ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/10'
+                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:text-slate-300 dark:hover:bg-white/5'
                     }`}
                 >
                     <Users className="w-5 h-5" />
@@ -1625,8 +1625,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     onClick={() => setInventorySlideUpOpen(true)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                         isInventoryPage 
-                            ? 'text-indigo-600 bg-indigo-50' 
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                            ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/10'
+                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:text-slate-300 dark:hover:bg-white/5'
                     }`}
                 >
                     <Package className="w-5 h-5" />
@@ -1638,8 +1638,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     onClick={() => setProductsSlideUpOpen(true)}
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                         isProductsPage 
-                            ? 'text-indigo-600 bg-indigo-50' 
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                            ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/10'
+                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:text-slate-300 dark:hover:bg-white/5'
                     }`}
                 >
                     <Package className="w-5 h-5" />
@@ -1651,8 +1651,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     href="/orders"
                     className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
                         currentPath === '/orders' 
-                            ? 'text-indigo-600 bg-indigo-50' 
-                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                            ? 'text-indigo-600 bg-indigo-50 dark:text-indigo-400 dark:bg-indigo-500/10'
+                            : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:text-slate-300 dark:hover:bg-white/5'
                     }`}
                 >
                     <ShoppingCart className="w-5 h-5" />
@@ -1661,7 +1661,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                 )}
                 <button
                     onClick={() => setMobileMenuOpen(true)}
-                    className="flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
+                    className="flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 dark:hover:text-slate-300 dark:hover:bg-white/5 transition-all"
                 >
                     <Menu className="w-5 h-5" />
                     <span className="text-[10px] font-medium">More</span>

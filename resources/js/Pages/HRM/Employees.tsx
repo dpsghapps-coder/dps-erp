@@ -28,6 +28,7 @@ export default function HrmEmployees() {
     const employeesList = employeesData?.data || employeesData || [];
     const departmentsData = (props as any)?.departments;
     const departmentsProp = departmentsData || [];
+    const isManager = Boolean((props as any)?.isManager);
 
     const [employees, setEmployees] = useState(employeesList);
     const [view, setView] = useState<'grid' | 'list'>('grid');
@@ -86,9 +87,11 @@ export default function HrmEmployees() {
                 title="Employee Directory" 
                 subtitle={`${employees.length} employees`}
                 action={
-                    <Link href="/hrm/create" className="glass-button flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> Add Employee
-                    </Link>
+                    isManager ? (
+                        <Link href="/hrm/create" className="glass-button flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> Add Employee
+                        </Link>
+                    ) : undefined
                 }
             />
 
@@ -160,13 +163,15 @@ export default function HrmEmployees() {
                                         <span className={`text-xs px-2 py-1 rounded-full ${employmentTypeColors[employee.employment_type?.name] || 'bg-slate-100 dark:bg-white/10'}`}>
                                             {employee.employment_type?.name || '-'}
                                         </span>
-                                        <Link
-                                            href={`/hrm/${employee.id}/edit`}
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                                        >
-                                            <Pencil className="w-4 h-4" />
-                                        </Link>
+                                        {isManager && (
+                                            <Link
+                                                href={`/hrm/${employee.id}/edit`}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </Link>
+                                        )}
                                     </div>
                                 </GlassCard>
                             </div>
@@ -228,13 +233,15 @@ export default function HrmEmployees() {
                                             </td>
                                             <td className="py-3 px-4 text-right">
                                                 <div className="flex items-center justify-end gap-1">
-                                                    <Link
-                                                        href={`/hrm/${employee.id}/edit`}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                                                    >
-                                                        <Pencil className="w-4 h-4" />
-                                                    </Link>
+                                                    {isManager && (
+                                                        <Link
+                                                            href={`/hrm/${employee.id}/edit`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </Link>
+                                                    )}
                                                     <ChevronRight className="w-5 h-5 text-slate-400" />
                                                 </div>
                                             </td>
@@ -333,12 +340,14 @@ export default function HrmEmployees() {
                             >
                                 <User className="w-4 h-4" /> Full Profile
                             </Link>
-                            <Link
-                                href={`/hrm/${selectedEmployee.id}/edit`}
-                                className="glass-button flex-1 flex items-center justify-center gap-2"
-                            >
-                                <Pencil className="w-4 h-4" /> Edit
-                            </Link>
+                            {isManager && (
+                                <Link
+                                    href={`/hrm/${selectedEmployee.id}/edit`}
+                                    className="glass-button flex-1 flex items-center justify-center gap-2"
+                                >
+                                    <Pencil className="w-4 h-4" /> Edit
+                                </Link>
+                            )}
                         </div>
                     </div>
                 )}
