@@ -74,19 +74,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/help/{slug}', [HelpController::class, 'show'])->name('help.show');
 
     // CRM Routes
-    Route::middleware('permission:crm.view')->group(function () {
-        Route::get('/crm', [CrmController::class, 'index'])->name('crm.index');
+    Route::middleware('permission:crm.create_clients')->group(function () {
         Route::get('/crm/create', [CrmController::class, 'create'])->name('crm.create');
         Route::post('/crm', [CrmController::class, 'store'])->name('crm.store');
+    });
+
+    Route::middleware('permission:crm.view')->group(function () {
+        Route::get('/crm', [CrmController::class, 'index'])->name('crm.index');
         Route::get('/crm/leads', [CrmLeadController::class, 'index'])->name('crm.leads');
         Route::get('/crm/reports', [CrmReportController::class, 'index'])->name('crm.reports');
-        Route::patch('/crm/bulk-update', [CrmController::class, 'updateBulk'])->name('crm.updateBulk');
         Route::get('/crm/{client}', [CrmController::class, 'show'])->name('crm.show');
+
+        // Proforma Routes (must be before {client} wildcard)
+        Route::get('/crm/{client}/proformas', [ProformaController::class, 'index'])->name('crm.proformas.index');
+        Route::get('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'show'])->name('crm.proformas.show');
+    });
+
+    Route::middleware('permission:crm.edit_clients')->group(function () {
         Route::get('/crm/{client}/edit', [CrmController::class, 'edit'])->name('crm.edit');
         Route::put('/crm/{client}', [CrmController::class, 'update'])->name('crm.update');
-        Route::delete('/crm/{client}', [CrmController::class, 'destroy'])->name('crm.destroy');
+        Route::patch('/crm/bulk-update', [CrmController::class, 'updateBulk'])->name('crm.updateBulk');
         Route::patch('/crm/{client}/status', [CrmController::class, 'updateStatus'])->name('crm.updateStatus');
-        Route::post('/crm/{client}/greylist', [CrmController::class, 'toggleGreylist'])->name('crm.toggleGreylist');
         Route::post('/crm/{client}/deals', [DealController::class, 'store'])->name('crm.deals.store');
         Route::patch('/deals/{deal}/status', [DealController::class, 'updateStatus'])->name('deals.updateStatus');
         Route::post('/crm/{client}/interactions', [CrmController::class, 'logInteraction'])->name('crm.interactions');
@@ -94,36 +102,59 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/crm/{client}/contacts/{contact}', [CrmController::class, 'updateContact'])->name('crm.contacts.update');
         Route::delete('/crm/{client}/contacts/{contact}', [CrmController::class, 'destroyContact'])->name('crm.contacts.destroy');
 
-        // Proforma Routes (must be before {client} wildcard)
-        Route::get('/crm/{client}/proformas', [ProformaController::class, 'index'])->name('crm.proformas.index');
         Route::get('/crm/{client}/proformas/create', [ProformaController::class, 'create'])->name('crm.proformas.create');
         Route::post('/crm/{client}/proformas', [ProformaController::class, 'store'])->name('crm.proformas.store');
-        Route::get('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'show'])->name('crm.proformas.show');
         Route::get('/crm/{client}/proformas/{proforma}/edit', [ProformaController::class, 'edit'])->name('crm.proformas.edit');
         Route::put('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'update'])->name('crm.proformas.update');
+    });
+
+    Route::middleware('permission:crm.delete_clients')->group(function () {
+        Route::delete('/crm/{client}', [CrmController::class, 'destroy'])->name('crm.destroy');
         Route::delete('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'destroy'])->name('crm.proformas.destroy');
     });
 
+    Route::middleware('permission:crm.approve-greylist')->group(function () {
+        Route::post('/crm/{client}/greylist', [CrmController::class, 'toggleGreylist'])->name('crm.toggleGreylist');
+    });
+
     // Products Routes
-    Route::middleware('permission:products.view')->group(function () {
-        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+    Route::middleware('permission:products.create')->group(function () {
         Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
         Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    });
+
+    Route::middleware('permission:products.view')->group(function () {
+        Route::get('/products', [ProductController::class, 'index'])->name('products.index');
         Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
-        Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
-        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
-        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
         Route::get('/calculators', [ProductController::class, 'calculators'])->name('products.calculators');
     });
 
+    Route::middleware('permission:products.edit')->group(function () {
+        Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
+        Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
+    });
+
+    Route::middleware('permission:products.delete')->group(function () {
+        Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+    });
+
     // Services Routes
-    Route::middleware('permission:services.view')->group(function () {
-        Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
+    Route::middleware('permission:services.create')->group(function () {
         Route::get('/services/create', [ServiceController::class, 'create'])->name('services.create');
         Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
+    });
+
+    Route::middleware('permission:services.view')->group(function () {
+        Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
         Route::get('/services/{service}', [ServiceController::class, 'show'])->name('services.show');
+    });
+
+    Route::middleware('permission:services.edit')->group(function () {
         Route::get('/services/{service}/edit', [ServiceController::class, 'edit'])->name('services.edit');
         Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
+    });
+
+    Route::middleware('permission:services.delete')->group(function () {
         Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
     });
 
@@ -131,14 +162,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('permission:inventory.view')->group(function () {
         Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory.index');
         Route::get('/inventory/suppliers', [SupplierController::class, 'index'])->name('inventory.suppliers');
-        Route::post('/inventory/suppliers', [SupplierController::class, 'store'])->name('inventory.suppliers.store');
         Route::get('/inventory/suppliers/{supplier}', [SupplierController::class, 'show'])->name('inventory.suppliers.show');
+        Route::get('/inventory/materials', [ProductCatalogController::class, 'index'])->name('inventory.materials');
+        Route::get('/inventory/materials/{product}', [ProductCatalogController::class, 'show'])->name('inventory.materials.show');
+        Route::get('/inventory/stock', [StockController::class, 'index'])->name('inventory.stock');
+        Route::get('/inventory/requisitions', [RequisitionController::class, 'index'])->name('inventory.requisitions');
+    });
+
+    Route::middleware('permission:inventory.manage_suppliers')->group(function () {
+        Route::post('/inventory/suppliers', [SupplierController::class, 'store'])->name('inventory.suppliers.store');
         Route::put('/inventory/suppliers/{supplier}', [SupplierController::class, 'update'])->name('inventory.suppliers.update');
         Route::delete('/inventory/suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('inventory.suppliers.destroy');
+    });
 
-        Route::get('/inventory/materials', [ProductCatalogController::class, 'index'])->name('inventory.materials');
+    Route::middleware('permission:inventory.manage_products')->group(function () {
         Route::post('/inventory/materials', [ProductCatalogController::class, 'store'])->name('inventory.materials.store');
-        Route::get('/inventory/materials/{product}', [ProductCatalogController::class, 'show'])->name('inventory.materials.show');
         Route::get('/inventory/materials/{product}/edit', [ProductCatalogController::class, 'edit'])->name('inventory.materials.edit');
         Route::put('/inventory/materials/{product}', [ProductCatalogController::class, 'update'])->name('inventory.materials.update');
         Route::delete('/inventory/materials/{product}', [ProductCatalogController::class, 'destroy'])->name('inventory.materials.destroy');
@@ -151,13 +189,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/inventory/materials/{product}/prices', [ProductCatalogController::class, 'storePrice'])->name('inventory.materials.prices.store');
         Route::put('/inventory/materials/prices/{price}', [ProductCatalogController::class, 'updatePrice'])->name('inventory.materials.prices.update');
         Route::delete('/inventory/materials/prices/{price}', [ProductCatalogController::class, 'destroyPrice'])->name('inventory.materials.prices.destroy');
+    });
 
-        Route::get('/inventory/stock', [StockController::class, 'index'])->name('inventory.stock');
+    Route::middleware('permission:inventory.manage_stock')->group(function () {
         Route::post('/inventory/stock', [StockController::class, 'store'])->name('inventory.stock.store');
         Route::put('/inventory/stock/{stock}', [StockController::class, 'update'])->name('inventory.stock.update');
         Route::delete('/inventory/stock/{stock}', [StockController::class, 'destroy'])->name('inventory.stock.destroy');
+    });
 
-        Route::get('/inventory/requisitions', [RequisitionController::class, 'index'])->name('inventory.requisitions');
+    Route::middleware('permission:inventory.manage_requisitions')->group(function () {
         Route::post('/inventory/requisitions', [RequisitionController::class, 'store'])->name('inventory.requisitions.store');
         Route::put('/inventory/requisitions/{requisition}', [RequisitionController::class, 'update'])->name('inventory.requisitions.update');
         Route::patch('/inventory/requisitions/{requisition}/status', [RequisitionController::class, 'updateStatus'])->name('inventory.requisitions.status');
@@ -165,69 +205,130 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Orders Routes
+    Route::middleware('permission:orders.create')->group(function () {
+        Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
+        Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    });
+
     Route::middleware('permission:orders.view')->group(function () {
         Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-        Route::get('/orders/create', [OrderController::class, 'create'])->name('orders.create');
         Route::get('/orders/reports', [OrderReportController::class, 'index'])->name('orders.reports');
-        Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+    });
+
+    Route::middleware('permission:orders.edit')->group(function () {
         Route::get('/orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
         Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+    });
+
+    Route::middleware('permission:orders.manage_status')->group(function () {
         Route::post('/orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status.update');
+    });
+
+    Route::middleware('permission:orders.record_payment')->group(function () {
         Route::post('/orders/{order}/payments', [OrderController::class, 'storePayment'])->name('orders.payments.store');
     });
 
     // Production Routes
+    Route::middleware('permission:production.create')->group(function () {
+        Route::get('/production/create', [ProductionController::class, 'create'])->name('production.create');
+        Route::post('/production', [ProductionController::class, 'store'])->name('production.store');
+    });
+
     Route::middleware('permission:production.view')->group(function () {
         Route::get('/production', [ProductionController::class, 'index'])->name('production.index');
-        Route::get('/production/create', [ProductionController::class, 'create'])->name('production.create');
         Route::get('/production/reports', [ProductionReportController::class, 'index'])->name('production.reports');
-        Route::post('/production', [ProductionController::class, 'store'])->name('production.store');
         Route::get('/production/{job}', [ProductionController::class, 'show'])->name('production.show');
+    });
+
+    Route::middleware('permission:production.edit')->group(function () {
         Route::get('/production/{job}/edit', [ProductionController::class, 'edit'])->name('production.edit');
         Route::put('/production/{job}', [ProductionController::class, 'update'])->name('production.update');
         Route::patch('/production/{job}/status', [ProductionController::class, 'updateStatus'])->name('production.updateStatus');
+    });
+
+    Route::middleware('permission:production.delete')->group(function () {
         Route::delete('/production/{job}', [ProductionController::class, 'destroy'])->name('production.destroy');
     });
 
     // Procurement Routes
+    $prCtrl = PurchaseRequestController::class;
+
     Route::middleware('permission:procurement.view')->group(function () {
         Route::get('/procurement', [ProcurementController::class, 'index'])->name('procurement.index');
         Route::get('/procurement/orders', [ProcurementController::class, 'orders'])->name('procurement.orders');
+    });
+
+    Route::middleware('permission:procurement.create')->group(function () {
         Route::get('/procurement/create', [ProcurementController::class, 'create'])->name('procurement.create');
         Route::post('/procurement', [ProcurementController::class, 'store'])->name('procurement.store');
+    });
 
-        // Goods routes (Must be before wildcard {po})
+    // Goods routes (must be before wildcard {po})
+    Route::middleware('permission:procurement.view')->group(function () {
         Route::get('/procurement/goods', [GoodController::class, 'index'])->name('procurement.goods.index');
+        Route::get('/procurement/goods/{good}', [GoodController::class, 'show'])->name('procurement.goods.show');
+    });
+
+    Route::middleware('permission:procurement.manage_goods')->group(function () {
         Route::post('/procurement/goods', [GoodController::class, 'store'])->name('procurement.goods.store');
         Route::get('/procurement/goods/{good}/edit', GoodEditController::class)->name('procurement.goods.edit');
-        Route::get('/procurement/goods/{good}', [GoodController::class, 'show'])->name('procurement.goods.show');
         Route::put('/procurement/goods/{good}', [GoodController::class, 'update'])->name('procurement.goods.update');
         Route::delete('/procurement/goods/{good}', [GoodController::class, 'destroy'])->name('procurement.goods.destroy');
 
         Route::post('/procurement/goods/{good}/suppliers', [GoodController::class, 'storeSupplierPrice'])->name('procurement.goods.suppliers.store');
         Route::delete('/procurement/goods/suppliers/{supplierPrice}', [GoodController::class, 'destroySupplierPrice'])->name('procurement.goods.suppliers.destroy');
+    });
 
-        // Purchase Requests (must be before {po} wildcard)
-        $prCtrl = PurchaseRequestController::class;
+    // Purchase Requests (must be before {po} wildcard)
+    Route::middleware('permission:pr.view')->group(function () use ($prCtrl) {
         Route::get('/procurement/purchase-requests', [$prCtrl, 'index'])->name('procurement.purchase-requests.index');
+        Route::get('/procurement/purchase-requests/{purchaseRequest}', [$prCtrl, 'show'])->name('procurement.purchase-requests.show');
+    });
+
+    Route::middleware('permission:pr.create')->group(function () use ($prCtrl) {
         Route::get('/procurement/purchase-requests/create', [$prCtrl, 'create'])->name('procurement.purchase-requests.create');
         Route::post('/procurement/purchase-requests', [$prCtrl, 'store'])->name('procurement.purchase-requests.store');
         Route::get('/procurement/purchase-requests/{purchaseRequest}/edit', [$prCtrl, 'edit'])->name('procurement.purchase-requests.edit');
         Route::put('/procurement/purchase-requests/{purchaseRequest}', [$prCtrl, 'update'])->name('procurement.purchase-requests.update');
-        Route::delete('/procurement/purchase-requests/{purchaseRequest}', [$prCtrl, 'destroy'])->name('procurement.purchase-requests.destroy');
         Route::post('/procurement/purchase-requests/{purchaseRequest}/submit', [$prCtrl, 'submit'])->name('procurement.purchase-requests.submit');
-        Route::post('/procurement/purchase-requests/{purchaseRequest}/dept-review', [$prCtrl, 'deptReview'])->name('procurement.purchase-requests.dept-review');
-        Route::post('/procurement/purchase-requests/{purchaseRequest}/finance-review', [$prCtrl, 'financeReview'])->name('procurement.purchase-requests.finance-review');
+    });
+
+    Route::middleware('permission:pr.cancel')->group(function () use ($prCtrl) {
+        Route::delete('/procurement/purchase-requests/{purchaseRequest}', [$prCtrl, 'destroy'])->name('procurement.purchase-requests.destroy');
         Route::post('/procurement/purchase-requests/{purchaseRequest}/cancel', [$prCtrl, 'cancel'])->name('procurement.purchase-requests.cancel');
+    });
+
+    Route::middleware('permission:pr.approve')->group(function () use ($prCtrl) {
+        Route::post('/procurement/purchase-requests/{purchaseRequest}/dept-review', [$prCtrl, 'deptReview'])->name('procurement.purchase-requests.dept-review');
+    });
+
+    Route::middleware('permission:pr.finance.review')->group(function () use ($prCtrl) {
+        Route::post('/procurement/purchase-requests/{purchaseRequest}/finance-review', [$prCtrl, 'financeReview'])->name('procurement.purchase-requests.finance-review');
+    });
+
+    Route::middleware('permission:procurement.create')->group(function () use ($prCtrl) {
         Route::get('/procurement/purchase-requests/{purchaseRequest}/create-po', [$prCtrl, 'createPo'])->name('procurement.purchase-requests.create-po');
         Route::post('/procurement/purchase-requests/{purchaseRequest}/store-po', [$prCtrl, 'storePo'])->name('procurement.purchase-requests.store-po');
-        Route::post('/procurement/purchase-requests/{purchaseRequest}/upload-receipt', [$prCtrl, 'uploadReceipt'])->name('procurement.purchase-requests.upload-receipt');
-        Route::post('/procurement/purchase-requests/{purchaseRequest}/inspect', [$prCtrl, 'inspect'])->name('procurement.purchase-requests.inspect');
-        Route::post('/procurement/purchase-requests/{purchaseRequest}/close-po', [$prCtrl, 'closePo'])->name('procurement.purchase-requests.close-po');
-        Route::get('/procurement/purchase-requests/{purchaseRequest}', [$prCtrl, 'show'])->name('procurement.purchase-requests.show');
+    });
 
+    Route::middleware('permission:procurement.manage_goods')->group(function () use ($prCtrl) {
+        Route::post('/procurement/purchase-requests/{purchaseRequest}/upload-receipt', [$prCtrl, 'uploadReceipt'])->name('procurement.purchase-requests.upload-receipt');
+    });
+
+    Route::middleware('permission:procurement.inspect')->group(function () use ($prCtrl) {
+        Route::post('/procurement/purchase-requests/{purchaseRequest}/inspect', [$prCtrl, 'inspect'])->name('procurement.purchase-requests.inspect');
+    });
+
+    Route::middleware('permission:procurement.close')->group(function () use ($prCtrl) {
+        Route::post('/procurement/purchase-requests/{purchaseRequest}/close-po', [$prCtrl, 'closePo'])->name('procurement.purchase-requests.close-po');
+    });
+
+    Route::middleware('permission:procurement.view')->group(function () {
         Route::get('/procurement/{po}', [ProcurementController::class, 'show'])->name('procurement.show');
+    });
+
+    Route::middleware('permission:procurement.edit')->group(function () {
         Route::get('/procurement/{po}/edit', [ProcurementController::class, 'edit'])->name('procurement.edit');
         Route::put('/procurement/{po}', [ProcurementController::class, 'update'])->name('procurement.update');
     });
