@@ -46,6 +46,14 @@ const INTERACTION_ICONS: Record<string, string> = {
 
 const SOURCES = ['Referral', 'Website', 'Cold Call', 'Social Media', 'Advertisement', 'Event', 'Other'];
 
+const OPEN_STAGE_OPTIONS = [
+    { value: 'new_lead', label: 'New Lead' },
+    { value: 'contacted', label: 'Contacted' },
+    { value: 'meeting_scheduled', label: 'Meeting Scheduled' },
+    { value: 'proposal_sent', label: 'Proposal Sent' },
+    { value: 'negotiating', label: 'Negotiating' },
+];
+
 const SOURCE_WEIGHTS: Record<string, number> = {
     'Referral': 30,
     'Website': 20,
@@ -72,7 +80,7 @@ function calculateScore(client: any): number {
 }
 
 export default function LeadsIndex() {
-    const { deals, eligibleForCampaign, stats, currentFilter, currentView } = usePage().props as any;
+    const { deals, eligibleForCampaign, stats, currentFilter, currentView, terminalVisibleHours } = usePage().props as any;
     const formatCurrency = useCurrency();
     const dealsList = deals?.data || deals || [];
     const [statsCollapsed, setStatsCollapsed] = useState(false);
@@ -208,6 +216,15 @@ export default function LeadsIndex() {
         router.patch(`/deals/${deal.id}/status`, {
             stage: deal.stage,
             next_follow_up_at: followUpDate,
+        }, {
+            preserveScroll: true,
+        });
+    };
+
+    const handleStageChange = (deal: any, newStage: string) => {
+        setOpenStatusId(null);
+        router.patch(`/deals/${deal.id}/status`, {
+            stage: newStage,
         }, {
             preserveScroll: true,
         });
@@ -599,7 +616,23 @@ export default function LeadsIndex() {
                                                         <ChevronDown className="w-4 h-4 text-slate-400" />
                                                     </button>
                                                     {openStatusId === deal.id && (
-                                                        <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl z-10 overflow-hidden p-3">
+                                                        <div
+                                                            className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-lg shadow-xl z-10 overflow-hidden p-3"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <label className="text-xs text-slate-400 block mb-1">Move to stage</label>
+                                                            <div className="flex flex-wrap gap-1.5 mb-3">
+                                                                {OPEN_STAGE_OPTIONS.filter((s) => s.value !== deal.stage).map((s) => (
+                                                                    <button
+                                                                        key={s.value}
+                                                                        onClick={() => handleStageChange(deal, s.value)}
+                                                                        className="text-xs px-2 py-1 rounded-md bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-indigo-600 hover:text-white transition-colors"
+                                                                    >
+                                                                        {s.label}
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+
                                                             <label className="text-xs text-slate-400 block mb-1">Next follow-up</label>
                                                             <input
                                                                 type="date"
@@ -610,7 +643,7 @@ export default function LeadsIndex() {
                                                                 }}
                                                                 className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded px-2 py-1 text-sm text-slate-900 dark:text-white"
                                                             />
-                                                            <p className="text-[11px] text-slate-500 mt-2">Change the pipeline stage from the Sales Pipeline board.</p>
+                                                            <p className="text-[11px] text-slate-500 mt-2">To mark this deal Won or Lost, use the Sales Pipeline board.</p>
                                                         </div>
                                                     )}
                                                 </div>
@@ -630,7 +663,7 @@ export default function LeadsIndex() {
                             </GlassCard>
                         )
                     ) : (
-                        <PipelineBoard deals={dealsList} />
+                        <PipelineBoard deals={dealsList} terminalVisibleHours={terminalVisibleHours} />
                     )}
                 </div>
             </div>

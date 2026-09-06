@@ -9,8 +9,13 @@ import { router } from '@inertiajs/react';
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 export default function CrmIndex() {
-    const { clients } = usePage().props as any;
+    const page = usePage().props as any;
+    const { clients } = page;
     const clientsList = clients?.data || clients || [];
+    const permissions = (page.auth?.permissions as string[]) || [];
+    const canCreate = permissions.includes('*') || permissions.includes('crm.create_clients');
+    const canEdit = permissions.includes('*') || permissions.includes('crm.edit_clients');
+    const canDelete = permissions.includes('*') || permissions.includes('crm.delete_clients');
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [letterFilter, setLetterFilter] = useState<string | null>(null);
@@ -61,9 +66,11 @@ export default function CrmIndex() {
                 title="Clients & Accounts"
                 subtitle={`${clientsList.length} clients`}
                 action={
-                    <Link href="/crm/create" className="glass-button flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> Add Client
-                    </Link>
+                    canCreate ? (
+                        <Link href="/crm/create" className="glass-button flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> Add Client
+                        </Link>
+                    ) : undefined
                 }
             />
 
@@ -206,7 +213,7 @@ export default function CrmIndex() {
                                         )}
 
                                         <div className="flex items-center justify-between gap-2 mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
-                                            {!client.has_open_deal ? (
+                                            {canEdit && !client.has_open_deal ? (
                                                 <button
                                                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStartCampaign(client.id); }}
                                                     className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600/20 border border-indigo-500/20 transition-colors"
@@ -214,20 +221,26 @@ export default function CrmIndex() {
                                                     <Rocket className="w-3.5 h-3.5" /> Start Sale Campaign
                                                 </button>
                                             ) : <span />}
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.visit(`/crm/${client.id}/edit`); }}
-                                                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(client.id); }}
-                                                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-red-400 transition-colors"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                            {(canEdit || canDelete) && (
+                                                <div className="flex gap-2">
+                                                    {canEdit && (
+                                                        <button
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.visit(`/crm/${client.id}/edit`); }}
+                                                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                                        >
+                                                            <Pencil className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    {canDelete && (
+                                                        <button
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(client.id); }}
+                                                            className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-red-400 transition-colors"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </GlassCard>
                                 </Link>

@@ -44,6 +44,8 @@ class Deal extends Model
         'lost',
     ];
 
+    public const TERMINAL_VISIBLE_HOURS = 48;
+
     public const OPEN_STAGES = [
         'new_lead',
         'contacted',

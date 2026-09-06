@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { router, useForm, Link } from '@inertiajs/react';
 import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent, useDroppable } from '@dnd-kit/core';
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
@@ -86,13 +86,20 @@ function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal
                     </Link>
                 </div>
 
-                {deal.estimated_value > 0 && (
-                    <div className="mb-2">
+                <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border ${
+                        deal.type === 'repeat_business'
+                            ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
+                            : 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                    }`}>
+                        {deal.type === 'repeat_business' ? 'Sales Campaign' : 'New Lead'}
+                    </span>
+                    {deal.estimated_value > 0 && (
                         <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                             {formatCurrency(deal.estimated_value)}
                         </span>
-                    </div>
-                )}
+                    )}
+                </div>
 
                 {client.primary_contact && (
                     <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-1">
@@ -154,11 +161,12 @@ function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal
     );
 }
 
-function DroppableColumn({ column, deals, onQuickAction }: { column: typeof COLUMNS[number]; deals: any[]; onQuickAction: (deal: any, type: string) => void }) {
+function DroppableColumn({ column, deals, onQuickAction, archiveHours }: { column: typeof COLUMNS[number]; deals: any[]; onQuickAction: (deal: any, type: string) => void; archiveHours?: number }) {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
     const formatCurrency = useCurrency();
 
     const columnTotal = deals.reduce((sum: number, d: any) => sum + (parseFloat(d.estimated_value) || 0), 0);
+    const isTerminal = !column.open;
 
     return (
         <div className={`rounded-xl border ${column.color} p-3 transition-colors ${isOver ? 'bg-slate-100 dark:bg-white/10' : 'bg-slate-50 dark:bg-white/5'}`}>
@@ -167,6 +175,11 @@ function DroppableColumn({ column, deals, onQuickAction }: { column: typeof COLU
                     <h3 className="font-medium text-sm">{column.label}</h3>
                     <span className="text-xs text-slate-400 bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded-full">{deals.length}</span>
                 </div>
+                {isTerminal && archiveHours ? (
+                    <span className="text-[10px] text-slate-400 mt-0.5">
+                        Archived after {archiveHours}h
+                    </span>
+                ) : null}
                 {columnTotal > 0 && (
                     <span className="text-xs text-emerald-400 font-semibold mt-1">
                         {formatCurrency(columnTotal)}
@@ -184,9 +197,8 @@ function DroppableColumn({ column, deals, onQuickAction }: { column: typeof COLU
     );
 }
 
-export default function PipelineBoard({ deals }: { deals: any[] }) {
+export default function PipelineBoard({ deals, terminalVisibleHours }: { deals: any[]; terminalVisibleHours?: number }) {
     const formatCurrency = useCurrency();
-    const [dealType, setDealType] = useState<'new_business' | 'repeat_business'>('repeat_business');
     const [activeId, setActiveId] = useState<number | null>(null);
     const [localDeals, setLocalDeals] = useState(() => [...deals]);
 
@@ -243,10 +255,8 @@ export default function PipelineBoard({ deals }: { deals: any[] }) {
         });
     };
 
-    const dealsForType = useMemo(() => localDeals.filter((d: any) => d.type === dealType), [localDeals, dealType]);
-
     const dealsByStage = COLUMNS.reduce((acc, col) => {
-        acc[col.id] = dealsForType.filter((d: any) => (d.stage || 'new_lead') === col.id);
+        acc[col.id] = localDeals.filter((d: any) => (d.stage || 'new_lead') === col.id);
         return acc;
     }, {} as Record<string, any[]>);
 
@@ -344,21 +354,6 @@ export default function PipelineBoard({ deals }: { deals: any[] }) {
                         <p className="text-xs text-slate-500">Total pipeline value (open stages)</p>
                     </div>
                 </div>
-
-                <div className="flex bg-slate-100 dark:bg-white/10 rounded-lg p-0.5">
-                    <button
-                        onClick={() => setDealType('repeat_business')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${dealType === 'repeat_business' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        Repeat Business
-                    </button>
-                    <button
-                        onClick={() => setDealType('new_business')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${dealType === 'new_business' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        New Business
-                    </button>
-                </div>
             </div>
 
             <DndContext
@@ -368,7 +363,7 @@ export default function PipelineBoard({ deals }: { deals: any[] }) {
             >
                 <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-7 gap-4 min-h-[600px]">
                     {COLUMNS.map((col) => (
-                        <DroppableColumn key={col.id} column={col} deals={dealsByStage[col.id] || []} onQuickAction={openQuickActionModal} />
+                        <DroppableColumn key={col.id} column={col} deals={dealsByStage[col.id] || []} onQuickAction={openQuickActionModal} archiveHours={terminalVisibleHours} />
                     ))}
                 </div>
 

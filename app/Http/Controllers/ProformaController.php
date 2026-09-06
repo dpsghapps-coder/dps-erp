@@ -18,6 +18,18 @@ class ProformaController extends Controller
         ]);
     }
 
+    public function all()
+    {
+        $proformas = Proforma::with('client:id,company_name')->latest()->get();
+
+        $clients = Client::orderBy('company_name')->get(['id', 'company_name']);
+
+        return inertia('CRM/Proformas/AllIndex', [
+            'proformas' => $proformas,
+            'clients' => $clients,
+        ]);
+    }
+
     public function create(Client $client)
     {
         return inertia('CRM/Proformas/Create', [

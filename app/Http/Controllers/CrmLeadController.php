@@ -20,9 +20,21 @@ class CrmLeadController extends Controller
         }]);
 
         if ($view === 'board') {
-            // Board view needs every deal, both types, all stages
+            // Board view needs every deal, both types, all stages — except
+            // converted/lost deals older than the visibility window, which
+            // drop off the Kanban to keep those terminal columns from piling
+            // up. This only hides them from the board; the records (and
+            // their audit/interaction history) are untouched.
+            $query->where(function ($q) {
+                $q->whereNotIn('stage', ['converted', 'lost'])
+                    ->orWhere('converted_at', '>=', now()->subHours(Deal::TERMINAL_VISIBLE_HOURS))
+                    ->orWhere('lost_at', '>=', now()->subHours(Deal::TERMINAL_VISIBLE_HOURS));
+            });
         } else {
-            $query->where('type', 'new_business')->whereIn('stage', Deal::OPEN_STAGES);
+            // List view: both new-business leads and repeat-business sales
+            // campaigns — i.e. every deal that also appears on the Kanban
+            // board, minus the terminal (converted/lost) stages.
+            $query->whereIn('stage', Deal::OPEN_STAGES);
 
             if ($filter === 'lead') {
                 $query->where('stage', 'new_lead');
@@ -37,15 +49,15 @@ class CrmLeadController extends Controller
             ->orderBy('company_name')
             ->get(['id', 'company_name', 'first_converted_at']);
 
-        $newBusinessOpen = Deal::where('type', 'new_business')->whereIn('stage', Deal::OPEN_STAGES);
+        $openDeals = Deal::whereIn('stage', Deal::OPEN_STAGES);
 
         $stats = [
-            'total' => (clone $newBusinessOpen)->count(),
-            'leads' => Deal::where('type', 'new_business')->where('stage', 'new_lead')->count(),
-            'prospects' => Deal::where('type', 'new_business')->whereIn('stage', $engagedStages)->count(),
-            'dueToday' => (clone $newBusinessOpen)->whereDate('next_follow_up_at', today())->count(),
-            'pipelineValue' => (float) (clone $newBusinessOpen)->sum('estimated_value'),
-            'openDeals' => (clone $newBusinessOpen)->count(),
+            'total' => (clone $openDeals)->count(),
+            'leads' => Deal::where('stage', 'new_lead')->count(),
+            'prospects' => Deal::whereIn('stage', $engagedStages)->count(),
+            'dueToday' => (clone $openDeals)->whereDate('next_follow_up_at', today())->count(),
+            'pipelineValue' => (float) (clone $openDeals)->sum('estimated_value'),
+            'openDeals' => (clone $openDeals)->count(),
             'won' => Deal::where('stage', 'converted')->count(),
             'lost' => Deal::where('stage', 'lost')->count(),
         ];
@@ -56,6 +68,7 @@ class CrmLeadController extends Controller
             'stats' => $stats,
             'currentFilter' => $filter,
             'currentView' => $view,
+            'terminalVisibleHours' => Deal::TERMINAL_VISIBLE_HOURS,
         ]);
     }
 }

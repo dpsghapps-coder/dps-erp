@@ -83,6 +83,7 @@ const inventorySubItems: CrmSubItem[] = [
 const productsSubItemsFull: CrmSubItem[] = [
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Services', href: '/services', icon: Wrench },
+    { name: 'Proformas', href: '/crm/proformas', icon: Receipt },
     { name: 'Calculators', href: '/calculators', icon: Calculator },
 ];
 
@@ -191,9 +192,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
     }, [flashKey]);
 
     const currentPath = useMemo(() => typeof window !== 'undefined' ? window.location.pathname : '', []);
-    const isCrmPage = currentPath.startsWith('/crm');
+    const isCrmPage = currentPath.startsWith('/crm') && !currentPath.startsWith('/crm/proformas');
     const isInventoryPage = currentPath.startsWith('/inventory') || currentPath.startsWith('/products');
-    const isProductsPage = currentPath.startsWith('/products') || currentPath.startsWith('/services');
+    const isProductsPage = currentPath.startsWith('/products') || currentPath.startsWith('/services') || currentPath.startsWith('/crm/proformas');
     const isOrdersPage = currentPath.startsWith('/orders');
     const isProductionPage = currentPath.startsWith('/production');
     const isHrmPage = currentPath.startsWith('/hrm');

@@ -83,6 +83,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/crm', [CrmController::class, 'index'])->name('crm.index');
         Route::get('/crm/leads', [CrmLeadController::class, 'index'])->name('crm.leads');
         Route::get('/crm/reports', [CrmReportController::class, 'index'])->name('crm.reports');
+        Route::get('/crm/proformas', [ProformaController::class, 'all'])->name('crm.proformas.all');
         Route::get('/crm/{client}', [CrmController::class, 'show'])->name('crm.show');
 
         // Proforma Routes (must be before {client} wildcard)

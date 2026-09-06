@@ -32,8 +32,17 @@ export default function Login({
         <GuestLayout>
             <Head title="Log in" />
 
+            <div className="mb-6 text-center">
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">
+                    Welcome back
+                </h1>
+                <p className="mt-1 text-sm text-[color:var(--color-text-secondary)]">
+                    Sign in to continue to your account
+                </p>
+            </div>
+
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                <div className="mb-4 text-sm font-medium text-emerald-600 dark:text-emerald-400">
                     {status}
                 </div>
             )}
@@ -84,23 +93,25 @@ export default function Login({
                                 )
                             }
                         />
-                        <span className="ms-2 text-sm text-gray-600">
+                        <span className="ms-2 text-sm text-slate-600 dark:text-slate-400">
                             Remember me
                         </span>
                     </label>
                 </div>
 
-                <div className="mt-4 flex items-center justify-end">
-                    {canResetPassword && (
+                <div className="mt-6 flex items-center justify-between gap-4">
+                    {canResetPassword ? (
                         <Link
                             href={route('password.request')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            className="rounded-md text-sm text-slate-600 underline hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#8b0f0c]/40 focus:ring-offset-2 dark:text-slate-400 dark:hover:text-white"
                         >
                             Forgot your password?
                         </Link>
+                    ) : (
+                        <span />
                     )}
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
+                    <PrimaryButton disabled={processing}>
                         Log in
                     </PrimaryButton>
                 </div>
