@@ -33,6 +33,7 @@ class CrmController extends Controller
             'phone' => ['nullable', 'string', 'max:10', 'regex:/^0[0-9]{9}$/'],
             'estimated_value' => 'nullable|numeric|min:0',
             'next_follow_up_at' => 'nullable|date',
+            'create_lead' => 'nullable|boolean',
             'industry' => 'nullable|string|max:100',
             'website' => 'nullable|url',
             'address' => 'nullable|string',
@@ -50,17 +51,20 @@ class CrmController extends Controller
 
         $estimatedValue = $validated['estimated_value'] ?? 0;
         $nextFollowUpAt = $validated['next_follow_up_at'] ?? null;
-        unset($validated['estimated_value'], $validated['next_follow_up_at']);
+        $createLead = $validated['create_lead'] ?? true;
+        unset($validated['estimated_value'], $validated['next_follow_up_at'], $validated['create_lead']);
 
         $client = Client::create($validated);
 
-        $client->deals()->create([
-            'type' => 'new_business',
-            'stage' => 'new_lead',
-            'estimated_value' => $estimatedValue,
-            'next_follow_up_at' => $nextFollowUpAt,
-            'created_by' => auth()->id(),
-        ]);
+        if ($createLead) {
+            $client->deals()->create([
+                'type' => 'new_business',
+                'stage' => 'new_lead',
+                'estimated_value' => $estimatedValue,
+                'next_follow_up_at' => $nextFollowUpAt,
+                'created_by' => auth()->id(),
+            ]);
+        }
 
         return redirect()->route('crm.index')->with('success', 'Client created successfully');
     }
@@ -199,14 +203,20 @@ class CrmController extends Controller
             return back()->with('error', 'No update provided');
         }
 
+        // Mass query-builder updates never fire Eloquent model events, so the
+        // Auditable trait would silently miss bulk changes — save each model
+        // individually instead to keep the audit trail complete.
         if (! empty($validated['status'])) {
-            Client::whereIn('id', $validated['ids'])->update(['status' => $validated['status']]);
+            Client::whereIn('id', $validated['ids'])->get()->each(
+                fn ($client) => $client->update(['status' => $validated['status']])
+            );
         }
 
         if (! empty($validated['next_follow_up_at'])) {
             Deal::whereIn('client_id', $validated['ids'])
                 ->whereIn('stage', Deal::OPEN_STAGES)
-                ->update(['next_follow_up_at' => $validated['next_follow_up_at']]);
+                ->get()
+                ->each(fn ($deal) => $deal->update(['next_follow_up_at' => $validated['next_follow_up_at']]));
         }
 
         return back()->with('success', count($validated['ids']) . ' leads updated');

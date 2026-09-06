@@ -83,7 +83,6 @@ const inventorySubItems: CrmSubItem[] = [
 const productsSubItemsFull: CrmSubItem[] = [
     { name: 'Products', href: '/products', icon: Package },
     { name: 'Services', href: '/services', icon: Wrench },
-    { name: 'Proformas', href: '/crm/proformas', icon: Receipt },
     { name: 'Calculators', href: '/calculators', icon: Calculator },
 ];
 
@@ -724,6 +723,21 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </div>
                             )}
 
+                            {hasModulePermission('products') && (
+                            <Link
+                                href="/crm/proformas"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    currentPath.startsWith('/crm/proformas')
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <Receipt className="w-5 h-5" />
+                                Proformas
+                            </Link>
+                            )}
+
                             {(hasModulePermission('hrm') || hasModulePermission('finance') || hasModulePermission('decision_hub')) && (
                             <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
                                 <span className="text-xs text-slate-400 uppercase font-medium">Management</span>
@@ -1094,6 +1108,19 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 ))}
                             </div>
                         )}
+                    </div>}
+                    {hasModulePermission('products') && <div className="px-3 mt-1">
+                        <Link
+                            href="/crm/proformas"
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${sidebarOpen ? '' : 'justify-center'} ${
+                                currentPath.startsWith('/crm/proformas')
+                                    ? 'bg-slate-900 text-white'
+                                    : 'text-slate-600 hover:bg-slate-100'
+                            }`}
+                        >
+                            <Receipt className="w-5 h-5 flex-shrink-0" />
+                            {sidebarOpen && <span>Proformas</span>}
+                        </Link>
                     </div>}
 
                     {/* OPERATIONS Section */}

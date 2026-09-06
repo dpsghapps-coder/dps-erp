@@ -96,6 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/crm/{client}', [CrmController::class, 'update'])->name('crm.update');
         Route::patch('/crm/bulk-update', [CrmController::class, 'updateBulk'])->name('crm.updateBulk');
         Route::patch('/crm/{client}/status', [CrmController::class, 'updateStatus'])->name('crm.updateStatus');
+        Route::post('/crm/{client}/greylist', [CrmController::class, 'toggleGreylist'])->name('crm.toggleGreylist');
         Route::post('/crm/{client}/deals', [DealController::class, 'store'])->name('crm.deals.store');
         Route::patch('/deals/{deal}/status', [DealController::class, 'updateStatus'])->name('deals.updateStatus');
         Route::post('/crm/{client}/interactions', [CrmController::class, 'logInteraction'])->name('crm.interactions');
@@ -114,9 +115,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'destroy'])->name('crm.proformas.destroy');
     });
 
-    Route::middleware('permission:crm.approve-greylist')->group(function () {
-        Route::post('/crm/{client}/greylist', [CrmController::class, 'toggleGreylist'])->name('crm.toggleGreylist');
-    });
 
     // Products Routes
     Route::middleware('permission:products.create')->group(function () {

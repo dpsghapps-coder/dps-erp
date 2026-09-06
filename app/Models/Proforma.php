@@ -13,6 +13,7 @@ class Proforma extends Model
 
     protected $fillable = [
         'client_id',
+        'deal_id',
         'number',
         'date',
         'valid_until',
@@ -51,6 +52,11 @@ class Proforma extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    public function deal(): BelongsTo
+    {
+        return $this->belongsTo(Deal::class);
     }
 
     public static function generateNumber(): string

@@ -20,6 +20,7 @@ export default function ClientCreate() {
         location: '',
         source: '',
         estimated_value: '',
+        create_lead: true,
         notes: '',
         linkedin: '',
         facebook: '',
@@ -97,20 +98,37 @@ export default function ClientCreate() {
                                         placeholder="Referral, Ads, etc."
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Estimated Value</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={data.estimated_value}
-                                        onChange={(e) => setData('estimated_value', e.target.value)}
-                                        className="glass-input w-full"
-                                        placeholder="e.g. 15000"
-                                    />
-                                    {errors.estimated_value && <p className="text-red-500 text-sm mt-1">{errors.estimated_value}</p>}
-                                </div>
+                                {data.create_lead && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Estimated Value</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.estimated_value}
+                                            onChange={(e) => setData('estimated_value', e.target.value)}
+                                            className="glass-input w-full"
+                                            placeholder="e.g. 15000"
+                                        />
+                                        {errors.estimated_value && <p className="text-red-500 text-sm mt-1">{errors.estimated_value}</p>}
+                                    </div>
+                                )}
                             </div>
+
+                            <label className="flex items-start gap-2.5 pt-2 border-t border-slate-200 dark:border-white/10">
+                                <input
+                                    type="checkbox"
+                                    checked={data.create_lead}
+                                    onChange={(e) => setData('create_lead', e.target.checked)}
+                                    className="mt-0.5 rounded border-slate-300 dark:border-white/20 text-indigo-500 focus:ring-indigo-500/50"
+                                />
+                                <span className="text-sm">
+                                    <span className="font-medium block">Start this client in the sales pipeline</span>
+                                    <span className="text-xs text-slate-400">
+                                        Creates a New Lead deal. Uncheck this if you're just cataloging an existing customer.
+                                    </span>
+                                </span>
+                            </label>
                         </div>
                     </GlassCard>
 

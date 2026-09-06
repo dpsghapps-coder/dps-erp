@@ -1,1 +1,0 @@
-import{j as r}from"./app-lg8645u9.js";function m({value:t,className:e="",children:s,...a}){return r.jsx("label",{...a,className:"block text-sm font-medium text-slate-700 dark:text-slate-300 "+e,children:t||s})}export{m as I};
