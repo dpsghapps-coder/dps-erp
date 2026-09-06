@@ -190,6 +190,7 @@ class HrmController extends Controller
         return inertia('HRM/Employees', [
             'employees' => $employees,
             'departments' => $departments,
+            'isManager' => $isManager,
         ]);
     }
 
@@ -212,6 +213,7 @@ class HrmController extends Controller
 
         return inertia('HRM/EmployeeShow', [
             'employee' => $employee,
+            'isManager' => $this->isHrmManager(),
         ]);
     }
 

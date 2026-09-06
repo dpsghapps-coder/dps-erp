@@ -40,6 +40,7 @@ function DetailRow({ label, children }: { label: string; children?: React.ReactN
 export default function EmployeeShow() {
     const { props } = usePage();
     const employee = (props as any)?.employee || {};
+    const isManager = Boolean((props as any)?.isManager);
     const formatCurrency = useCurrency();
     const [activeTab, setActiveTab] = useState<Tab>('Details');
 
@@ -75,9 +76,11 @@ export default function EmployeeShow() {
                 }
                 subtitle={employee.job_title || 'No title'}
                 action={
-                    <Link href={`/hrm/${employee.id}/edit`} className="glass-button flex items-center gap-2">
-                        <Pencil className="w-4 h-4" /> Edit
-                    </Link>
+                    isManager ? (
+                        <Link href={`/hrm/${employee.id}/edit`} className="glass-button flex items-center gap-2">
+                            <Pencil className="w-4 h-4" /> Edit
+                        </Link>
+                    ) : undefined
                 }
             />
 
