@@ -7,6 +7,7 @@ use App\Models\ProductCategory;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\User;
+use Database\Seeders\ChartOfAccountsSeeder;
 use Database\Seeders\ChatSeeder;
 use Database\Seeders\ClientSeeder;
 use Database\Seeders\DecisionHubSeeder;
@@ -80,6 +81,7 @@ class SetupController extends Controller
         $admin = DB::transaction(function () use ($validated, $logoPath) {
             (new PermissionSeeder)->run();
             (new RoleSeeder)->run();
+            (new ChartOfAccountsSeeder)->run();
 
             $adminRole = Role::where('name', 'admin')->firstOrFail();
 

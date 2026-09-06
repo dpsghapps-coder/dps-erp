@@ -125,6 +125,7 @@ export default function FinanceIndex() {
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500 dark:text-slate-400">Date</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500 dark:text-slate-400">Type</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500 dark:text-slate-400">Category</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-500 dark:text-slate-400">Account</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500 dark:text-slate-400">Description</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500 dark:text-slate-400">Reference</th>
                                     <th className="text-right py-3 px-4 text-sm font-medium text-slate-500 dark:text-slate-400">Amount</th>
@@ -142,6 +143,7 @@ export default function FinanceIndex() {
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">{transaction.category}</td>
+                                            <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400">{transaction.financial_account?.name || '-'}</td>
                                             <td className="py-3 px-4 text-sm text-slate-500 dark:text-slate-400">{transaction.description || '-'}</td>
                                             <td className="py-3 px-4 text-sm text-slate-400 dark:text-slate-500">{transaction.reference || '-'}</td>
                                             <td className={`py-3 px-4 text-right font-mono font-medium ${transaction.type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -161,7 +163,7 @@ export default function FinanceIndex() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={7} className="py-8">
+                                        <td colSpan={8} className="py-8">
                                             <EmptyState 
                                                 icon={DollarSign}
                                                 title="No transactions found"

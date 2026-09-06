@@ -176,7 +176,7 @@ export default function ClientShow() {
 
     const activeOrdersCount = useMemo(() => {
         if (!client?.orders?.length) return 0;
-        return client.orders.filter((o: any) => ['draft', 'confirmed', 'processing'].includes(o.status)).length;
+        return client.orders.filter((o: any) => ['confirmed', 'payment_received', 'in_production', 'ready'].includes(o.status)).length;
     }, [client?.orders]);
 
     const proformasTotal = useMemo(() => {

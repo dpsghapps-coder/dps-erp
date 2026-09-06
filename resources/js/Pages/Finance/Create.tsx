@@ -1,9 +1,10 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 
 export default function FinanceCreate() {
+    const { financialAccounts } = usePage().props as any;
     const { data, setData, post, processing, errors } = useForm({
         type: 'income',
         category: '',
@@ -11,6 +12,7 @@ export default function FinanceCreate() {
         description: '',
         date: new Date().toISOString().split('T')[0],
         reference: '',
+        financial_account_id: '',
     });
 
     const incomeCategories = [
@@ -97,13 +99,28 @@ export default function FinanceCreate() {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Date *</label>
-                            <input 
+                            <input
                                 type="date"
                                 value={data.date}
                                 onChange={(e) => setData('date', e.target.value)}
                                 className="glass-input w-full"
                             />
                             {errors.date && <p className="text-red-400 text-sm mt-1">{errors.date}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Financial Account *</label>
+                            <select
+                                value={data.financial_account_id}
+                                onChange={(e) => setData('financial_account_id', e.target.value)}
+                                className="glass-input w-full"
+                            >
+                                <option value="">Select Cash / Bank / Mobile Money Account</option>
+                                {(financialAccounts || []).map((a: any) => (
+                                    <option key={a.id} value={a.id}>{a.name}</option>
+                                ))}
+                            </select>
+                            {errors.financial_account_id && <p className="text-red-400 text-sm mt-1">{errors.financial_account_id}</p>}
                         </div>
 
                         <div className="md:col-span-2">

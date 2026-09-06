@@ -15,6 +15,7 @@ export default function HrmLeaves() {
     const leaveRequests = leaveRequestsData?.data || [];
     const leaveBalance = (props as any)?.leaveBalance;
     const leaveTypes = (props as any)?.leaveTypes || [];
+    const allLeaveTypes = (props as any)?.allLeaveTypes || [];
     const teamLeaveData = (props as any)?.teamLeave;
     const teamLeave = teamLeaveData?.data || [];
     const employees = (props as any)?.employees || [];
@@ -217,7 +218,7 @@ export default function HrmLeaves() {
                 onClose={() => setShowModal(false)}
                 onSubmit={handleSubmitLeave}
                 employees={employees}
-                leaveTypes={leaveTypes}
+                leaveTypes={allLeaveTypes}
             />
         </AppLayout>
     );

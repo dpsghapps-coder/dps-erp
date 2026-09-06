@@ -14,11 +14,22 @@ interface RequestModalProps {
 export function RequestModal({ isOpen, onClose, onSubmit, employees, leaveTypes = [], defaultEmployeeId }: RequestModalProps) {
   const [formData, setFormData] = useState({
     employee_id: defaultEmployeeId || '',
-    leave_type: leaveTypes[0]?.name?.toLowerCase() || 'annual',
+    leave_type_id: '',
     start_date: '',
     end_date: '',
     reason: '',
   });
+
+  const selectedEmployee = employees.find((emp) => String(emp.id) === String(formData.employee_id));
+  const applicableTypes = selectedEmployee
+    ? leaveTypes.filter((lt: any) => lt.staff_level_id === selectedEmployee.staff_level_id)
+    : leaveTypes;
+
+  const handleEmployeeChange = (employeeId: string) => {
+    const emp = employees.find((e) => String(e.id) === String(employeeId));
+    const types = emp ? leaveTypes.filter((lt: any) => lt.staff_level_id === emp.staff_level_id) : [];
+    setFormData({ ...formData, employee_id: employeeId, leave_type_id: types[0]?.id || '' });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +42,7 @@ export function RequestModal({ isOpen, onClose, onSubmit, employees, leaveTypes 
     // Reset form and close
     setFormData({
       employee_id: defaultEmployeeId || '',
-      leave_type: leaveTypes[0]?.name?.toLowerCase() || 'annual',
+      leave_type_id: '',
       start_date: '',
       end_date: '',
       reason: '',
@@ -59,7 +70,7 @@ export function RequestModal({ isOpen, onClose, onSubmit, employees, leaveTypes 
             <label className="block text-sm font-medium mb-2">Employee</label>
             <select
               value={formData.employee_id}
-              onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
+              onChange={(e) => handleEmployeeChange(e.target.value)}
               className="glass-input w-full"
               required
             >
@@ -75,19 +86,18 @@ export function RequestModal({ isOpen, onClose, onSubmit, employees, leaveTypes 
           <div>
             <label className="block text-sm font-medium mb-2">Leave Type</label>
             <select
-              value={formData.leave_type}
-              onChange={(e) => setFormData({ ...formData, leave_type: e.target.value })}
+              value={formData.leave_type_id}
+              onChange={(e) => setFormData({ ...formData, leave_type_id: e.target.value })}
               className="glass-input w-full"
               required
+              disabled={!formData.employee_id}
             >
-              {leaveTypes.map((lt: any) => (
-                <option key={lt.id} value={lt.name.toLowerCase()}>{lt.name} ({lt.days_per_year} days/yr)</option>
+              <option value="">{formData.employee_id ? 'Select Leave Type' : 'Select an employee first'}</option>
+              {applicableTypes.map((lt: any) => (
+                <option key={lt.id} value={lt.id}>{lt.name} ({lt.days_per_year} days/yr)</option>
               ))}
-              {leaveTypes.length === 0 && (
-                <>
-                  <option value="annual">Annual Leave</option>
-                  <option value="sick">Sick Leave</option>
-                </>
+              {formData.employee_id && applicableTypes.length === 0 && (
+                <option value="" disabled>No leave types configured for this staff level</option>
               )}
             </select>
           </div>

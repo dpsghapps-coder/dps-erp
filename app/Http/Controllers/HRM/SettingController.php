@@ -72,9 +72,9 @@ class SettingController extends Controller
     public function updateLeaveType(Request $request, LeaveType $leaveType)
     {
         $leaveType->update($request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|in:'.implode(',', LeaveType::TYPES).'|unique:leave_types,name,'.$leaveType->id.',id,staff_level_id,'.$request->input('staff_level_id'),
             'staff_level_id' => 'required|exists:staff_levels,id',
-            'days_per_year' => 'required|integer',
+            'days_per_year' => 'required|integer|min:0',
         ]));
 
         return back()->with('success', 'Leave type updated');
@@ -97,9 +97,9 @@ class SettingController extends Controller
     public function storeLeaveType(Request $request)
     {
         LeaveType::create($request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required|in:'.implode(',', LeaveType::TYPES).'|unique:leave_types,name,NULL,id,staff_level_id,'.$request->input('staff_level_id'),
             'staff_level_id' => 'required|exists:staff_levels,id',
-            'days_per_year' => 'required|integer',
+            'days_per_year' => 'required|integer|min:0',
         ]));
 
         return back()->with('success', 'Leave days created');
@@ -129,7 +129,7 @@ class SettingController extends Controller
 
     public function destroyLeaveType(LeaveType $leaveType)
     {
-        if (LeaveRequest::where('leave_type', strtolower($leaveType->name))->exists()) {
+        if (LeaveRequest::where('leave_type_id', $leaveType->id)->exists()) {
             return back()->withErrors('Cannot delete leave type with existing leave requests.');
         }
 

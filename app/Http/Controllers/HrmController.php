@@ -12,6 +12,7 @@ use App\Models\LeaveType;
 use App\Models\Notice;
 use App\Models\Payroll;
 use App\Models\Performance;
+use App\Models\StaffLevel;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,8 +25,22 @@ class HrmController extends Controller
         return redirect()->route('hrm.dashboard');
     }
 
+    private function isHrmManager(): bool
+    {
+        return Auth::user()->hasRole('md') || Auth::user()->hasPermission('hrm.manage_employees');
+    }
+
+    private function currentEmployee(): ?Employee
+    {
+        return Employee::where('user_id', Auth::id())->first();
+    }
+
     public function dashboard()
     {
+        if (! $this->isHrmManager()) {
+            return $this->personalDashboard();
+        }
+
         $today = Carbon::now()->toDateString();
 
         $stats = [
@@ -66,9 +81,10 @@ class HrmController extends Controller
 
         $departments = Department::withCount('employees')->get();
 
+        $latestPayrollMonth = Payroll::max('month');
         $payrollStatus = [
-            'processed' => Payroll::where('status', 'paid')->count(),
-            'pending' => Payroll::where('status', '!=', 'paid')->count(),
+            'processed' => Payroll::where('month', $latestPayrollMonth)->where('status', 'paid')->count(),
+            'pending' => Payroll::where('month', $latestPayrollMonth)->where('status', '!=', 'paid')->count(),
         ];
 
         return inertia('HRM/Dashboard', [
@@ -81,9 +97,71 @@ class HrmController extends Controller
         ]);
     }
 
+    private function personalDashboard()
+    {
+        $employee = $this->currentEmployee();
+        $today = Carbon::now()->toDateString();
+
+        if (! $employee) {
+            return inertia('HRM/Dashboard', [
+                'stats' => ['totalEmployees' => 0, 'presentToday' => 0, 'onLeave' => 0, 'pendingApprovals' => 0],
+                'attendanceData' => ['present' => 0, 'absent' => 0, 'onLeave' => 0],
+                'pendingLeaves' => collect(),
+                'recentAttendance' => collect(),
+                'departments' => collect(),
+                'payrollStatus' => ['processed' => 0, 'pending' => 0],
+            ]);
+        }
+
+        $todayLog = AttendanceLog::where('employee_id', $employee->id)->where('date', $today)->first();
+        $onLeaveToday = LeaveRequest::where('employee_id', $employee->id)
+            ->where('start_date', '<=', $today)
+            ->where('end_date', '>=', $today)
+            ->where('status', 'approved')
+            ->exists();
+
+        $stats = [
+            'totalEmployees' => 1,
+            'presentToday' => $todayLog && $todayLog->check_in ? 1 : 0,
+            'onLeave' => $onLeaveToday ? 1 : 0,
+            'pendingApprovals' => 0,
+        ];
+
+        $attendanceData = [
+            'present' => $stats['presentToday'],
+            'absent' => (! $stats['presentToday'] && ! $onLeaveToday) ? 1 : 0,
+            'onLeave' => $stats['onLeave'],
+        ];
+
+        $recentAttendance = AttendanceLog::with('employee')
+            ->where('employee_id', $employee->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('check_in', 'desc')
+            ->limit(10)
+            ->get();
+
+        $latestPayslip = Payroll::where('employee_id', $employee->id)->orderBy('month', 'desc')->first();
+
+        return inertia('HRM/Dashboard', [
+            'stats' => $stats,
+            'attendanceData' => $attendanceData,
+            'pendingLeaves' => collect(),
+            'recentAttendance' => $recentAttendance,
+            'departments' => collect(),
+            'payrollStatus' => [
+                'processed' => $latestPayslip && $latestPayslip->status === 'paid' ? 1 : 0,
+                'pending' => $latestPayslip && $latestPayslip->status !== 'paid' ? 1 : 0,
+            ],
+        ]);
+    }
+
     public function employees(Request $request)
     {
-        $query = Employee::with(['department', 'employmentType']);
+        $isManager = $this->isHrmManager();
+        $currentEmployee = $this->currentEmployee();
+
+        $query = Employee::with(['department', 'employmentType'])
+            ->when(! $isManager, fn ($q) => $q->where('id', $currentEmployee?->id ?? 0));
 
         if ($request->search) {
             $search = str_replace(['%', '_'], ['\\%', '\\_'], $request->search);
@@ -117,13 +195,31 @@ class HrmController extends Controller
 
     public function employeeShow(Employee $employee)
     {
-        $employee->load(['department', 'employmentType', 'leaveRequests', 'attendanceLogs', 'payrolls', 'performances']);
+        if (! $this->isHrmManager() && $this->currentEmployee()?->id !== $employee->id) {
+            abort(403, 'You are not authorized to view this employee\'s record.');
+        }
 
-        return response()->json($employee);
+        $employee->load([
+            'department',
+            'employmentType',
+            'staffLevel',
+            'supervisingManager',
+            'leaveRequests' => fn ($q) => $q->with('leaveType')->orderBy('start_date', 'desc'),
+            'attendanceLogs' => fn ($q) => $q->orderBy('date', 'desc')->limit(30),
+            'payrolls' => fn ($q) => $q->orderBy('month', 'desc'),
+            'performances' => fn ($q) => $q->orderBy('review_date', 'desc'),
+        ]);
+
+        return inertia('HRM/EmployeeShow', [
+            'employee' => $employee,
+        ]);
     }
 
     public function attendance(Request $request)
     {
+        $isManager = $this->isHrmManager() || Auth::user()->hasPermission('hrm.manage_attendance');
+        $currentEmployee = $this->currentEmployee();
+
         $today = Carbon::now()->toDateString();
         $month = $request->month ?? Carbon::now()->format('Y-m');
 
@@ -132,25 +228,31 @@ class HrmController extends Controller
 
         $logs = AttendanceLog::whereBetween('date', [$startOfMonth, $endOfMonth])
             ->with('employee')
+            ->when(! $isManager, fn ($q) => $q->where('employee_id', $currentEmployee?->id ?? 0))
             ->orderBy('date', 'desc')
             ->get()
             ->groupBy('date');
 
-        $employees = Employee::whereNull('date_terminated')->get();
+        $employees = Employee::whereNull('date_terminated')
+            ->when(! $isManager, fn ($q) => $q->where('id', $currentEmployee?->id ?? 0))
+            ->get();
 
         $stats = [
             'present' => AttendanceLog::whereBetween('date', [$startOfMonth, $endOfMonth])
                 ->whereNotNull('check_in')
+                ->when(! $isManager, fn ($q) => $q->where('employee_id', $currentEmployee?->id ?? 0))
                 ->distinct('employee_id')
                 ->count('employee_id'),
             'absent' => $employees->count(),
             'onLeave' => LeaveRequest::whereBetween('start_date', [$startOfMonth, $endOfMonth])
                 ->where('status', 'approved')
+                ->when(! $isManager, fn ($q) => $q->where('employee_id', $currentEmployee?->id ?? 0))
                 ->distinct('employee_id')
                 ->count('employee_id'),
         ];
 
         $recentLogs = AttendanceLog::with('employee')
+            ->when(! $isManager, fn ($q) => $q->where('employee_id', $currentEmployee?->id ?? 0))
             ->orderBy('date', 'desc')
             ->orderBy('check_in', 'desc')
             ->limit(20)
@@ -167,7 +269,11 @@ class HrmController extends Controller
 
     public function checkIn(Request $request)
     {
-        $employee = $request->user()->employee ?? Employee::first();
+        $employee = $this->currentEmployee();
+
+        if (! $employee) {
+            abort(403, 'No employee record is linked to your account.');
+        }
 
         $today = Carbon::now()->toDateString();
         $now = Carbon::now();
@@ -188,7 +294,11 @@ class HrmController extends Controller
 
     public function checkOut(Request $request)
     {
-        $employee = $request->user()->employee ?? Employee::first();
+        $employee = $this->currentEmployee();
+
+        if (! $employee) {
+            abort(403, 'No employee record is linked to your account.');
+        }
 
         $today = Carbon::now()->toDateString();
         $now = Carbon::now();
@@ -209,12 +319,38 @@ class HrmController extends Controller
 
     public function leaves(Request $request)
     {
+        $currentEmployee = Employee::where('user_id', Auth::id())->first();
+        $canViewAll = Auth::user()->hasPermission('hrm.manage_leaves') || Auth::user()->hasRole('md');
+        $canViewTeam = Auth::user()->hasPermission('hrm.view_team_leaves');
+
+        if ($canViewAll) {
+            $visibleEmployeeIds = null;
+        } elseif ($currentEmployee && $canViewTeam) {
+            $visibleEmployeeIds = Employee::where('supervising_manager_id', $currentEmployee->id)
+                ->pluck('id')
+                ->push($currentEmployee->id);
+        } elseif ($currentEmployee) {
+            $visibleEmployeeIds = collect([$currentEmployee->id]);
+        } else {
+            $visibleEmployeeIds = collect();
+        }
+
         $employeeId = $request->employee_id;
 
-        $leaveTypes = LeaveType::orderBy('name')->get();
+        if ($employeeId && $visibleEmployeeIds !== null && ! $visibleEmployeeIds->contains((int) $employeeId)) {
+            abort(403, 'You are not authorized to view this employee\'s leave records.');
+        }
+
+        if (! $employeeId && $visibleEmployeeIds !== null && $visibleEmployeeIds->count() <= 1) {
+            $employeeId = $currentEmployee?->id;
+        }
+
+        $allLeaveTypes = LeaveType::orderBy('name')->get();
 
         if ($employeeId) {
             $employee = Employee::with('staffLevel')->find($employeeId);
+            $leaveTypes = $allLeaveTypes->where('staff_level_id', $employee->staff_level_id)->values();
+
             $leaveRequests = LeaveRequest::where('employee_id', $employeeId)
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
@@ -224,11 +360,12 @@ class HrmController extends Controller
                 ->where('status', 'approved')
                 ->whereYear('start_date', $year)
                 ->get()
-                ->groupBy('leave_type')
+                ->groupBy('leave_type_id')
                 ->map(fn ($requests) => $requests->sum('days_count'));
 
-            $balanceData = $leaveTypes->map(function ($lt) use ($employee, $approvedThisYear) {
-                $used = $approvedThisYear->get(strtolower($lt->name), 0);
+            $balanceData = $leaveTypes->map(function ($lt) use ($approvedThisYear) {
+                $used = $approvedThisYear->get($lt->id, 0);
+
                 return [
                     'id' => $lt->id,
                     'name' => $lt->name,
@@ -244,17 +381,22 @@ class HrmController extends Controller
                 'types' => $balanceData,
             ];
         } else {
+            $leaveTypes = $allLeaveTypes;
             $leaveRequests = LeaveRequest::with('employee')
+                ->when($visibleEmployeeIds !== null, fn ($q) => $q->whereIn('employee_id', $visibleEmployeeIds))
                 ->orderBy('created_at', 'desc')
                 ->paginate(20);
             $leaveBalance = null;
         }
 
-        $employees = Employee::whereNull('date_terminated')->get();
+        $employees = Employee::whereNull('date_terminated')
+            ->when($visibleEmployeeIds !== null, fn ($q) => $q->whereIn('id', $visibleEmployeeIds))
+            ->get();
 
         $teamLeave = LeaveRequest::with('employee')
             ->where('status', 'approved')
             ->where('start_date', '>=', Carbon::now()->subMonth())
+            ->when($visibleEmployeeIds !== null, fn ($q) => $q->whereIn('employee_id', $visibleEmployeeIds))
             ->orderBy('start_date')
             ->get();
 
@@ -262,6 +404,7 @@ class HrmController extends Controller
             'leaveRequests' => $leaveRequests,
             'leaveBalance' => $leaveBalance,
             'leaveTypes' => $leaveTypes,
+            'allLeaveTypes' => $allLeaveTypes,
             'employees' => $employees,
             'teamLeave' => $teamLeave,
         ]);
@@ -269,38 +412,72 @@ class HrmController extends Controller
 
     public function storeLeave(Request $request)
     {
-        $validTypes = LeaveType::pluck('name')->map(fn ($name) => strtolower($name))->implode(',');
-
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'leave_type' => 'required|in:' . $validTypes,
+            'leave_type_id' => 'required|exists:leave_types,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
             'reason' => 'nullable|string',
         ]);
 
+        $employee = Employee::findOrFail($validated['employee_id']);
+        $leaveType = LeaveType::findOrFail($validated['leave_type_id']);
+
+        if ($leaveType->staff_level_id !== $employee->staff_level_id) {
+            return back()->withErrors(['leave_type_id' => 'This leave type does not apply to the employee\'s staff level.']);
+        }
+
         $start = Carbon::parse($validated['start_date']);
         $end = Carbon::parse($validated['end_date']);
         $daysCount = $start->diffInDays($end) + 1;
 
-        $validated['days_count'] = $daysCount;
-        $validated['status'] = 'pending';
-
-        LeaveRequest::create($validated);
+        LeaveRequest::create([
+            'employee_id' => $validated['employee_id'],
+            'leave_type_id' => $leaveType->id,
+            'leave_type' => strtolower($leaveType->name),
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'reason' => $validated['reason'] ?? null,
+            'days_count' => $daysCount,
+            'status' => 'pending',
+        ]);
 
         return back()->with('success', 'Leave request submitted successfully');
     }
 
+    private function authorizeLeaveAction(LeaveRequest $leaveRequest): void
+    {
+        $canViewAll = Auth::user()->hasPermission('hrm.manage_leaves') || Auth::user()->hasRole('md');
+
+        if ($canViewAll) {
+            return;
+        }
+
+        $currentEmployee = Employee::where('user_id', Auth::id())->first();
+        $canViewTeam = Auth::user()->hasPermission('hrm.view_team_leaves');
+
+        if ($canViewTeam
+            && $currentEmployee
+            && $leaveRequest->employee
+            && $leaveRequest->employee->supervising_manager_id === $currentEmployee->id) {
+            return;
+        }
+
+        abort(403, 'You are not authorized to act on this leave request.');
+    }
+
     public function approveLeave(LeaveRequest $leaveRequest)
     {
+        $this->authorizeLeaveAction($leaveRequest);
+
         $leaveRequest->update([
             'status' => 'approved',
             'reviewed_by' => Auth::id(),
         ]);
 
-        if ($leaveRequest->employee) {
+        if ($leaveRequest->employee && $leaveRequest->leaveType?->name === 'Annual') {
             $employee = $leaveRequest->employee;
-            $newBalance = max(0, ($employee->leave_days ?? 20) - $leaveRequest->days_count);
+            $newBalance = max(0, ($employee->leave_days ?? 0) - $leaveRequest->days_count);
             $employee->update(['leave_days' => $newBalance]);
         }
 
@@ -309,6 +486,8 @@ class HrmController extends Controller
 
     public function rejectLeave(LeaveRequest $leaveRequest)
     {
+        $this->authorizeLeaveAction($leaveRequest);
+
         $leaveRequest->update([
             'status' => 'rejected',
             'reviewed_by' => Auth::id(),
@@ -354,7 +533,10 @@ class HrmController extends Controller
 
     public function payroll(Request $request)
     {
-        $employeeId = $request->employee_id;
+        $isManager = $this->isHrmManager() || Auth::user()->hasPermission('hrm.view_payroll') || Auth::user()->hasPermission('hrm.manage_payroll');
+        $currentEmployee = $this->currentEmployee();
+
+        $employeeId = $isManager ? $request->employee_id : ($currentEmployee?->id ?? 0);
         $month = $request->month;
 
         $query = Payroll::with('employee');
@@ -369,9 +551,14 @@ class HrmController extends Controller
 
         $payslips = $query->orderBy('month', 'desc')->paginate(12);
 
-        $employees = Employee::whereNull('date_terminated')->get();
+        $employees = Employee::whereNull('date_terminated')
+            ->when(! $isManager, fn ($q) => $q->where('id', $currentEmployee?->id ?? 0))
+            ->get();
 
         $trendData = Payroll::where('status', 'paid')
+            ->when(! $isManager, fn ($q) => $q->where('employee_id', $currentEmployee?->id ?? 0))
+            ->selectRaw('month, SUM(net_pay) as value')
+            ->groupBy('month')
             ->orderBy('month', 'desc')
             ->limit(6)
             ->get()
@@ -396,7 +583,10 @@ class HrmController extends Controller
 
     public function performance(Request $request)
     {
-        $employeeId = $request->employee_id;
+        $isManager = $this->isHrmManager() || Auth::user()->hasPermission('hrm.manage_performance');
+        $currentEmployee = $this->currentEmployee();
+
+        $employeeId = $isManager ? $request->employee_id : ($currentEmployee?->id ?? 0);
 
         $query = Performance::with('employee');
 
@@ -406,7 +596,9 @@ class HrmController extends Controller
 
         $reviews = $query->orderBy('review_date', 'desc')->paginate(20);
 
-        $employees = Employee::whereNull('date_terminated')->get();
+        $employees = Employee::whereNull('date_terminated')
+            ->when(! $isManager, fn ($q) => $q->where('id', $currentEmployee?->id ?? 0))
+            ->get();
 
         return inertia('HRM/Performance', [
             'reviews' => $reviews,
@@ -419,6 +611,10 @@ class HrmController extends Controller
 
     public function storePerformance(Request $request)
     {
+        if (! $this->isHrmManager() && ! Auth::user()->hasPermission('hrm.manage_performance')) {
+            abort(403, 'You are not authorized to create performance reviews.');
+        }
+
         $validated = $request->validate([
             'employee_id' => 'required|exists:employees,id',
             'review_date' => 'required|date',
@@ -484,13 +680,17 @@ class HrmController extends Controller
 
     public function create()
     {
+        if (! $this->isHrmManager()) {
+            abort(403, 'You are not authorized to add employees.');
+        }
+
         $nextNumber = (Employee::max('id') ?? 0) + 1;
-        $employeeNumber = 'EMP' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        $employeeNumber = 'EMP'.str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
         return inertia('HRM/Create', [
             'departments' => Department::all(),
             'employmentTypes' => EmploymentType::all(),
-            'staffLevels' => \App\Models\StaffLevel::orderBy('sort_order')->get(),
+            'staffLevels' => StaffLevel::orderBy('sort_order')->get(),
             'managers' => Employee::with('staffLevel')->whereHas('staffLevel', fn ($q) => $q->whereIn('name', ['Managing Director', 'General Manager', 'Manager']))->orderBy('first_name')->get(),
             'employeeNumber' => $employeeNumber,
         ]);
@@ -498,6 +698,10 @@ class HrmController extends Controller
 
     public function store(Request $request)
     {
+        if (! $this->isHrmManager()) {
+            abort(403, 'You are not authorized to add employees.');
+        }
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
@@ -513,7 +717,6 @@ class HrmController extends Controller
             'mobile_2' => 'nullable|string|max:255',
             'emergency_person' => 'nullable|string|max:255',
             'pay_frequency' => 'nullable|string|in:weekly,bi_weekly,monthly',
-            'leave_days' => 'nullable|numeric|min:0',
             'date_hired' => 'required|date',
             'avatar' => 'nullable|image|max:2048',
         ]);
@@ -522,6 +725,10 @@ class HrmController extends Controller
             ? $request->file('avatar')->store('avatars', 'public')
             : null;
 
+        $validated['leave_days'] = $validated['staff_level_id']
+            ? (LeaveType::where('staff_level_id', $validated['staff_level_id'])->where('name', 'Annual')->value('days_per_year') ?? 0)
+            : 0;
+
         $employee = Employee::create($validated);
 
         return redirect()->route('hrm.employees')->with('success', 'Employee created successfully');
@@ -529,6 +736,10 @@ class HrmController extends Controller
 
     public function show(Employee $employee)
     {
+        if (! $this->isHrmManager() && $this->currentEmployee()?->id !== $employee->id) {
+            abort(403, 'You are not authorized to view this employee\'s record.');
+        }
+
         $employee->load(['department', 'employmentType', 'staffLevel', 'supervisingManager', 'leaveRequests', 'attendanceLogs', 'payrolls', 'performances']);
 
         return inertia('HRM/Show', [
@@ -538,13 +749,17 @@ class HrmController extends Controller
 
     public function edit(Employee $employee)
     {
+        if (! $this->isHrmManager()) {
+            abort(403, 'You are not authorized to edit employee records.');
+        }
+
         $employee->load(['department', 'employmentType', 'staffLevel', 'supervisingManager']);
 
         return inertia('HRM/Edit', [
             'employee' => $employee,
             'departments' => Department::all(),
             'employmentTypes' => EmploymentType::all(),
-            'staffLevels' => \App\Models\StaffLevel::orderBy('sort_order')->get(),
+            'staffLevels' => StaffLevel::orderBy('sort_order')->get(),
             'managers' => Employee::with('staffLevel')
                 ->where('id', '!=', $employee->id)
                 ->whereHas('staffLevel', fn ($q) => $q->whereIn('name', ['Managing Director', 'General Manager', 'Manager']))
@@ -555,6 +770,10 @@ class HrmController extends Controller
 
     public function update(Request $request, Employee $employee)
     {
+        if (! $this->isHrmManager()) {
+            abort(403, 'You are not authorized to edit employee records.');
+        }
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',

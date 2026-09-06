@@ -7,7 +7,16 @@ use App\Http\Controllers\CrmLeadController;
 use App\Http\Controllers\CrmReportController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DealController;
+use App\Http\Controllers\Finance\AccountController;
+use App\Http\Controllers\Finance\AssetController;
+use App\Http\Controllers\Finance\BillController;
+use App\Http\Controllers\Finance\CashBankController;
+use App\Http\Controllers\Finance\DashboardController as FinanceDashboardController;
+use App\Http\Controllers\Finance\InvoiceController;
+use App\Http\Controllers\Finance\LedgerController;
+use App\Http\Controllers\Finance\ReportController;
 use App\Http\Controllers\FinanceController;
+use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HRM\SettingController;
 use App\Http\Controllers\HrmController;
 use App\Http\Controllers\Inventory\InventoryController;
@@ -59,6 +68,10 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Help Center
+    Route::get('/help', [HelpController::class, 'index'])->name('help.index');
+    Route::get('/help/{slug}', [HelpController::class, 'show'])->name('help.show');
 
     // CRM Routes
     Route::middleware('permission:crm.view')->group(function () {
@@ -276,6 +289,83 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/studio/{booking}/edit', [StudioController::class, 'edit'])->name('studio.edit');
         Route::put('/studio/{booking}', [StudioController::class, 'update'])->name('studio.update');
         Route::delete('/studio/{booking}', [StudioController::class, 'destroy'])->name('studio.destroy');
+    });
+
+    // Finance Dashboard Route
+    Route::middleware('permission:finance.view')->group(function () {
+        Route::get('/finance/dashboard', [FinanceDashboardController::class, 'index'])->name('finance.dashboard');
+        Route::get('/finance/help', fn () => view('finance.help'))->name('finance.help');
+    });
+
+    // Finance Reports Routes
+    Route::middleware('permission:finance.view')->prefix('finance/reports')->name('finance.reports.')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('index');
+        Route::get('/profit-loss', [ReportController::class, 'profitLoss'])->name('profit-loss');
+        Route::get('/balance-sheet', [ReportController::class, 'balanceSheet'])->name('balance-sheet');
+        Route::get('/transactions', [ReportController::class, 'transactions'])->name('transactions');
+    });
+
+    // Finance / Accounts Receivable Routes
+    Route::middleware('permission:finance.view')->prefix('finance/receivables')->name('finance.receivables.')->group(function () {
+        Route::get('/', [InvoiceController::class, 'index'])->name('index');
+        Route::get('/create', [InvoiceController::class, 'create'])->name('create');
+        Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
+    });
+    Route::middleware('permission:finance.manage_receivables')->prefix('finance/receivables')->name('finance.receivables.')->group(function () {
+        Route::post('/', [InvoiceController::class, 'store'])->name('store');
+        Route::post('/{invoice}/send', [InvoiceController::class, 'send'])->name('send');
+        Route::post('/{invoice}/payments', [InvoiceController::class, 'storePayment'])->name('payments.store');
+        Route::post('/{invoice}/cancel', [InvoiceController::class, 'cancel'])->name('cancel');
+        Route::delete('/{invoice}', [InvoiceController::class, 'destroy'])->name('destroy');
+    });
+
+    // Finance / Accounts Payable Routes
+    Route::middleware('permission:finance.view')->prefix('finance/payables')->name('finance.payables.')->group(function () {
+        Route::get('/', [BillController::class, 'index'])->name('index');
+        Route::get('/create', [BillController::class, 'create'])->name('create');
+        Route::get('/{bill}', [BillController::class, 'show'])->name('show');
+    });
+    Route::middleware('permission:finance.manage_payables')->prefix('finance/payables')->name('finance.payables.')->group(function () {
+        Route::post('/', [BillController::class, 'store'])->name('store');
+        Route::post('/{bill}/submit', [BillController::class, 'submit'])->name('submit');
+        Route::post('/{bill}/payments', [BillController::class, 'storePayment'])->name('payments.store');
+        Route::post('/{bill}/cancel', [BillController::class, 'cancel'])->name('cancel');
+        Route::delete('/{bill}', [BillController::class, 'destroy'])->name('destroy');
+    });
+
+    // Finance / Asset Ledger Routes (registered before the /finance/{transaction} wildcard below)
+    Route::middleware('permission:finance.view_assets')->group(function () {
+        Route::get('/finance/assets', [AssetController::class, 'index'])->name('finance.assets.index');
+        Route::get('/finance/assets/{asset}', [AssetController::class, 'show'])->name('finance.assets.show');
+    });
+    Route::middleware('permission:finance.manage_assets')->group(function () {
+        Route::post('/finance/assets', [AssetController::class, 'store'])->name('finance.assets.store');
+        Route::post('/finance/assets/{asset}/entries', [AssetController::class, 'storeEntry'])->name('finance.assets.entries.store');
+        Route::delete('/finance/assets/{asset}', [AssetController::class, 'destroy'])->name('finance.assets.destroy');
+    });
+
+    // Finance / Chart of Accounts Routes
+    Route::middleware('permission:finance.view')->group(function () {
+        Route::get('/finance/accounts', [AccountController::class, 'index'])->name('finance.accounts.index');
+    });
+    Route::middleware('permission:finance.manage_accounts')->group(function () {
+        Route::post('/finance/accounts', [AccountController::class, 'store'])->name('finance.accounts.store');
+        Route::put('/finance/accounts/{account}', [AccountController::class, 'update'])->name('finance.accounts.update');
+        Route::delete('/finance/accounts/{account}', [AccountController::class, 'destroy'])->name('finance.accounts.destroy');
+    });
+
+    // Finance / Cash & Bank Routes
+    Route::middleware('permission:finance.view')->group(function () {
+        Route::get('/finance/cash-bank', [CashBankController::class, 'index'])->name('finance.cash-bank.index');
+    });
+    Route::middleware('permission:finance.manage_transfers')->group(function () {
+        Route::post('/finance/cash-bank/transfer', [CashBankController::class, 'transfer'])->name('finance.cash-bank.transfer');
+    });
+
+    // Finance / General Ledger Routes
+    Route::middleware('permission:finance.view')->group(function () {
+        Route::get('/finance/ledger', [LedgerController::class, 'index'])->name('finance.ledger.index');
+        Route::get('/finance/ledger/{journalEntry}', [LedgerController::class, 'show'])->name('finance.ledger.show');
     });
 
     // Finance Routes

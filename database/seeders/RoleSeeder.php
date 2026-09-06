@@ -84,6 +84,8 @@ class RoleSeeder extends Seeder
                     $studioPerms,
                     $crmPerms,
                     $productsPerms,
+                    Permission::where('name', 'hrm.view_team_leaves')->pluck('id')->toArray(),
+                    Permission::where('name', 'hrm.view')->pluck('id')->toArray(),
                 ),
             ],
             [
@@ -93,6 +95,7 @@ class RoleSeeder extends Seeder
                 'permissions' => array_merge(
                     Permission::where('name', 'studio.view')->pluck('id')->toArray(),
                     Permission::where('name', 'studio.manage_bookings')->pluck('id')->toArray(),
+                    Permission::where('name', 'hrm.view')->pluck('id')->toArray(),
                 ),
             ],
             [
@@ -103,6 +106,8 @@ class RoleSeeder extends Seeder
                     $productionPerms,
                     $inventoryPerms,
                     $procurementPerms,
+                    Permission::where('name', 'hrm.view_team_leaves')->pluck('id')->toArray(),
+                    Permission::where('name', 'hrm.view')->pluck('id')->toArray(),
                 ),
             ],
             [
@@ -113,6 +118,7 @@ class RoleSeeder extends Seeder
                     Permission::where('name', 'production.view')->pluck('id')->toArray(),
                     Permission::where('name', 'production.create')->pluck('id')->toArray(),
                     Permission::where('name', 'inventory.view')->pluck('id')->toArray(),
+                    Permission::where('name', 'hrm.view')->pluck('id')->toArray(),
                 ),
             ],
             [
@@ -136,6 +142,8 @@ class RoleSeeder extends Seeder
                 'permissions' => array_merge(
                     $crmPerms,
                     $ordersPerms,
+                    Permission::where('name', 'hrm.view_team_leaves')->pluck('id')->toArray(),
+                    Permission::where('name', 'hrm.view')->pluck('id')->toArray(),
                 ),
             ],
             [
@@ -148,6 +156,7 @@ class RoleSeeder extends Seeder
                     Permission::where('name', 'crm.create_clients')->pluck('id')->toArray(),
                     Permission::where('name', 'orders.view')->pluck('id')->toArray(),
                     Permission::where('name', 'orders.create')->pluck('id')->toArray(),
+                    Permission::where('name', 'hrm.view')->pluck('id')->toArray(),
                 ),
             ],
         ];

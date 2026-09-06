@@ -326,12 +326,20 @@ export default function HrmEmployees() {
                             </div>
                         </div>
 
-                        <Link
-                            href={`/hrm/${selectedEmployee.id}/edit`}
-                            className="glass-button w-full flex items-center justify-center gap-2 mt-4"
-                        >
-                            <Pencil className="w-4 h-4" /> Edit Employee
-                        </Link>
+                        <div className="flex items-center gap-2 mt-4">
+                            <Link
+                                href={`/hrm/employees/${selectedEmployee.id}`}
+                                className="glass-button flex-1 flex items-center justify-center gap-2"
+                            >
+                                <User className="w-4 h-4" /> Full Profile
+                            </Link>
+                            <Link
+                                href={`/hrm/${selectedEmployee.id}/edit`}
+                                className="glass-button flex-1 flex items-center justify-center gap-2"
+                            >
+                                <Pencil className="w-4 h-4" /> Edit
+                            </Link>
+                        </div>
                     </div>
                 )}
             </SlideDrawer>

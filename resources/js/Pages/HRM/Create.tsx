@@ -21,7 +21,6 @@ export default function HrmCreate() {
         mobile_2: '',
         emergency_person: '',
         pay_frequency: '',
-        leave_days: '',
         date_hired: '',
         avatar: null as File | null,
     });
@@ -155,6 +154,7 @@ export default function HrmCreate() {
                                     <option key={s.id} value={s.id}>{s.name}</option>
                                 ))}
                             </select>
+                            <p className="text-xs text-slate-400 mt-1">Annual leave days are set automatically based on this staff level's Annual leave type.</p>
                         </div>
 
                         <div>
@@ -251,18 +251,6 @@ export default function HrmCreate() {
                                 <option value="bi_weekly">Bi-Weekly</option>
                                 <option value="monthly">Monthly</option>
                             </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Leave Days</label>
-                            <input 
-                                type="number"
-                                value={data.leave_days}
-                                onChange={(e) => setData('leave_days', e.target.value)}
-                                className="glass-input w-full"
-                                placeholder="0"
-                                step="0.5"
-                            />
                         </div>
 
                         <div>

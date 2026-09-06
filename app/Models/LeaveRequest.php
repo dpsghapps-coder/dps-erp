@@ -10,6 +10,7 @@ class LeaveRequest extends Model
     protected $fillable = [
         'employee_id',
         'leave_type',
+        'leave_type_id',
         'start_date',
         'end_date',
         'days_count',
@@ -34,5 +35,10 @@ class LeaveRequest extends Model
     public function reviewedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function leaveType(): BelongsTo
+    {
+        return $this->belongsTo(LeaveType::class);
     }
 }

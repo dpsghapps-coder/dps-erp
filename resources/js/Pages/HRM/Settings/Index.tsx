@@ -79,23 +79,29 @@ export default function HrmSettingsIndex() {
                     ]} data={staffLevels} />
                 </GlassCard>
 
-                <GlassCard><div className="flex justify-between items-center mb-2"><h2 className="text-lg font-semibold">Leave Days</h2><span className="text-sm text-gray-500">{leaveTypes.length} items</span></div>
+                <GlassCard><div className="flex justify-between items-center mb-2"><h2 className="text-lg font-semibold">Leave Types</h2><span className="text-sm text-gray-500">{leaveTypes.length} items</span></div>
+                    <p className="text-xs text-gray-500 mb-3">Each leave type is set per staff level — e.g. Annual leave can be 15 days for Junior and 25 days for Manager.</p>
                     <form onSubmit={(e) => { e.preventDefault(); leaveTypeForm.post('/hrm/settings/leave-types', { onSuccess: () => leaveTypeForm.reset() }); }}>
                         <div className="space-y-2 mb-4">
-                            <input className="glass-input w-full" placeholder="Leave Name (e.g., Annual Leave)" value={leaveTypeForm.data.name} onChange={e => leaveTypeForm.setData('name', e.target.value)} />
+                            <select className="glass-input w-full" value={leaveTypeForm.data.name} onChange={e => leaveTypeForm.setData('name', e.target.value)}>
+                                <option value="">Select Leave Type</option>
+                                <option value="Annual">Annual</option>
+                                <option value="Sick">Sick</option>
+                                <option value="Emergency">Emergency</option>
+                            </select>
                             <div className="flex gap-2">
                                 <select className="glass-input flex-1" value={leaveTypeForm.data.staff_level_id} onChange={e => leaveTypeForm.setData('staff_level_id', e.target.value)}>
                                     <option value="">Select Staff Level</option>
                                     {staffLevels.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
                                 <input type="number" className="glass-input w-24" placeholder="Days" value={leaveTypeForm.data.days_per_year} onChange={e => leaveTypeForm.setData('days_per_year', e.target.value)} />
-                                <button className="glass-button"><Plus className="w-4 h-4" /></button>
+                                <button className="glass-button" disabled={!leaveTypeForm.data.name || !leaveTypeForm.data.staff_level_id}><Plus className="w-4 h-4" /></button>
                             </div>
                         </div>
                     </form>
                     <DataTable columns={[
                         { header: 'Name', key: 'name' },
-                        { header: 'Staff Level', render: (l: any) => l.staffLevel?.name || '-' },
+                        { header: 'Staff Level', render: (l: any) => l.staff_level?.name || '-' },
                         { header: 'Days', key: 'days_per_year' },
                         { header: 'Actions', className: 'text-right', render: (lt: any) => <button onClick={() => handleDelete(`/hrm/settings/leave-types/${lt.id}`, lt.name)}><Trash2 className="w-4 h-4 text-red-500" /></button> }
                     ]} data={leaveTypes} />

@@ -5,9 +5,12 @@ namespace App\Models\Finance;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transaction extends Model
 {
+    use SoftDeletes;
+
     protected $fillable = [
         'type',
         'category',
@@ -15,6 +18,8 @@ class Transaction extends Model
         'description',
         'date',
         'reference',
+        'financial_account_id',
+        'journal_entry_id',
         'created_by',
     ];
 
@@ -26,6 +31,16 @@ class Transaction extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function financialAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'financial_account_id');
+    }
+
+    public function journalEntry(): BelongsTo
+    {
+        return $this->belongsTo(JournalEntry::class);
     }
 
     public function scopeIncome($query)

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Bell, Settings, Check, CheckCheck, Package, ShoppingCart, Box, Users, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import axios from 'axios';
 
 interface ActivityTabProps {
     currentUserId: number;
@@ -28,8 +29,11 @@ interface Preferences {
     orders: boolean;
     inventory: boolean;
     hrm: boolean;
+    marketing: boolean;
     chat_messages: boolean;
 }
+
+const PREFERENCE_KEYS: (keyof Preferences)[] = ['procurement', 'orders', 'inventory', 'hrm', 'marketing', 'chat_messages'];
 
 export default function ActivityTab({ currentUserId }: ActivityTabProps) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -38,6 +42,7 @@ export default function ActivityTab({ currentUserId }: ActivityTabProps) {
         orders: true,
         inventory: true,
         hrm: true,
+        marketing: true,
         chat_messages: true,
     });
     const [showPreferences, setShowPreferences] = useState(false);
@@ -45,8 +50,7 @@ export default function ActivityTab({ currentUserId }: ActivityTabProps) {
 
     const fetchNotifications = useCallback(async () => {
         try {
-            const response = await fetch('/notifications');
-            const data = await response.json();
+            const { data } = await axios.get('/notifications');
             setNotifications(data);
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
@@ -57,9 +61,11 @@ export default function ActivityTab({ currentUserId }: ActivityTabProps) {
 
     const fetchPreferences = useCallback(async () => {
         try {
-            const response = await fetch('/notifications/preferences');
-            const data = await response.json();
-            setPreferences(data);
+            const { data } = await axios.get('/notifications/preferences');
+            setPreferences(prev => ({
+                ...prev,
+                ...Object.fromEntries(PREFERENCE_KEYS.filter(key => key in data).map(key => [key, Boolean(data[key])])),
+            }));
         } catch (error) {
             console.error('Failed to fetch preferences:', error);
         }
@@ -77,7 +83,7 @@ export default function ActivityTab({ currentUserId }: ActivityTabProps) {
 
     const handleMarkAsRead = async (notificationId: string) => {
         try {
-            await fetch(`/notifications/${notificationId}/read`, { method: 'POST' });
+            await axios.post(`/notifications/${notificationId}/read`);
             setNotifications(prev =>
                 prev.map(n => n.id === notificationId ? { ...n, read_at: new Date().toISOString() } : n)
             );
@@ -88,7 +94,7 @@ export default function ActivityTab({ currentUserId }: ActivityTabProps) {
 
     const handleMarkAllAsRead = async () => {
         try {
-            await fetch('/notifications/read-all', { method: 'POST' });
+            await axios.post('/notifications/read-all');
             setNotifications(prev => prev.map(n => ({ ...n, read_at: new Date().toISOString() })));
         } catch (error) {
             console.error('Failed to mark all as read:', error);
@@ -97,11 +103,7 @@ export default function ActivityTab({ currentUserId }: ActivityTabProps) {
 
     const handlePreferenceChange = async (key: keyof Preferences, value: boolean) => {
         try {
-            await fetch('/notifications/preferences', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ [key]: value }),
-            });
+            await axios.put('/notifications/preferences', { [key]: value });
             setPreferences(prev => ({ ...prev, [key]: value }));
         } catch (error) {
             console.error('Failed to update preference:', error);
@@ -175,25 +177,28 @@ export default function ActivityTab({ currentUserId }: ActivityTabProps) {
                         NOTIFICATION TYPES
                     </h4>
                     <div className="space-y-2">
-                        {Object.entries(preferences).map(([key, value]) => (
-                            <label key={key} className="flex items-center justify-between cursor-pointer">
-                                <span className="text-sm text-slate-700 dark:text-slate-300 capitalize">
-                                    {key.replace('_', ' ')}
-                                </span>
-                                <button
-                                    onClick={() => handlePreferenceChange(key as keyof Preferences, !value)}
-                                    className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                                        value ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'
-                                    }`}
-                                >
-                                    <span
-                                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
-                                            value ? 'translate-x-4.5' : 'translate-x-0.5'
+                        {PREFERENCE_KEYS.map((key) => {
+                            const value = preferences[key];
+                            return (
+                                <label key={key} className="flex items-center justify-between cursor-pointer">
+                                    <span className="text-sm text-slate-700 dark:text-slate-300 capitalize">
+                                        {key.replace('_', ' ')}
+                                    </span>
+                                    <button
+                                        onClick={() => handlePreferenceChange(key, !value)}
+                                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                                            value ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'
                                         }`}
-                                    />
-                                </button>
-                            </label>
-                        ))}
+                                    >
+                                        <span
+                                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${
+                                                value ? 'translate-x-4.5' : 'translate-x-0.5'
+                                            }`}
+                                        />
+                                    </button>
+                                </label>
+                            );
+                        })}
                     </div>
                 </div>
             )}

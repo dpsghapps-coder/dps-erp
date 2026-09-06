@@ -80,6 +80,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'hrm.manage_payroll', 'module' => 'hrm', 'description' => 'Manage payroll'],
             ['name' => 'hrm.manage_attendance', 'module' => 'hrm', 'description' => 'Manage attendance'],
             ['name' => 'hrm.manage_leaves', 'module' => 'hrm', 'description' => 'Manage leaves'],
+            ['name' => 'hrm.view_team_leaves', 'module' => 'hrm', 'description' => 'View leave requests of directly supervised employees'],
             ['name' => 'hrm.manage_holidays', 'module' => 'hrm', 'description' => 'Manage holidays'],
             ['name' => 'hrm.manage_performance', 'module' => 'hrm', 'description' => 'Manage performance'],
             ['name' => 'hrm.manage_noticeboard', 'module' => 'hrm', 'description' => 'Manage noticeboard'],
@@ -90,6 +91,12 @@ class PermissionSeeder extends Seeder
             ['name' => 'finance.create', 'module' => 'finance', 'description' => 'Create transactions'],
             ['name' => 'finance.edit', 'module' => 'finance', 'description' => 'Edit transactions'],
             ['name' => 'finance.delete', 'module' => 'finance', 'description' => 'Delete transactions'],
+            ['name' => 'finance.view_assets', 'module' => 'finance', 'description' => 'View asset ledger'],
+            ['name' => 'finance.manage_assets', 'module' => 'finance', 'description' => 'Manage asset ledger'],
+            ['name' => 'finance.manage_accounts', 'module' => 'finance', 'description' => 'Manage chart of accounts'],
+            ['name' => 'finance.manage_transfers', 'module' => 'finance', 'description' => 'Transfer between cash/bank accounts'],
+            ['name' => 'finance.manage_receivables', 'module' => 'finance', 'description' => 'Manage invoices and customer payments'],
+            ['name' => 'finance.manage_payables', 'module' => 'finance', 'description' => 'Manage bills and supplier payments'],
 
             // Studio
             ['name' => 'studio.view', 'module' => 'studio', 'description' => 'View studio'],

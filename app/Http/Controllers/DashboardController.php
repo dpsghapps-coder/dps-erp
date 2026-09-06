@@ -18,7 +18,11 @@ class DashboardController extends Controller
             'active_clients' => Client::whereNotNull('first_converted_at')->count(),
             'total_orders' => Order::count(),
             'pending_orders' => Order::where('status', 'draft')->count(),
-            'production_jobs' => ProductionJob::whereIn('status', ['queued', 'in_progress'])->count(),
+            'production_jobs' => ProductionJob::whereNotIn('status', [
+                ProductionJob::STATUS_COMPLETED,
+                ProductionJob::STATUS_PAUSED,
+                ProductionJob::STATUS_CANCELLED,
+            ])->count(),
             'studio_bookings' => StudioBooking::whereIn('status', ['tentative', 'confirmed'])
                 ->where('start_datetime', '>=', now())
                 ->count(),

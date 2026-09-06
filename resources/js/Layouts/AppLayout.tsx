@@ -37,7 +37,11 @@ import {
     ClipboardCheck,
     User as UserIcon,
     Globe,
-    Calculator
+    Calculator,
+    Wallet,
+    BookOpen,
+    Receipt,
+    HelpCircle
 } from 'lucide-react';
 import ChatSidebar from '@/Components/Chat/ChatSidebar';
 
@@ -51,6 +55,7 @@ interface CrmSubItem {
     name: string;
     href: string;
     icon: React.ComponentType<{ className?: string }>;
+    external?: boolean;
 }
 
 const enterpriseNav: NavItem[] = [
@@ -96,6 +101,18 @@ const managementNav: NavItem[] = [
     { name: 'Finance', href: '/finance', icon: DollarSign },
     { name: 'HRM', href: '/hrm', icon: UserCog },
 ];
+const financeSubItems: CrmSubItem[] = [
+    { name: 'Dashboard', href: '/finance/dashboard', icon: LayoutDashboard },
+    { name: 'Transactions', href: '/finance', icon: DollarSign },
+    { name: 'Chart of Accounts', href: '/finance/accounts', icon: ClipboardList },
+    { name: 'Cash & Bank', href: '/finance/cash-bank', icon: Wallet },
+    { name: 'Receivables', href: '/finance/receivables', icon: Receipt },
+    { name: 'Payables', href: '/finance/payables', icon: Truck },
+    { name: 'General Ledger', href: '/finance/ledger', icon: BookOpen },
+    { name: 'Asset Ledger', href: '/finance/assets', icon: Boxes },
+    { name: 'Reports', href: '/finance/reports', icon: BarChart3 },
+    { name: 'Help', href: '/finance/help', icon: HelpCircle, external: true },
+];
 const hrmSubItems: CrmSubItem[] = [
     { name: 'Dashboard', href: '/hrm/dashboard', icon: LayoutDashboard },
     { name: 'Employees', href: '/hrm/employees', icon: UsersIcon },
@@ -132,6 +149,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const [crmSlideUpOpen, setCrmSlideUpOpen] = useState(false);
     const [inventoryDropdownOpen, setInventoryDropdownOpen] = useState(false);
     const [inventorySlideUpOpen, setInventorySlideUpOpen] = useState(false);
+    const [financeDropdownOpen, setFinanceDropdownOpen] = useState(false);
     const [hrmDropdownOpen, setHrmDropdownOpen] = useState(false);
     const [productsDropdownOpen, setProductsDropdownOpen] = useState(false);
     const [productsSlideUpOpen, setProductsSlideUpOpen] = useState(false);
@@ -195,6 +213,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
         if (isHrmPage) {
             setHrmDropdownOpen(true);
         }
+        if (isFinancePage) {
+            setFinanceDropdownOpen(true);
+        }
         if (isProductsPage) {
             setProductsDropdownOpen(true);
         }
@@ -207,7 +228,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         if (isDecisionHubPage) {
             setDecisionHubDropdownOpen(true);
         }
-    }, [isCrmPage, isInventoryPage, isHrmPage, isProductsPage, isOrdersPage, isProductionPage, isDecisionHubPage]);
+    }, [isCrmPage, isInventoryPage, isHrmPage, isFinancePage, isProductsPage, isOrdersPage, isProductionPage, isDecisionHubPage]);
 
     // Search handler
     const handleSearch = async (query: string) => {
@@ -296,8 +317,18 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     >
                         <LayoutDashboard className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                     </button>
+                    {/* Help Center */}
+                    <Link
+                        href="/help"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
+                        aria-label="Help Center"
+                    >
+                        <HelpCircle className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                    </Link>
                     {/* Theme Toggle */}
-                    <button 
+                    <button
                         onClick={toggleTheme}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
                         aria-label="Toggle theme"
@@ -699,18 +730,43 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             )}
 
                             {hasModulePermission('finance') && (
-                            <Link
-                                href="/finance"
-                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
-                                    isFinancePage
-                                        ? 'bg-slate-900 text-white'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                }`}
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                <DollarSign className="w-5 h-5" />
-                                Finance
-                            </Link>
+                            <div className="mb-2">
+                                <button
+                                    onClick={() => setFinanceDropdownOpen(!financeDropdownOpen)}
+                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                        isFinancePage
+                                            ? 'bg-slate-900 text-white'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <DollarSign className="w-5 h-5" />
+                                        Finance
+                                    </div>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${financeDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {financeDropdownOpen && (
+                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
+                                        {financeSubItems.map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                target={item.external ? '_blank' : undefined}
+                                                rel={item.external ? 'noopener noreferrer' : undefined}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                                    currentPath === item.href
+                                                        ? 'bg-slate-100 text-slate-900 font-medium'
+                                                        : 'text-slate-500 hover:bg-slate-50'
+                                                }`}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                <item.icon className="w-4 h-4" />
+                                                {item.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                             )}
 
                             {hasModulePermission('hrm') && (
@@ -1153,10 +1209,56 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Management</span>}
                     </div>}
 
-                    {hasModulePermission('finance') && <Link href="/finance" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isFinancePage ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
-                        <DollarSign className="w-5 h-5 flex-shrink-0" />
-                        {sidebarOpen && <span>Finance</span>}
-                    </Link>}
+                    {/* Finance Dropdown */}
+                    {hasModulePermission('finance') && <div className="space-y-1 px-3 mb-1">
+                        {sidebarOpen ? (
+                            <button
+                                onClick={() => setFinanceDropdownOpen(!financeDropdownOpen)}
+                                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                    isFinancePage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <DollarSign className="w-5 h-5 flex-shrink-0" />
+                                    <span>Finance</span>
+                                </div>
+                                <ChevronDown className={`w-4 h-4 transition-transform ${financeDropdownOpen ? 'rotate-180' : ''}`} />
+                            </button>
+                        ) : (
+                            <Link
+                                href="/finance/dashboard"
+                                className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors ${
+                                    isFinancePage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                                <DollarSign className="w-5 h-5" />
+                            </Link>
+                        )}
+                        {financeDropdownOpen && sidebarOpen && (
+                            <div className="mt-1 space-y-1">
+                                {financeSubItems.map((item) => (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        target={item.external ? '_blank' : undefined}
+                                        rel={item.external ? 'noopener noreferrer' : undefined}
+                                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                            currentPath === item.href
+                                                ? 'bg-slate-100 text-slate-900 font-medium'
+                                                : 'text-slate-500 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <item.icon className="w-4 h-4" />
+                                        {item.name}
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
+                    </div>}
 
                     {/* HRM Dropdown */}
                     {hasModulePermission('hrm') && <div className="space-y-1 px-3 mb-1">
@@ -1365,7 +1467,16 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     )}
                 </div>
                 <div className="flex-1 flex items-center justify-end gap-2">
-                    <button 
+                    <Link
+                        href="/help"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                        aria-label="Help Center"
+                    >
+                        <HelpCircle className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                    </Link>
+                    <button
                         onClick={toggleTheme}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                         aria-label="Toggle theme"

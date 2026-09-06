@@ -7,16 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-class StudioResource extends Model
-{
-    protected $fillable = ['name', 'type', 'description', 'is_available'];
-
-    protected $casts = [
-        'type' => 'string',
-        'is_available' => 'boolean',
-    ];
-}
-
 class StudioBooking extends Model
 {
     use GeneratesDailyCode;
