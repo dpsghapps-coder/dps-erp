@@ -14,6 +14,7 @@ use App\Models\Payroll;
 use App\Models\Performance;
 use App\Models\StaffLevel;
 use App\Notifications\HrmNotification;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -597,6 +598,39 @@ class HrmController extends Controller
                 'month' => $month,
             ],
         ]);
+    }
+
+    public function payslipPdf(Payroll $payroll)
+    {
+        $isManager = $this->isHrmManager() || Auth::user()->hasPermission('hrm.view_payroll') || Auth::user()->hasPermission('hrm.manage_payroll');
+        $currentEmployee = $this->currentEmployee();
+
+        if (! $isManager && (! $currentEmployee || $currentEmployee->id !== $payroll->employee_id)) {
+            abort(403, 'You are not authorized to view this payslip.');
+        }
+
+        $payroll->load('employee.department');
+
+        $pdf = Pdf::loadView('pdf.payslip', [
+            'payroll' => $payroll,
+            'currencySymbol' => $this->currencySymbol(),
+        ]);
+
+        return $pdf->stream("Payslip-{$payroll->employee->employee_number}-{$payroll->month}.pdf");
+    }
+
+    private function currencySymbol(): string
+    {
+        // dompdf's default fonts don't cover the Cedi/Naira glyphs, so those fall
+        // back to the plain currency code rather than rendering as "?".
+        $code = \App\Models\Setting::get('currency', 'GHS');
+
+        return match ($code) {
+            'USD' => '$',
+            'EUR' => '€',
+            'GBP' => '£',
+            default => $code,
+        };
     }
 
     public function performance(Request $request)

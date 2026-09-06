@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, usePage, Link, router, useForm } from '@inertiajs/react';
-import { ArrowLeft, Send, Ban, Trash2, Plus } from 'lucide-react';
+import { ArrowLeft, Send, Ban, Trash2, Plus, FileDown } from 'lucide-react';
 import { useState } from 'react';
 import { useCurrency } from '@/Utils/currency';
 import Swal from 'sweetalert2';
@@ -89,6 +89,14 @@ export default function ShowInvoice() {
                 subtitle={invoice.client?.company_name}
                 action={
                     <div className="flex gap-2">
+                        <a
+                            href={`/finance/receivables/${invoice.id}/pdf`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="glass-button-secondary flex items-center gap-2"
+                        >
+                            <FileDown className="w-4 h-4" /> Download PDF
+                        </a>
                         {invoice.status === 'draft' && (
                             <>
                                 <button onClick={handleSend} className="glass-button flex items-center gap-2"><Send className="w-4 h-4" /> Send</button>

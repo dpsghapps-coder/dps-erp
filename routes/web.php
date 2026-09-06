@@ -349,6 +349,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/hrm/holidays', [HrmController::class, 'holidays'])->name('hrm.holidays');
         Route::post('/hrm/holidays', [HrmController::class, 'storeHoliday'])->name('hrm.holidays.store');
         Route::get('/hrm/payroll', [HrmController::class, 'payroll'])->name('hrm.payroll');
+        Route::get('/hrm/payroll/{payroll}/pdf', [HrmController::class, 'payslipPdf'])->name('hrm.payroll.pdf');
         Route::get('/hrm/performance', [HrmController::class, 'performance'])->name('hrm.performance');
         Route::post('/hrm/performance', [HrmController::class, 'storePerformance'])->name('hrm.performance.store');
         Route::get('/hrm/noticeboard', [HrmController::class, 'noticeboard'])->name('hrm.noticeboard');
@@ -411,6 +412,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [InvoiceController::class, 'index'])->name('index');
         Route::get('/create', [InvoiceController::class, 'create'])->name('create');
         Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
+        Route::get('/{invoice}/pdf', [InvoiceController::class, 'pdf'])->name('pdf');
     });
     Route::middleware('permission:finance.manage_receivables')->prefix('finance/receivables')->name('finance.receivables.')->group(function () {
         Route::post('/', [InvoiceController::class, 'store'])->name('store');

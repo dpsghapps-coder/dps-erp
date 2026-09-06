@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\Finance\Account;
 use App\Models\Finance\Invoice;
 use App\Models\Finance\JournalEntry;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -94,6 +95,33 @@ class InvoiceController extends Controller
             'invoice' => $invoice,
             'financialAccounts' => $this->cashAndBankAccounts(),
         ]);
+    }
+
+    public function pdf(Invoice $invoice)
+    {
+        $invoice->load(['client', 'items']);
+        $invoice->is_overdue = $invoice->isOverdue();
+
+        $pdf = Pdf::loadView('pdf.invoice', [
+            'invoice' => $invoice,
+            'currencySymbol' => $this->currencySymbol(),
+        ]);
+
+        return $pdf->stream("Invoice-{$invoice->invoice_number}.pdf");
+    }
+
+    private function currencySymbol(): string
+    {
+        // dompdf's default fonts don't cover the Cedi/Naira glyphs, so those fall
+        // back to the plain currency code rather than rendering as "?".
+        $code = \App\Models\Setting::get('currency', 'GHS');
+
+        return match ($code) {
+            'USD' => '$',
+            'EUR' => '€',
+            'GBP' => '£',
+            default => $code,
+        };
     }
 
     public function send(Invoice $invoice)

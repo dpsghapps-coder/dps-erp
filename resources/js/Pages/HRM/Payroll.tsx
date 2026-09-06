@@ -225,7 +225,14 @@ export default function HrmPayroll() {
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-right">
-                                        <button className="text-blue-500 hover:underline text-sm">View</button>
+                                        <a
+                                            href={`/hrm/payroll/${payslip.id}/pdf`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-500 hover:underline text-sm"
+                                        >
+                                            Payslip PDF
+                                        </a>
                                     </td>
                                 </tr>
                             ))}
