@@ -10,6 +10,7 @@ use App\Models\ProductionJob;
 use App\Models\Service;
 use App\Models\Setting;
 use App\Models\User;
+use App\Notifications\OrderNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -148,6 +149,11 @@ class OrderController extends Controller
             }
         });
 
+        $owner = $order->created_by ? User::find($order->created_by) : null;
+        if ($owner) {
+            $owner->notify(new OrderNotification($order->id, 'status_changed', $order->order_number));
+        }
+
         return back()->with('success', 'Order status updated');
     }
 
@@ -207,6 +213,11 @@ class OrderController extends Controller
                 $order->transitionTo(Order::STATUS_PAYMENT_RECEIVED, 'Payment recorded');
             }
         });
+
+        $owner = $order->created_by ? User::find($order->created_by) : null;
+        if ($owner) {
+            $owner->notify(new OrderNotification($order->id, 'payment_received', $order->order_number));
+        }
 
         return back()->with('success', 'Payment recorded');
     }

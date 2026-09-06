@@ -3,8 +3,10 @@
 namespace App\Notifications;
 
 use App\Models\PurchaseRequest;
+use App\Models\UserNotificationPreference;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class PurchaseRequestNotification extends Notification implements ShouldQueue
@@ -19,7 +21,22 @@ class PurchaseRequestNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+
+        if (UserNotificationPreference::getForUser($notifiable->id)->procurement) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Purchase Request Update: '.$this->purchaseRequest->pr_number)
+            ->line($this->getDefaultMessage())
+            ->action('View Purchase Request', url($this->toArray($notifiable)['url']))
+            ->line('Thank you for using '.config('app.name').'.');
     }
 
     public function toArray(object $notifiable): array
@@ -42,6 +59,8 @@ class PurchaseRequestNotification extends Notification implements ShouldQueue
             'approved' => 'Purchase Request '.$this->purchaseRequest->pr_number.' has been approved.',
             'rejected' => 'Purchase Request '.$this->purchaseRequest->pr_number.' has been rejected.',
             'queried' => 'Purchase Request '.$this->purchaseRequest->pr_number.' has been queried.',
+            'held' => 'Purchase Request '.$this->purchaseRequest->pr_number.' has been put on hold.',
+            'cancelled' => 'Purchase Request '.$this->purchaseRequest->pr_number.' has been cancelled.',
             'po_created' => 'Purchase Order created for PR '.$this->purchaseRequest->pr_number.'.',
             default => 'Purchase Request '.$this->purchaseRequest->pr_number.' has been updated.',
         };

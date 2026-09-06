@@ -3,8 +3,10 @@
 namespace App\Notifications;
 
 use App\Models\Campaign;
+use App\Models\UserNotificationPreference;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class CampaignNotification extends Notification implements ShouldQueue
@@ -19,7 +21,22 @@ class CampaignNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+
+        if (UserNotificationPreference::getForUser($notifiable->id)->marketing) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Campaign Update: '.($this->campaign?->title ?? 'Campaign'))
+            ->line($this->getDefaultMessage())
+            ->action('View Campaign', url($this->toArray($notifiable)['url']))
+            ->line('Thank you for using '.config('app.name').'.');
     }
 
     public function toArray(object $notifiable): array

@@ -2,8 +2,10 @@
 
 namespace App\Notifications;
 
+use App\Models\UserNotificationPreference;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 class OrderNotification extends Notification implements ShouldQueue
@@ -19,7 +21,22 @@ class OrderNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        $channels = ['database'];
+
+        if (UserNotificationPreference::getForUser($notifiable->id)->orders) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        return (new MailMessage)
+            ->subject('Order Update: '.($this->orderNumber ?? '#'.$this->orderId))
+            ->line($this->getDefaultMessage())
+            ->action('View Order', url($this->toArray($notifiable)['url']))
+            ->line('Thank you for using '.config('app.name').'.');
     }
 
     public function toArray(object $notifiable): array

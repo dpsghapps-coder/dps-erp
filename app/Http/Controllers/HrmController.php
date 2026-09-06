@@ -13,6 +13,7 @@ use App\Models\Notice;
 use App\Models\Payroll;
 use App\Models\Performance;
 use App\Models\StaffLevel;
+use App\Notifications\HrmNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -444,6 +445,11 @@ class HrmController extends Controller
             'status' => 'pending',
         ]);
 
+        $supervisor = $employee->supervisingManager?->user;
+        if ($supervisor) {
+            $supervisor->notify(new HrmNotification('leave_requested', $employee->full_name ?? $employee->first_name, $employee->id));
+        }
+
         return back()->with('success', 'Leave request submitted successfully');
     }
 
@@ -483,6 +489,11 @@ class HrmController extends Controller
             $employee->update(['leave_days' => $newBalance]);
         }
 
+        $employeeUser = $leaveRequest->employee?->user;
+        if ($employeeUser) {
+            $employeeUser->notify(new HrmNotification('leave_approved', $leaveRequest->employee->full_name, $leaveRequest->employee->id));
+        }
+
         return back()->with('success', 'Leave approved successfully');
     }
 
@@ -494,6 +505,11 @@ class HrmController extends Controller
             'status' => 'rejected',
             'reviewed_by' => Auth::id(),
         ]);
+
+        $employeeUser = $leaveRequest->employee?->user;
+        if ($employeeUser) {
+            $employeeUser->notify(new HrmNotification('leave_rejected', $leaveRequest->employee->full_name, $leaveRequest->employee->id));
+        }
 
         return back()->with('success', 'Leave rejected');
     }

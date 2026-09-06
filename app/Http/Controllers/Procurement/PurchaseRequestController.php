@@ -11,6 +11,7 @@ use App\Models\PurchaseRequestHistory;
 use App\Models\Stock;
 use App\Models\Supplier;
 use App\Models\User;
+use App\Notifications\PurchaseRequestNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -282,6 +283,14 @@ class PurchaseRequestController extends Controller
             ]);
         });
 
+        $deptManagers = User::whereHas('role.permissions', fn ($q) => $q->where('name', 'pr.approve'))
+            ->get()
+            ->filter(fn (User $u) => $u->department === $purchaseRequest->department);
+
+        foreach ($deptManagers as $manager) {
+            $manager->notify(new PurchaseRequestNotification($purchaseRequest, 'submitted'));
+        }
+
         return back()->with('success', 'Purchase request submitted for review');
     }
 
@@ -323,6 +332,8 @@ class PurchaseRequestController extends Controller
                 'comment' => $validated['comment'] ?? "Department manager {$validated['action']}d the PR",
             ]);
         });
+
+        $purchaseRequest->requester?->notify(new PurchaseRequestNotification($purchaseRequest, $newStatus === 'dept_approved' ? 'approved' : $newStatus));
 
         return back()->with('success', "Purchase request {$validated['action']}d successfully");
     }
@@ -368,6 +379,8 @@ class PurchaseRequestController extends Controller
             ]);
         });
 
+        $purchaseRequest->requester?->notify(new PurchaseRequestNotification($purchaseRequest, $newStatus === 'finance_approved' ? 'approved' : $newStatus));
+
         return back()->with('success', "Purchase request {$validated['action']}d successfully");
     }
 
@@ -395,6 +408,10 @@ class PurchaseRequestController extends Controller
                 'comment' => 'PR cancelled',
             ]);
         });
+
+        if ($purchaseRequest->requester && $purchaseRequest->requester->id !== $user->id) {
+            $purchaseRequest->requester->notify(new PurchaseRequestNotification($purchaseRequest, 'cancelled'));
+        }
 
         return back()->with('success', 'Purchase request cancelled');
     }
