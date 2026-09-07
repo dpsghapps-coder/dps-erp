@@ -46,6 +46,7 @@ class Order extends Model
         'total_amount',
         'discount_amount',
         'tax_amount',
+        'vat_applicable',
         'grand_total',
         'currency',
         'payment_status',
@@ -61,8 +62,13 @@ class Order extends Model
         'total_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',
+        'vat_applicable' => 'boolean',
         'grand_total' => 'decimal:2',
     ];
+
+    // Ghana's unified VAT rate applied when vat_applicable is true:
+    // 15% standard VAT + 2.5% NHIL + 2.5% GETFund, summed flat (not compounded).
+    public const VAT_RATE = 0.20;
 
     public function client(): BelongsTo
     {
@@ -113,7 +119,9 @@ class Order extends Model
     {
         $this->total_amount = $this->items->sum(fn ($item) => $item->qty * $item->unit_price);
         $this->discount_amount = $this->items->sum(fn ($item) => $item->qty * $item->unit_price * ($item->discount_pct / 100));
-        $this->tax_amount = 0;
+        $this->tax_amount = $this->vat_applicable
+            ? ($this->total_amount - $this->discount_amount) * self::VAT_RATE
+            : 0;
         $this->grand_total = $this->total_amount - $this->discount_amount + $this->tax_amount;
         $this->save();
     }

@@ -146,6 +146,16 @@ export default function LeadsIndex() {
         }
     }, [openStatusId]);
 
+    // Board isn't backed by real-time push (no WebSocket infra on this hosting), so
+    // poll for changes made by other users while the board view is open.
+    useEffect(() => {
+        if (viewMode !== 'board') return;
+
+        const { stop } = router.poll(15000, { only: ['deals', 'stats'] });
+
+        return () => stop();
+    }, [viewMode]);
+
     const toggleSelect = (id: number) => {
         setSelectedIds(prev => {
             const next = new Set(prev);
@@ -232,10 +242,10 @@ export default function LeadsIndex() {
 
     return (
         <AppLayout>
-            <Head title="Lead Management" />
+            <Head title="Sales Management" />
 
             <PageHeader
-                title="Lead Management"
+                title="Sales Management"
                 subtitle={`${dealsList.length} leads & prospects`}
                 action={
                     <div className="flex items-center gap-3">

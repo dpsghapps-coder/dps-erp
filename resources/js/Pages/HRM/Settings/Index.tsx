@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, DataTable } from '@/Components/ui';
-import { Head, useForm, usePage, router } from '@inertiajs/react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Head, useForm, usePage, router, Link } from '@inertiajs/react';
+import { Plus, Trash2, Pencil } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 export default function HrmSettingsIndex() {
@@ -39,7 +39,12 @@ export default function HrmSettingsIndex() {
                     </form>
                     <DataTable columns={[
                         { header: 'Name', key: 'name' },
-                        { header: 'Actions', className: 'text-right', render: (d: any) => <button onClick={() => handleDelete(`/hrm/settings/departments/${d.id}`, d.name)}><Trash2 className="w-4 h-4 text-red-500" /></button> }
+                        { header: 'Actions', className: 'text-right', render: (d: any) => (
+                            <div className="flex items-center justify-end gap-3">
+                                <Link href={`/hrm/settings/departments/${d.id}/edit`}><Pencil className="w-4 h-4 text-slate-400 hover:text-slate-700" /></Link>
+                                <button onClick={() => handleDelete(`/hrm/settings/departments/${d.id}`, d.name)}><Trash2 className="w-4 h-4 text-red-500" /></button>
+                            </div>
+                        ) }
                     ]} data={departments} />
                 </GlassCard>
 
@@ -52,7 +57,12 @@ export default function HrmSettingsIndex() {
                     </form>
                     <DataTable columns={[
                         { header: 'Name', key: 'name' },
-                        { header: 'Actions', className: 'text-right', render: (e: any) => <button onClick={() => handleDelete(`/hrm/settings/employment-types/${e.id}`, e.name)}><Trash2 className="w-4 h-4 text-red-500" /></button> }
+                        { header: 'Actions', className: 'text-right', render: (e: any) => (
+                            <div className="flex items-center justify-end gap-3">
+                                <Link href={`/hrm/settings/employment-types/${e.id}/edit`}><Pencil className="w-4 h-4 text-slate-400 hover:text-slate-700" /></Link>
+                                <button onClick={() => handleDelete(`/hrm/settings/employment-types/${e.id}`, e.name)}><Trash2 className="w-4 h-4 text-red-500" /></button>
+                            </div>
+                        ) }
                     ]} data={employmentTypes} />
                 </GlassCard>
 
@@ -75,7 +85,13 @@ export default function HrmSettingsIndex() {
                     </form>
                     <DataTable columns={[
                         { header: 'Name', key: 'name' },
-                        { header: 'Actions', className: 'text-right', render: (s: any) => <button onClick={() => handleDelete(`/hrm/settings/staff-levels/${s.id}`, s.name)}><Trash2 className="w-4 h-4 text-red-500" /></button> }
+                        { header: 'Manager?', render: (s: any) => s.is_manager ? <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600">Yes</span> : <span className="text-xs text-gray-400">—</span> },
+                        { header: 'Actions', className: 'text-right', render: (s: any) => (
+                            <div className="flex items-center justify-end gap-3">
+                                <Link href={`/hrm/settings/staff-levels/${s.id}/edit`}><Pencil className="w-4 h-4 text-slate-400 hover:text-slate-700" /></Link>
+                                <button onClick={() => handleDelete(`/hrm/settings/staff-levels/${s.id}`, s.name)}><Trash2 className="w-4 h-4 text-red-500" /></button>
+                            </div>
+                        ) }
                     ]} data={staffLevels} />
                 </GlassCard>
 
@@ -103,7 +119,12 @@ export default function HrmSettingsIndex() {
                         { header: 'Name', key: 'name' },
                         { header: 'Staff Level', render: (l: any) => l.staff_level?.name || '-' },
                         { header: 'Days', key: 'days_per_year' },
-                        { header: 'Actions', className: 'text-right', render: (lt: any) => <button onClick={() => handleDelete(`/hrm/settings/leave-types/${lt.id}`, lt.name)}><Trash2 className="w-4 h-4 text-red-500" /></button> }
+                        { header: 'Actions', className: 'text-right', render: (lt: any) => (
+                            <div className="flex items-center justify-end gap-3">
+                                <Link href={`/hrm/settings/leave-types/${lt.id}/edit`}><Pencil className="w-4 h-4 text-slate-400 hover:text-slate-700" /></Link>
+                                <button onClick={() => handleDelete(`/hrm/settings/leave-types/${lt.id}`, lt.name)}><Trash2 className="w-4 h-4 text-red-500" /></button>
+                            </div>
+                        ) }
                     ]} data={leaveTypes} />
                 </GlassCard>
             </div>

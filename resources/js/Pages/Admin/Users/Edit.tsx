@@ -35,7 +35,9 @@ export default function UserEdit() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.put(`/admin/users/${user?.id}`, data, { forceFormData: true });
+        // PHP does not parse multipart bodies on PUT requests, so spoof via POST + _method
+        // (Inertia's router.put doesn't do this automatically when forcing FormData).
+        router.post(`/admin/users/${user?.id}`, { ...data, _method: 'put' }, { forceFormData: true });
     };
 
     return (

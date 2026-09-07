@@ -31,6 +31,7 @@ use App\Http\Controllers\Management\MeetingController;
 use App\Http\Controllers\Management\ReviewController;
 use App\Http\Controllers\Marketing\CampaignController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OfficeIssueReportController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderReportController;
 use App\Http\Controllers\Procurement\GoodController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProformaController;
+use App\Http\Controllers\SalesOverviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SetupController;
@@ -88,6 +90,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Proforma Routes (must be before {client} wildcard)
         Route::get('/crm/{client}/proformas', [ProformaController::class, 'index'])->name('crm.proformas.index');
+        // "create" is a literal segment and must be registered before the {proforma} wildcard below,
+        // otherwise a request like /crm/5/proformas/create matches {proforma}="create" first and 404s.
+        Route::get('/crm/{client}/proformas/create', [ProformaController::class, 'create'])
+            ->name('crm.proformas.create')
+            ->middleware('permission:crm.edit_clients');
         Route::get('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'show'])->name('crm.proformas.show');
     });
 
@@ -104,7 +111,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/crm/{client}/contacts/{contact}', [CrmController::class, 'updateContact'])->name('crm.contacts.update');
         Route::delete('/crm/{client}/contacts/{contact}', [CrmController::class, 'destroyContact'])->name('crm.contacts.destroy');
 
-        Route::get('/crm/{client}/proformas/create', [ProformaController::class, 'create'])->name('crm.proformas.create');
         Route::post('/crm/{client}/proformas', [ProformaController::class, 'store'])->name('crm.proformas.store');
         Route::get('/crm/{client}/proformas/{proforma}/edit', [ProformaController::class, 'edit'])->name('crm.proformas.edit');
         Route::put('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'update'])->name('crm.proformas.update');
@@ -115,6 +121,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'destroy'])->name('crm.proformas.destroy');
     });
 
+
+    Route::middleware('permission:products.view')->group(function () {
+        Route::get('/sales/overview', [SalesOverviewController::class, 'index'])->name('sales.overview');
+    });
 
     // Products Routes
     Route::middleware('permission:products.create')->group(function () {
@@ -374,6 +384,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/hrm/settings/leave-types/{leaveType}', [SettingController::class, 'destroyLeaveType'])->name('hrm.settings.leave-types.destroy');
 
         Route::post('/hrm/settings/staff-levels', [SettingController::class, 'storeStaffLevel'])->name('hrm.settings.staff-levels.store');
+        Route::get('/hrm/settings/staff-levels/{staffLevel}/edit', [SettingController::class, 'editStaffLevel'])->name('hrm.settings.staff-levels.edit');
+        Route::put('/hrm/settings/staff-levels/{staffLevel}', [SettingController::class, 'updateStaffLevel'])->name('hrm.settings.staff-levels.update');
         Route::delete('/hrm/settings/staff-levels/{staffLevel}', [SettingController::class, 'destroyStaffLevel'])->name('hrm.settings.staff-levels.destroy');
 
         Route::get('/hrm/{employee}', [HrmController::class, 'show'])->name('hrm.show');
@@ -597,6 +609,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/notification-preferences', [ProfileController::class, 'updateNotificationPreferences'])->name('profile.notification-preferences');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/profile/employee', [ProfileController::class, 'employeeDetails'])->name('profile.employee');
+    Route::get('/profile/leave', [ProfileController::class, 'leave'])->name('profile.leave');
+    Route::post('/profile/leave', [ProfileController::class, 'storeLeave'])->name('profile.leave.store');
+    Route::get('/profile/performance', [ProfileController::class, 'performance'])->name('profile.performance');
+    Route::get('/profile/report-issue', [OfficeIssueReportController::class, 'create'])->name('profile.report-issue');
+    Route::post('/profile/report-issue', [OfficeIssueReportController::class, 'store'])->name('profile.report-issue.store');
+
+    Route::get('/hrm/issue-reports', [OfficeIssueReportController::class, 'index'])->name('hrm.issue-reports');
+    Route::post('/hrm/issue-reports/{officeIssueReport}/status', [OfficeIssueReportController::class, 'updateStatus'])->name('hrm.issue-reports.status');
 
     Route::get('/search', [SearchController::class, 'search'])->name('search');
 });

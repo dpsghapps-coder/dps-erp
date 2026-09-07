@@ -53,18 +53,21 @@ interface CampaignEvent {
     type: string;
     status: string;
     campaign: any;
+    allDay?: boolean;
+    isHoliday?: boolean;
+    holiday?: any;
 }
 
 export default function MarketingIndex() {
-    const { campaigns } = usePage().props as any;
+    const { campaigns, holidays } = usePage().props as any;
     const formatCurrency = useCurrency();
     const [currentView, setCurrentView] = useState<View>(Views.MONTH);
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
+    const [selectedHoliday, setSelectedHoliday] = useState<any>(null);
 
     const events: CampaignEvent[] = useMemo(() => {
-        if (!campaigns) return [];
-        return campaigns.map((campaign: any) => ({
+        const campaignEvents = (campaigns || []).map((campaign: any) => ({
             id: campaign.id,
             title: campaign.title,
             start: startOfDay(new Date(campaign.start_date)),
@@ -73,9 +76,38 @@ export default function MarketingIndex() {
             status: campaign.status,
             campaign,
         }));
-    }, [campaigns]);
+
+        const holidayEvents = (holidays || []).map((holiday: any) => ({
+            id: `holiday-${holiday.id}`,
+            title: `🇬🇭 ${holiday.name}`,
+            start: startOfDay(new Date(holiday.date)),
+            end: startOfDay(new Date(holiday.date)),
+            type: 'holiday',
+            status: '',
+            campaign: null,
+            allDay: true,
+            isHoliday: true,
+            holiday,
+        }));
+
+        return [...campaignEvents, ...holidayEvents];
+    }, [campaigns, holidays]);
 
     const eventStyleGetter = useCallback((event: CampaignEvent) => {
+        if (event.isHoliday) {
+            return {
+                style: {
+                    backgroundColor: '#ce1126',
+                    backgroundImage: 'linear-gradient(90deg, #ce1126 0 33%, #fcd116 33% 66%, #006b3f 66% 100%)',
+                    borderRadius: '6px',
+                    color: 'white',
+                    border: 'none',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    padding: '2px 6px',
+                },
+            };
+        }
         const color = TYPE_COLORS[event.type] || '#6b7280';
         return {
             style: {
@@ -91,7 +123,11 @@ export default function MarketingIndex() {
     }, []);
 
     const handleSelectEvent = useCallback((event: CampaignEvent) => {
-        setSelectedCampaign(event.campaign);
+        if (event.isHoliday) {
+            setSelectedHoliday(event.holiday);
+        } else {
+            setSelectedCampaign(event.campaign);
+        }
     }, []);
 
     const handleDelete = (id: number) => {
@@ -160,6 +196,14 @@ export default function MarketingIndex() {
                         </div>
                     </div>
                 </GlassCard>
+            </div>
+
+            <div className="flex items-center gap-2 mb-3 text-xs text-slate-400">
+                <span
+                    className="inline-block w-4 h-3 rounded-sm"
+                    style={{ backgroundImage: 'linear-gradient(90deg, #ce1126 0 33%, #fcd116 33% 66%, #006b3f 66% 100%)' }}
+                />
+                Ghana public holiday
             </div>
 
             <GlassCard className="overflow-hidden p-0">
@@ -236,6 +280,34 @@ export default function MarketingIndex() {
                                 </button>
                             </div>
                             <button onClick={() => setSelectedCampaign(null)} className="glass-button-secondary px-3 py-1.5 text-sm">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {selectedHoliday && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setSelectedHoliday(null)}>
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-start justify-between mb-3">
+                            <div>
+                                <p className="text-xs font-medium text-slate-500 uppercase">Ghana Public Holiday</p>
+                                <h3 className="text-lg font-semibold">{selectedHoliday.name}</h3>
+                            </div>
+                            <span
+                                className="inline-block w-6 h-4 rounded-sm shrink-0 mt-1"
+                                style={{ backgroundImage: 'linear-gradient(90deg, #ce1126 0 33%, #fcd116 33% 66%, #006b3f 66% 100%)' }}
+                            />
+                        </div>
+                        <p className="text-sm font-medium mb-1">
+                            {new Date(selectedHoliday.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        </p>
+                        {selectedHoliday.description && (
+                            <p className="text-sm text-slate-500">{selectedHoliday.description}</p>
+                        )}
+                        <div className="flex justify-end pt-4 mt-4 border-t">
+                            <button onClick={() => setSelectedHoliday(null)} className="glass-button-secondary px-3 py-1.5 text-sm">
                                 Close
                             </button>
                         </div>

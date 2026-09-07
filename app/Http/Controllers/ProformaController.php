@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Deal;
+use App\Models\Product;
 use App\Models\Proforma;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -41,6 +43,8 @@ class ProformaController extends Controller
             'client' => $client,
             'deals' => $deals,
             'openDealId' => $openDeal?->id,
+            'products' => Product::with('prices')->where('is_active', true)->orderBy('name')->get(),
+            'services' => Service::with('prices')->where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -52,6 +56,8 @@ class ProformaController extends Controller
             'status' => 'required|in:draft,sent,accepted,rejected',
             'deal_id' => ['nullable', Rule::exists('deals', 'id')->where('client_id', $client->id)],
             'items' => 'required|array|min:1',
+            'items.*.product_id' => 'nullable|string',
+            'items.*.product_type' => 'nullable|in:App\Models\Product,App\Models\Service',
             'items.*.description' => 'required|string',
             'items.*.specs' => 'nullable|string',
             'items.*.quantity' => 'required|numeric|min:1',
@@ -60,13 +66,14 @@ class ProformaController extends Controller
             'discount_type' => 'nullable|in:percentage,flat',
             'vat_rate' => 'nullable|numeric|min:0|max:100',
             'deposit_rate' => 'nullable|numeric|min:0|max:100',
-            'rep_name' => 'nullable|string|max:255',
             'terms' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
 
         $validated['client_id'] = $client->id;
         $validated['number'] = Proforma::generateNumber();
+        // Sales rep is always whoever is logged in creating it, not a free-text field.
+        $validated['rep_name'] = $request->user()->name;
 
         // No deal explicitly chosen? Auto-attach whichever deal is currently
         // open for this client — most proformas are written during an active
@@ -106,6 +113,8 @@ class ProformaController extends Controller
             'client' => $client,
             'proforma' => $proforma,
             'deals' => $deals,
+            'products' => Product::with('prices')->where('is_active', true)->orderBy('name')->get(),
+            'services' => Service::with('prices')->where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 
@@ -117,6 +126,8 @@ class ProformaController extends Controller
             'status' => 'required|in:draft,sent,accepted,rejected',
             'deal_id' => ['nullable', Rule::exists('deals', 'id')->where('client_id', $client->id)],
             'items' => 'required|array|min:1',
+            'items.*.product_id' => 'nullable|string',
+            'items.*.product_type' => 'nullable|in:App\Models\Product,App\Models\Service',
             'items.*.description' => 'required|string',
             'items.*.specs' => 'nullable|string',
             'items.*.quantity' => 'required|numeric|min:1',
@@ -125,10 +136,15 @@ class ProformaController extends Controller
             'discount_type' => 'nullable|in:percentage,flat',
             'vat_rate' => 'nullable|numeric|min:0|max:100',
             'deposit_rate' => 'nullable|numeric|min:0|max:100',
-            'rep_name' => 'nullable|string|max:255',
             'terms' => 'nullable|string',
             'notes' => 'nullable|string',
         ]);
+
+        // Rep name isn't editable — it reflects whoever created the proforma.
+        // Backfill it here only for older records that predate this field being enforced.
+        if (empty($proforma->rep_name)) {
+            $validated['rep_name'] = $request->user()->name;
+        }
 
         $calculated = Proforma::calculate($validated);
         $validated = array_merge($validated, $calculated);

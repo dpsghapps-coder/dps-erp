@@ -42,6 +42,7 @@ export default function OrderEdit() {
         contact_id: order.contact_id ? String(order.contact_id) : '',
         delivery_date: order.delivery_date || '',
         notes: order.notes || '',
+        vat_applicable: Boolean(order.vat_applicable),
         items: (order.items || []).map((item: any) => ({
             product_id: String(item.product_id),
             product_type: item.product_type || PRODUCT_TYPE,
@@ -90,9 +91,10 @@ export default function OrderEdit() {
         return item.qty * item.unit_price * (1 - item.discount_pct / 100);
     };
 
+    const VAT_RATE = 0.20;
     const subtotal = data.items.reduce((sum, item) => sum + item.qty * item.unit_price, 0);
     const discount = data.items.reduce((sum, item) => sum + item.qty * item.unit_price * (item.discount_pct / 100), 0);
-    const tax = 0;
+    const tax = data.vat_applicable ? (subtotal - discount) * VAT_RATE : 0;
     const grandTotal = subtotal - discount + tax;
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -282,6 +284,19 @@ export default function OrderEdit() {
                         <GlassCard>
                             <h2 className="text-lg font-semibold mb-4">Summary</h2>
 
+                            <label className="flex items-start gap-2.5 mb-4 pb-4 border-b border-slate-200 dark:border-white/10 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={data.vat_applicable}
+                                    onChange={(e) => setData('vat_applicable', e.target.checked)}
+                                    className="mt-0.5"
+                                />
+                                <span className="text-sm">
+                                    <span className="font-medium block">Apply VAT (20%)</span>
+                                    <span className="text-xs text-slate-400">15% standard VAT + 2.5% NHIL + 2.5% GETFund</span>
+                                </span>
+                            </label>
+
                             <div className="space-y-3">
                                 <div className="flex justify-between">
                                     <span className="text-slate-400">Subtotal</span>
@@ -292,7 +307,7 @@ export default function OrderEdit() {
                                     <span>-{formatCurrency(discount)}</span>
                                 </div>
                                 <div className="flex justify-between">
-                                    <span className="text-slate-400">Tax</span>
+                                    <span className="text-slate-400">Tax {data.vat_applicable ? '(20%)' : ''}</span>
                                     <span>{formatCurrency(tax)}</span>
                                 </div>
                                 <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-white/10 text-lg font-semibold">

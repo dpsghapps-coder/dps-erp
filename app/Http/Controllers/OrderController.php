@@ -48,6 +48,7 @@ class OrderController extends Controller
                 'contact_id' => $validated['contact_id'] ?? null,
                 'delivery_date' => $validated['delivery_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
+                'vat_applicable' => $validated['vat_applicable'] ?? false,
                 'order_number' => Order::generateOrderNumber(),
                 'currency' => Setting::get('currency', 'GHS'),
                 'created_by' => auth()->id(),
@@ -112,6 +113,7 @@ class OrderController extends Controller
                 'contact_id' => $validated['contact_id'] ?? null,
                 'delivery_date' => $validated['delivery_date'] ?? null,
                 'notes' => $validated['notes'] ?? null,
+                'vat_applicable' => $validated['vat_applicable'] ?? false,
             ]);
 
             $order->items()->delete();
@@ -237,6 +239,7 @@ class OrderController extends Controller
             'contact_id' => 'nullable|exists:contacts,id',
             'delivery_date' => 'nullable|date',
             'notes' => 'nullable|string',
+            'vat_applicable' => 'nullable|boolean',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|integer',
             'items.*.product_type' => 'required|in:App\Models\Product,App\Models\Service',

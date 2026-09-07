@@ -41,7 +41,8 @@ import {
     Wallet,
     BookOpen,
     Receipt,
-    HelpCircle
+    HelpCircle,
+    Flag
 } from 'lucide-react';
 import ChatSidebar from '@/Components/Chat/ChatSidebar';
 
@@ -68,7 +69,7 @@ const enterpriseNav: NavItem[] = [
 
 const crmSubItems: CrmSubItem[] = [
     { name: 'Clients & Accounts', href: '/crm', icon: Users },
-    { name: 'Lead Management', href: '/crm/leads', icon: UserPlus },
+    { name: 'Sales Management', href: '/crm/leads', icon: UserPlus },
     { name: 'Reports', href: '/crm/reports', icon: BarChart3 },
 ];
 
@@ -123,6 +124,7 @@ const hrmSubItems: CrmSubItem[] = [
     { name: 'Payroll', href: '/hrm/payroll', icon: DollarSignIcon },
     { name: 'Performance', href: '/hrm/performance', icon: TrendingUp },
     { name: 'Noticeboard', href: '/hrm/noticeboard', icon: BellIcon },
+    { name: 'Issue Reports', href: '/hrm/issue-reports', icon: Flag },
 ];
 
 const decisionHubSubItems: CrmSubItem[] = [
@@ -193,7 +195,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const currentPath = useMemo(() => typeof window !== 'undefined' ? window.location.pathname : '', []);
     const isCrmPage = currentPath.startsWith('/crm') && !currentPath.startsWith('/crm/proformas');
     const isInventoryPage = currentPath.startsWith('/inventory') || currentPath.startsWith('/products');
-    const isProductsPage = currentPath.startsWith('/products') || currentPath.startsWith('/services') || currentPath.startsWith('/crm/proformas');
+    const isPricingPage = currentPath.startsWith('/products') || currentPath.startsWith('/services');
+    const isProductsPage = isPricingPage || currentPath.startsWith('/crm/proformas') || currentPath.startsWith('/sales/overview');
     const isOrdersPage = currentPath.startsWith('/orders');
     const isProductionPage = currentPath.startsWith('/production');
     const isHrmPage = currentPath.startsWith('/hrm');
@@ -216,7 +219,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         if (isFinancePage) {
             setFinanceDropdownOpen(true);
         }
-        if (isProductsPage) {
+        if (isPricingPage) {
             setProductsDropdownOpen(true);
         }
         if (isOrdersPage) {
@@ -228,7 +231,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         if (isDecisionHubPage) {
             setDecisionHubDropdownOpen(true);
         }
-    }, [isCrmPage, isInventoryPage, isHrmPage, isFinancePage, isProductsPage, isOrdersPage, isProductionPage, isDecisionHubPage]);
+    }, [isCrmPage, isInventoryPage, isHrmPage, isFinancePage, isPricingPage, isOrdersPage, isProductionPage, isDecisionHubPage]);
 
     // Search handler
     const handleSearch = async (query: string) => {
@@ -535,6 +538,14 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 Marketing
                             </Link>
                             )}
+                            <div className="px-3 mt-2 mb-2">
+                                <span className="text-xs text-slate-400 uppercase font-medium">Operations</span>
+                            </div>
+                            <Link href="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentPath === '/dashboard' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`} onClick={() => setMobileMenuOpen(false)}>
+                                <LayoutDashboard className="w-5 h-5" />
+                                Dashboard
+                            </Link>
+
                             {hasModulePermission('inventory') && (
                             <div className="mb-2">
                                 <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
@@ -579,14 +590,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 )}
                             </div>
                             )}
-
-                            <div className="px-3 mt-2 mb-2">
-                                <span className="text-xs text-slate-400 uppercase font-medium">Operations</span>
-                            </div>
-                            <Link href="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentPath === '/dashboard' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`} onClick={() => setMobileMenuOpen(false)}>
-                                <LayoutDashboard className="w-5 h-5" />
-                                Dashboard
-                            </Link>
 
                             {hasModulePermission('orders') && (
                             <div className="mb-2">
@@ -686,11 +689,26 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             )}
 
                             {hasModulePermission('products') && (
+                            <Link
+                                href="/sales/overview"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    currentPath === '/sales/overview'
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <BarChart3 className="w-5 h-5" />
+                                Overview
+                            </Link>
+                            )}
+
+                            {hasModulePermission('products') && (
                             <div className="mb-2">
                                 <button
                                     onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
                                     className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                                        isProductsPage
+                                        isPricingPage
                                             ? 'bg-slate-900 text-white'
                                             : 'text-slate-600 hover:bg-slate-100'
                                     }`}
@@ -988,86 +1006,29 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </Link>
                     </div>}
 
-                    {/* Inventory Dropdown */}
-                    {hasModulePermission('inventory') && <div className="px-3 mb-1">
-                        {sidebarOpen ? (
-                            <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                                isInventoryPage
-                                    ? 'bg-slate-900 text-white'
-                                    : 'text-slate-600 hover:bg-slate-100'
-                            }`}>
-                                <Link
-                                    href="/inventory"
-                                    className="flex items-center gap-3 flex-1"
-                                >
-                                    <Package className="w-5 h-5" />
-                                    <span>Inventory</span>
-                                </Link>
-                                <button
-                                    onClick={() => setInventoryDropdownOpen(!inventoryDropdownOpen)}
-                                    className="p-1 rounded hover:bg-black/10 transition-colors"
-                                    aria-label="Toggle inventory dropdown"
-                                >
-                                    <ChevronDown className={`w-4 h-4 transition-transform ${inventoryDropdownOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                            </div>
-                        ) : (
-                                 <Link
-                                     href="/inventory"
-                                     className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors ${
-                                         isInventoryPage
-                                             ? 'bg-slate-900 text-white'
-                                             : 'text-slate-600 hover:bg-slate-100'
-                                     }`}
-                                 >
-                                     <Package className="w-5 h-5" />
-                                 </Link>
-                        )}
-                        {inventoryDropdownOpen && sidebarOpen && (
-                            <div className="mt-1 space-y-1">
-                                {inventorySubItems.map((item) => (
-                                    <Link
-                                        key={item.href}
-                                        href={item.href}
-                                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                            currentPath === item.href
-                                                ? 'bg-slate-100 text-slate-900 font-medium'
-                                                : 'text-slate-500 hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        <item.icon className="w-4 h-4" />
-                                        {item.name}
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
+                    {/* SALES Section */}
+                    {hasModulePermission('products') && <div className="px-3 mt-4 mb-2">
+                        {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Sales</span>}
                     </div>}
-
-                    {/* Procurement Link */}
-                    {hasModulePermission('procurement') && <div className="px-3 mb-1">
+                    {hasModulePermission('products') && <div className="px-3 mb-1">
                         <Link
-                            href="/procurement/purchase-requests"
-                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                                isProcurementPage
+                            href="/sales/overview"
+                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${sidebarOpen ? '' : 'justify-center'} ${
+                                currentPath === '/sales/overview'
                                     ? 'bg-slate-900 text-white'
                                     : 'text-slate-600 hover:bg-slate-100'
                             }`}
                         >
-                            <ShoppingBag className="w-5 h-5 flex-shrink-0" />
-                            {sidebarOpen && <span>Procurement</span>}
+                            <BarChart3 className="w-5 h-5 flex-shrink-0" />
+                            {sidebarOpen && <span>Overview</span>}
                         </Link>
-                    </div>}
-
-                    {/* SALES Section */}
-                    {hasModulePermission('products') && <div className="px-3 mt-4 mb-2">
-                        {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Sales</span>}
                     </div>}
                     {hasModulePermission('products') && <div className="px-3 space-y-1">
                         {sidebarOpen ? (
                             <button
                                 onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
                                 className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                                    isProductsPage
+                                    isPricingPage
                                         ? 'bg-slate-900 text-white'
                                         : 'text-slate-600 hover:bg-slate-100'
                                 }`}
@@ -1082,7 +1043,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             <Link
                                 href="/products"
                                 className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors ${
-                                    isProductsPage
+                                    isPricingPage
                                         ? 'bg-slate-900 text-white'
                                         : 'text-slate-600 hover:bg-slate-100'
                                 }`}
@@ -1229,6 +1190,76 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     ))}
                                 </div>
                             )}
+                        </div>}
+
+                        {/* Inventory Dropdown */}
+                        {hasModulePermission('inventory') && <div className="space-y-1">
+                            {sidebarOpen ? (
+                                <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                    isInventoryPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}>
+                                    <Link
+                                        href="/inventory"
+                                        className="flex items-center gap-3 flex-1"
+                                    >
+                                        <Package className="w-5 h-5" />
+                                        <span>Inventory</span>
+                                    </Link>
+                                    <button
+                                        onClick={() => setInventoryDropdownOpen(!inventoryDropdownOpen)}
+                                        className="p-1 rounded hover:bg-black/10 transition-colors"
+                                        aria-label="Toggle inventory dropdown"
+                                    >
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${inventoryDropdownOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                </div>
+                            ) : (
+                                     <Link
+                                         href="/inventory"
+                                         className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors ${
+                                             isInventoryPage
+                                                 ? 'bg-slate-900 text-white'
+                                                 : 'text-slate-600 hover:bg-slate-100'
+                                         }`}
+                                     >
+                                         <Package className="w-5 h-5" />
+                                     </Link>
+                            )}
+                            {inventoryDropdownOpen && sidebarOpen && (
+                                <div className="mt-1 space-y-1 ml-4 border-l-2 border-slate-200 pl-2">
+                                    {inventorySubItems.map((item) => (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                                currentPath === item.href
+                                                    ? 'bg-slate-100 text-slate-900 font-medium'
+                                                    : 'text-slate-500 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <item.icon className="w-4 h-4" />
+                                            {item.name}
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>}
+
+                        {/* Procurement Link */}
+                        {hasModulePermission('procurement') && <div className="space-y-1">
+                            <Link
+                                href="/procurement/purchase-requests"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                                    isProcurementPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                                <ShoppingBag className="w-5 h-5 flex-shrink-0" />
+                                {sidebarOpen && <span>Procurement</span>}
+                            </Link>
                         </div>}
                     </div>
 
@@ -1820,6 +1851,22 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 </button>
                             </div>
                             <div className="p-4 space-y-2">
+                                <Link
+                                    href="/sales/overview"
+                                    onClick={() => setProductsSlideUpOpen(false)}
+                                    className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+                                        currentPath === '/sales/overview'
+                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo/25'
+                                            : 'text-slate-600 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                        currentPath === '/sales/overview' ? 'bg-white/20' : 'bg-slate-100'
+                                    }`}>
+                                        <BarChart3 className="w-5 h-5" />
+                                    </div>
+                                    <span className="font-medium">Overview</span>
+                                </Link>
                                 {productsSubItemsFull.map((item) => (
                                     <Link
                                         key={item.href}

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use App\Models\CampaignReminder;
 use App\Models\Client;
+use App\Models\Holiday;
 use App\Models\User;
 use App\Notifications\CampaignNotification;
 use Illuminate\Http\Request;
@@ -18,7 +19,9 @@ class CampaignController extends Controller
             ->orderByDesc('start_date')
             ->get();
 
-        return inertia('Marketing/Index', ['campaigns' => $campaigns]);
+        $holidays = Holiday::public()->orderBy('date')->get(['id', 'name', 'date', 'description']);
+
+        return inertia('Marketing/Index', ['campaigns' => $campaigns, 'holidays' => $holidays]);
     }
 
     public function create()

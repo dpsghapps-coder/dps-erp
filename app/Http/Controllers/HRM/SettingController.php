@@ -66,6 +66,7 @@ class SettingController extends Controller
     {
         return inertia('HRM/Settings/EditLeaveType', [
             'leaveType' => $leaveType,
+            'staffLevels' => StaffLevel::orderBy('sort_order')->get(),
         ]);
     }
 
@@ -143,9 +144,27 @@ class SettingController extends Controller
     {
         StaffLevel::create($request->validate([
             'name' => 'required|string|max:255|unique:staff_levels',
+            'is_manager' => 'nullable|boolean',
         ]));
 
         return back()->with('success', 'Staff level created');
+    }
+
+    public function editStaffLevel(StaffLevel $staffLevel)
+    {
+        return inertia('HRM/Settings/EditStaffLevel', [
+            'staffLevel' => $staffLevel,
+        ]);
+    }
+
+    public function updateStaffLevel(Request $request, StaffLevel $staffLevel)
+    {
+        $staffLevel->update($request->validate([
+            'name' => 'required|string|max:255|unique:staff_levels,name,'.$staffLevel->id,
+            'is_manager' => 'nullable|boolean',
+        ]));
+
+        return back()->with('success', 'Staff level updated');
     }
 
     public function destroyStaffLevel(StaffLevel $staffLevel)

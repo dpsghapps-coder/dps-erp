@@ -282,39 +282,48 @@ class AdminController extends Controller
 
         Log::warning("Factory reset initiated by user #{$admin->id} ({$admin->email})");
 
-        $dbPath = config('database.connections.sqlite.database');
+        $connection = config('database.default');
         $backupDir = storage_path('app/backups');
 
         if (! is_dir($backupDir)) {
             mkdir($backupDir, 0755, true);
         }
 
-        $backupPath = $backupDir.'/database-'.now()->format('Y-m-d_His').'.sqlite';
+        $isSqlite = $connection === 'sqlite';
+        $backupPath = $backupDir.'/database-'.now()->format('Y-m-d_His').($isSqlite ? '.sqlite' : '.sql');
 
-        if (! copy($dbPath, $backupPath)) {
+        $backupOk = $isSqlite
+            ? copy(config('database.connections.sqlite.database'), $backupPath)
+            : $this->backupMysqlDatabase($connection, $backupPath);
+
+        if (! $backupOk) {
             Log::error('Factory reset aborted: database backup failed.');
 
             return back()->withErrors(['password' => 'Backup failed — reset aborted. No data was changed.']);
         }
 
-        $tables = DB::select("SELECT name FROM sqlite_master WHERE type = 'table'");
-        $hasSequenceTable = collect($tables)->contains(fn ($t) => $t->name === 'sqlite_sequence');
+        if ($isSqlite) {
+            $tableNames = collect(DB::select("SELECT name FROM sqlite_master WHERE type = 'table'"))->pluck('name');
+        } else {
+            $tableNames = collect(DB::select('SELECT table_name AS name FROM information_schema.tables WHERE table_schema = ?', [config("database.connections.$connection.database")]))->pluck('name');
+        }
+
         $wipedTables = [];
 
-        DB::statement('PRAGMA foreign_keys = OFF');
+        DB::statement($isSqlite ? 'PRAGMA foreign_keys = OFF' : 'SET FOREIGN_KEY_CHECKS = 0');
 
-        DB::transaction(function () use ($tables, $admin, $hasSequenceTable, &$wipedTables) {
-            foreach ($tables as $table) {
-                $name = $table->name;
-
+        DB::transaction(function () use ($tableNames, $admin, $isSqlite, &$wipedTables) {
+            foreach ($tableNames as $name) {
                 if (in_array($name, self::FACTORY_RESET_KEPT_TABLES, true)) {
                     continue;
                 }
 
                 DB::table($name)->delete();
 
-                if ($hasSequenceTable) {
+                if ($isSqlite) {
                     DB::table('sqlite_sequence')->where('name', $name)->delete();
+                } else {
+                    DB::statement("ALTER TABLE `$name` AUTO_INCREMENT = 1");
                 }
 
                 $wipedTables[] = $name;
@@ -323,7 +332,7 @@ class AdminController extends Controller
             User::where('id', '!=', $admin->id)->delete();
         });
 
-        DB::statement('PRAGMA foreign_keys = ON');
+        DB::statement($isSqlite ? 'PRAGMA foreign_keys = ON' : 'SET FOREIGN_KEY_CHECKS = 1');
 
         AuditLog::create([
             'user_id' => $admin->id,
@@ -337,6 +346,36 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', 'Factory reset complete. Business data has been wiped; a backup was saved on the server before the reset.');
+    }
+
+    private function backupMysqlDatabase(string $connection, string $backupPath): bool
+    {
+        $config = config("database.connections.$connection");
+        $mysqldump = env('DB_MYSQLDUMP_PATH', 'mysqldump');
+
+        // Password passed via MYSQL_PWD rather than --password= so it doesn't
+        // show up in the process list while the dump is running.
+        $command = sprintf(
+            '%s --user=%s --host=%s --port=%s %s > %s 2>&1',
+            escapeshellarg($mysqldump),
+            escapeshellarg($config['username']),
+            escapeshellarg($config['host']),
+            escapeshellarg((string) $config['port']),
+            escapeshellarg($config['database']),
+            escapeshellarg($backupPath)
+        );
+
+        putenv('MYSQL_PWD='.$config['password']);
+        exec($command, $output, $exitCode);
+        putenv('MYSQL_PWD');
+
+        if ($exitCode !== 0 || ! file_exists($backupPath) || filesize($backupPath) === 0) {
+            Log::error('mysqldump backup failed', ['output' => implode("\n", $output), 'exit_code' => $exitCode]);
+
+            return false;
+        }
+
+        return true;
     }
 
     public function settingsUpdate(Request $request)

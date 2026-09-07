@@ -408,7 +408,7 @@ export default function OrderShow() {
                                 <span>-{formatCurrency(order?.discount_amount || 0)}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-400">Tax</span>
+                                <span className="text-slate-400">Tax {order?.vat_applicable ? '(VAT 20%)' : ''}</span>
                                 <span>{formatCurrency(order?.tax_amount || 0)}</span>
                             </div>
                             <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-white/10 font-medium">

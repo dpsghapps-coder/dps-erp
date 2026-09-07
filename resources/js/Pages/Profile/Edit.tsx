@@ -7,6 +7,7 @@ import InputLabel from '@/Components/InputLabel';
 import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import WhatsAppLink from '@/Components/WhatsAppLink';
+import ProfileNav from '@/Components/ProfileNav';
 
 interface UserData {
     id: number;
@@ -43,7 +44,7 @@ export default function Edit() {
         user.employee?.avatar ? `/storage/${user.employee.avatar}` : null
     );
 
-    const { data, setData, post, errors, processing, recentlySuccessful } = useForm({
+    const { data, setData, post, transform, errors, processing, recentlySuccessful } = useForm({
         name: user.name,
         email: user.email,
         avatar: null as File | null,
@@ -59,6 +60,9 @@ export default function Edit() {
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        // PHP does not parse multipart bodies on PATCH requests, so spoof via POST + _method
+        // (Inertia's router.patch doesn't do this automatically when forcing FormData).
+        transform((formData) => ({ ...formData, _method: 'patch' }));
         post(route('profile.update'), {
             forceFormData: true,
         });
@@ -100,6 +104,8 @@ export default function Edit() {
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">My Profile</h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage your account settings and preferences</p>
                 </div>
+
+                <ProfileNav />
 
                 {/* Profile Photo + Basic Info */}
                 <div className="bg-white dark:bg-[#1a1e2a] rounded-xl border border-slate-200 dark:border-white/[0.06] overflow-hidden">

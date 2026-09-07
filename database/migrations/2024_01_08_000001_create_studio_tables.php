@@ -38,7 +38,7 @@ return new class extends Migration
             $table->foreignId('studio_resource_id')->constrained()->onDelete('cascade');
             $table->timestamps();
 
-            $table->unique(['studio_booking_id', 'studio_resource_id']);
+            $table->unique(['studio_booking_id', 'studio_resource_id'], 'studio_booking_resources_unique');
         });
 
         Schema::create('studio_crew', function (Blueprint $table) {

@@ -58,7 +58,12 @@ export default function HrmEdit() {
 
             <div className="max-w-2xl">
                 <GlassCard>
-                    <form onSubmit={(e) => { e.preventDefault(); router.put(`/hrm/${employee?.id}`, data, { forceFormData: true }); }}>
+                    <form onSubmit={(e) => {
+                        e.preventDefault();
+                        // PHP does not parse multipart bodies on PUT requests, so spoof via POST + _method
+                        // (Inertia's router.put doesn't do this automatically when forcing FormData).
+                        router.post(`/hrm/${employee?.id}`, { ...data, _method: 'put' }, { forceFormData: true });
+                    }}>
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="md:col-span-2 flex items-center gap-4">
                                 <button

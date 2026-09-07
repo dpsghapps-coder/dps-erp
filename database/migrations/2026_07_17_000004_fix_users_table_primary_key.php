@@ -8,6 +8,14 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // This repairs a primary-key/autoincrement issue specific to SQLite's
+        // table-rebuild pattern used by earlier migrations. MySQL/MariaDB never
+        // had this problem (Schema::create always defines the PK correctly), so
+        // there's nothing to fix there.
+        if (config('database.default') !== 'sqlite') {
+            return;
+        }
+
         DB::statement('PRAGMA foreign_keys = OFF');
 
         DB::statement('CREATE TABLE users_fixed (

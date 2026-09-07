@@ -41,7 +41,7 @@ export default function ClientCreate() {
 
             <div className="mb-6">
                 <Link href={fromLeads ? '/crm/leads' : '/crm'} className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors">
-                    <ArrowLeft className="w-4 h-4" /> {fromLeads ? 'Back to Lead Management' : 'Back to Clients'}
+                    <ArrowLeft className="w-4 h-4" /> {fromLeads ? 'Back to Sales Management' : 'Back to Clients'}
                 </Link>
             </div>
 

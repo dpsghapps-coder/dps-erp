@@ -5,7 +5,12 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 import { useState, useEffect, useMemo } from 'react';
 
+const PRODUCT_TYPE = 'App\\Models\\Product';
+const SERVICE_TYPE = 'App\\Models\\Service';
+
 interface LineItem {
+    product_id: string;
+    product_type: string;
     description: string;
     specs: string;
     quantity: number;
@@ -32,8 +37,23 @@ const dealLabel = (deal: DealOption) => {
     return `${type} — ${stage} (${date})`;
 };
 
+function priceForQuantity(item: any, qty: number): number {
+    const tiers = item?.prices || [];
+    const applicable = tiers
+        .filter((p: any) => qty >= p.min_qty && (p.max_qty === null || p.max_qty === undefined || qty <= p.max_qty))
+        .sort((a: any, b: any) => b.min_qty - a.min_qty)[0];
+
+    return applicable ? Number(applicable.unit_price) : Number(item?.default_price || 0);
+}
+
+function findPickable(products: any[], services: any[], type: string, id: string) {
+    if (type === PRODUCT_TYPE) return (products || []).find((p: any) => String(p.id) === String(id));
+    if (type === SERVICE_TYPE) return (services || []).find((s: any) => String(s.id) === String(id));
+    return null;
+}
+
 export default function ProformaCreate() {
-    const { client, deals, openDealId } = usePage().props as any;
+    const { client, deals, openDealId, products, services, auth } = usePage().props as any;
     const formatCurrency = useCurrency();
 
     const { data, setData, post, transform, processing, errors } = useForm({
@@ -41,12 +61,11 @@ export default function ProformaCreate() {
         valid_until: '',
         status: 'draft',
         deal_id: openDealId ? String(openDealId) : '',
-        items: [{ description: '', specs: '', quantity: 1, unit_cost: 0 }] as LineItem[],
+        items: [{ product_id: '', product_type: '', description: '', specs: '', quantity: 1, unit_cost: 0 }] as LineItem[],
         discount: 0,
         discount_type: 'flat',
         vat_rate: 20,
         deposit_rate: 70,
-        rep_name: '',
         terms: DEFAULT_TERMS.join('\n'),
         notes: '',
     });
@@ -64,14 +83,36 @@ export default function ProformaCreate() {
         return { subtotal, discountValue, discounted, vatAmount, total, depositAmount, balanceAmount };
     }, [data.items, data.discount, data.discount_type, data.vat_rate, data.deposit_rate]);
 
-    const updateItem = (index: number, field: keyof LineItem, value: string | number) => {
+    const updateItem = (index: number, field: keyof LineItem | 'catalog', value: string | number) => {
         const updated = [...data.items];
-        updated[index] = { ...updated[index], [field]: value };
+
+        if (field === 'catalog') {
+            // value arrives as "type|id" from the picker, or '' for a blank/custom item
+            const [type, id] = String(value).split('|');
+            const picked = findPickable(products, services, type, id);
+            updated[index] = {
+                ...updated[index],
+                product_type: type || '',
+                product_id: id || '',
+                description: picked ? picked.name : updated[index].description,
+                unit_cost: picked ? priceForQuantity(picked, updated[index].quantity) : updated[index].unit_cost,
+            };
+        } else if (field === 'quantity') {
+            const picked = findPickable(products, services, updated[index].product_type, updated[index].product_id);
+            updated[index] = {
+                ...updated[index],
+                quantity: value as number,
+                unit_cost: picked ? priceForQuantity(picked, value as number) : updated[index].unit_cost,
+            };
+        } else {
+            updated[index] = { ...updated[index], [field]: value };
+        }
+
         setData('items', updated);
     };
 
     const addItem = () => {
-        setData('items', [...data.items, { description: '', specs: '', quantity: 1, unit_cost: 0 }]);
+        setData('items', [...data.items, { product_id: '', product_type: '', description: '', specs: '', quantity: 1, unit_cost: 0 }]);
     };
 
     const removeItem = (index: number) => {
@@ -107,12 +148,33 @@ export default function ProformaCreate() {
                                 {data.items.map((item, index) => (
                                     <div key={index} className="grid grid-cols-12 gap-2 items-start p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
                                         <div className="col-span-5">
+                                            <select
+                                                value={item.product_type && item.product_id ? `${item.product_type}|${item.product_id}` : ''}
+                                                onChange={(e) => updateItem(index, 'catalog', e.target.value)}
+                                                className="glass-input w-full text-sm"
+                                            >
+                                                <option value="">Custom item (type below)</option>
+                                                {(products || []).length > 0 && (
+                                                    <optgroup label="Products">
+                                                        {products.map((p: any) => (
+                                                            <option key={`p-${p.id}`} value={`${PRODUCT_TYPE}|${p.id}`}>{p.name}</option>
+                                                        ))}
+                                                    </optgroup>
+                                                )}
+                                                {(services || []).length > 0 && (
+                                                    <optgroup label="Services">
+                                                        {services.map((s: any) => (
+                                                            <option key={`s-${s.id}`} value={`${SERVICE_TYPE}|${s.id}`}>{s.name}</option>
+                                                        ))}
+                                                    </optgroup>
+                                                )}
+                                            </select>
                                             <input
                                                 type="text"
                                                 placeholder="Item description"
                                                 value={item.description}
                                                 onChange={(e) => updateItem(index, 'description', e.target.value)}
-                                                className="glass-input w-full text-sm"
+                                                className="glass-input w-full text-sm mt-1"
                                             />
                                             <input
                                                 type="text"
@@ -218,7 +280,7 @@ export default function ProformaCreate() {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Sales Rep</label>
-                                    <input type="text" value={data.rep_name} onChange={(e) => setData('rep_name', e.target.value)} className="glass-input w-full" placeholder="Rep name" />
+                                    <p className="glass-input w-full flex items-center text-slate-500 dark:text-slate-400">{auth?.user?.name}</p>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Linked Deal</label>

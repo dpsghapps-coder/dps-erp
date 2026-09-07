@@ -15,7 +15,9 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('avatar')->nullable();
-            $table->foreignId('role_id')->nullable()->constrained('roles')->nullOnDelete();
+            // FK to roles added separately in 2024_01_01_000004_add_role_id_foreign_key_to_users_table
+            // — the roles table doesn't exist yet at this point in migration order.
+            $table->foreignId('role_id')->nullable();
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();

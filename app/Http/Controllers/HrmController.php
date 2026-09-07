@@ -743,7 +743,7 @@ class HrmController extends Controller
             'departments' => Department::all(),
             'employmentTypes' => EmploymentType::all(),
             'staffLevels' => StaffLevel::orderBy('sort_order')->get(),
-            'managers' => Employee::with('staffLevel')->whereHas('staffLevel', fn ($q) => $q->whereIn('name', ['Managing Director', 'General Manager', 'Manager']))->orderBy('first_name')->get(),
+            'managers' => Employee::with('staffLevel')->whereHas('staffLevel', fn ($q) => $q->where('is_manager', true))->orderBy('first_name')->get(),
             'employeeNumber' => $employeeNumber,
         ]);
     }
@@ -814,7 +814,7 @@ class HrmController extends Controller
             'staffLevels' => StaffLevel::orderBy('sort_order')->get(),
             'managers' => Employee::with('staffLevel')
                 ->where('id', '!=', $employee->id)
-                ->whereHas('staffLevel', fn ($q) => $q->whereIn('name', ['Managing Director', 'General Manager', 'Manager']))
+                ->whereHas('staffLevel', fn ($q) => $q->where('is_manager', true))
                 ->orderBy('first_name')
                 ->get(),
         ]);
