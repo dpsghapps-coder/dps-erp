@@ -11,7 +11,9 @@ return new class extends Migration
         Schema::create('departments', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->foreignId('manager_id')->nullable()->constrained('employees')->nullOnDelete();
+            // FK added below, once "employees" exists — departments and employees
+            // reference each other, so this can't be inline on either create().
+            $table->unsignedBigInteger('manager_id')->nullable();
             $table->timestamps();
         });
 
@@ -31,6 +33,10 @@ return new class extends Migration
             $table->string('phone', 30)->nullable();
             $table->string('emergency_contact')->nullable();
             $table->timestamps();
+        });
+
+        Schema::table('departments', function (Blueprint $table) {
+            $table->foreign('manager_id')->references('id')->on('employees')->nullOnDelete();
         });
 
         Schema::create('leave_requests', function (Blueprint $table) {
@@ -62,6 +68,9 @@ return new class extends Migration
     {
         Schema::dropIfExists('attendance_logs');
         Schema::dropIfExists('leave_requests');
+        Schema::table('departments', function (Blueprint $table) {
+            $table->dropForeign(['manager_id']);
+        });
         Schema::dropIfExists('employees');
         Schema::dropIfExists('departments');
     }

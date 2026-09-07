@@ -24,7 +24,8 @@ return new class extends Migration
                 $table->timestamp('date_deactivated')->nullable();
                 $table->timestamps();
 
-                $table->foreign('supplier_id')->references('id')->on('suppliers')->onDelete('set null');
+                // FK to suppliers added in 2024_01_06_000002_add_supplier_id_foreign_key_to_inventory_products_table
+                // — the suppliers table doesn't exist yet at this point in migration order.
             });
         }
 
