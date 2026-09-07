@@ -55,6 +55,15 @@ export default function ProformaShow() {
                     <span className={`text-xs font-medium px-3 py-1 rounded-full ${STATUS_COLORS[proforma?.status] || ''}`}>
                         {proforma?.status?.charAt(0).toUpperCase()}{proforma?.status?.slice(1)}
                     </span>
+                    {proforma?.deal ? (
+                        <span className="text-xs font-medium px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400">
+                            {proforma.deal.type === 'repeat_business' ? 'Sales Campaign' : 'New Lead'} · {proforma.deal.stage.replace(/_/g, ' ')}
+                        </span>
+                    ) : (
+                        <span className="text-xs font-medium px-3 py-1 rounded-full bg-slate-500/20 text-slate-400">
+                            Standalone (no deal)
+                        </span>
+                    )}
                 </div>
                 <div className="flex gap-3">
                     <Link href={`/crm/${client?.id}/proformas/${proforma?.id}/edit`} className="glass-button flex items-center gap-2 text-sm">

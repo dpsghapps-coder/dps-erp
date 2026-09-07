@@ -12,14 +12,29 @@ interface LineItem {
     unit_cost: number;
 }
 
+interface DealOption {
+    id: number;
+    type: string;
+    stage: string;
+    created_at: string;
+}
+
+const dealLabel = (deal: DealOption) => {
+    const type = deal.type === 'repeat_business' ? 'Sales Campaign' : 'New Lead';
+    const stage = deal.stage.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    const date = new Date(deal.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return `${type} — ${stage} (${date})`;
+};
+
 export default function ProformaEdit() {
-    const { client, proforma } = usePage().props as any;
+    const { client, proforma, deals } = usePage().props as any;
     const formatCurrency = useCurrency();
 
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, put, transform, processing, errors } = useForm({
         date: proforma?.date?.split('T')[0] || new Date().toISOString().split('T')[0],
         valid_until: proforma?.valid_until?.split('T')[0] || '',
         status: proforma?.status || 'draft',
+        deal_id: proforma?.deal_id ? String(proforma.deal_id) : '',
         items: (proforma?.items || []) as LineItem[],
         discount: proforma?.discount || 0,
         discount_type: proforma?.discount_type || 'flat',
@@ -60,6 +75,7 @@ export default function ProformaEdit() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        transform((formData) => ({ ...formData, deal_id: formData.deal_id || null }));
         put(`/crm/${client?.id}/proformas/${proforma?.id}`);
     };
 
@@ -149,6 +165,16 @@ export default function ProformaEdit() {
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Sales Rep</label>
                                     <input type="text" value={data.rep_name} onChange={(e) => setData('rep_name', e.target.value)} className="glass-input w-full" placeholder="Rep name" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Linked Deal</label>
+                                    <select value={data.deal_id} onChange={(e) => setData('deal_id', e.target.value)} className="glass-input w-full">
+                                        <option value="">No deal (standalone)</option>
+                                        {(deals as DealOption[])?.map((deal) => (
+                                            <option key={deal.id} value={deal.id}>{dealLabel(deal)}</option>
+                                        ))}
+                                    </select>
+                                    <p className="text-xs text-slate-400 mt-1">Ties this proforma to a specific sales cycle. Leave as standalone if it's not tied to a campaign.</p>
                                 </div>
                             </div>
                         </GlassCard>

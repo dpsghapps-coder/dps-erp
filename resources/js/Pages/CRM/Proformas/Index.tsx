@@ -73,6 +73,14 @@ export default function ProformaIndex() {
                                     <p className="text-xs text-slate-400 mb-2">{p.items.length} item{p.items.length !== 1 ? 's' : ''}</p>
                                 )}
 
+                                <p className="text-xs mb-2">
+                                    {p.deal ? (
+                                        <span className="text-indigo-400">{p.deal.type === 'repeat_business' ? 'Sales Campaign' : 'New Lead'} · {p.deal.stage.replace(/_/g, ' ')}</span>
+                                    ) : (
+                                        <span className="text-slate-500">Standalone</span>
+                                    )}
+                                </p>
+
                                 <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-between">
                                     <span className="text-lg font-semibold">{formatCurrency(p.total)}</span>
                                     <div className="flex gap-2">

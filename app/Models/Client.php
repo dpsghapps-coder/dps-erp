@@ -46,6 +46,8 @@ class Client extends Model
 
     public const TIERS = ['bronze', 'silver', 'gold', 'platinum'];
 
+    public const PHONE_REGEX = '/^0[0-9]{9}$/';
+
     public function contacts(): HasMany
     {
         return $this->hasMany(Contact::class);
@@ -91,8 +93,11 @@ class Client extends Model
         return ! is_null($this->first_converted_at);
     }
 
-    public function hasOpenDeal(): bool
+    public function hasOpenDeal(?string $type = null): bool
     {
-        return $this->deals()->whereIn('stage', Deal::OPEN_STAGES)->exists();
+        return $this->deals()
+            ->whereIn('stage', Deal::OPEN_STAGES)
+            ->when($type, fn ($q) => $q->where('type', $type))
+            ->exists();
     }
 }

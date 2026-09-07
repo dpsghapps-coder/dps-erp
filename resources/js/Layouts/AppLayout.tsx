@@ -1839,6 +1839,22 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                         <span className="font-medium">{item.name}</span>
                                     </Link>
                                 ))}
+                                <Link
+                                    href="/crm/proformas"
+                                    onClick={() => setProductsSlideUpOpen(false)}
+                                    className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+                                        currentPath.startsWith('/crm/proformas')
+                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo/25'
+                                            : 'text-slate-600 hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                        currentPath.startsWith('/crm/proformas') ? 'bg-white/20' : 'bg-slate-100'
+                                    }`}>
+                                        <Receipt className="w-5 h-5" />
+                                    </div>
+                                    <span className="font-medium">Proformas</span>
+                                </Link>
                             </div>
                             <div className="pb-8"></div>
                         </div>

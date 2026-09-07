@@ -30,7 +30,7 @@ class CrmController extends Controller
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:clients,email',
-            'phone' => ['nullable', 'string', 'max:10', 'regex:/^0[0-9]{9}$/'],
+            'phone' => ['nullable', 'string', 'max:10', 'regex:'.Client::PHONE_REGEX],
             'estimated_value' => 'nullable|numeric|min:0',
             'next_follow_up_at' => 'nullable|date',
             'create_lead' => 'nullable|boolean',
@@ -102,7 +102,7 @@ class CrmController extends Controller
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:clients,email,'.$client->id,
-            'phone' => ['nullable', 'string', 'max:10', 'regex:/^0[0-9]{9}$/'],
+            'phone' => ['nullable', 'string', 'max:10', 'regex:'.Client::PHONE_REGEX],
             'status' => 'nullable|in:'.implode(',', Client::TIERS),
             'industry' => 'nullable|string|max:100',
             'website' => 'nullable|url',
@@ -246,7 +246,7 @@ class CrmController extends Controller
             'branch' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:50',
             'job_title' => 'nullable|string|max:255',
-            'phone' => ['nullable', 'string', 'max:10', 'regex:/^0[0-9]{9}$/'],
+            'phone' => ['nullable', 'string', 'max:10', 'regex:'.Client::PHONE_REGEX],
         ]);
 
         $client->contacts()->create($validated);
@@ -262,7 +262,7 @@ class CrmController extends Controller
             'branch' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:50',
             'job_title' => 'nullable|string|max:255',
-            'phone' => ['nullable', 'string', 'max:10', 'regex:/^0[0-9]{9}$/'],
+            'phone' => ['nullable', 'string', 'max:10', 'regex:'.Client::PHONE_REGEX],
         ]);
 
         $contact->update($validated);

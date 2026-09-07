@@ -10,11 +10,12 @@ class DealController extends Controller
 {
     public function store(Client $client)
     {
-        if ($client->hasOpenDeal()) {
-            return back()->with('error', 'This client already has an active deal in the pipeline.');
+        $type = $client->isExistingClient() ? 'repeat_business' : 'new_business';
+
+        if ($client->hasOpenDeal($type)) {
+            return back()->with('error', 'This client already has an active '.($type === 'repeat_business' ? 'sales campaign' : 'lead').' in the pipeline.');
         }
 
-        $type = $client->isExistingClient() ? 'repeat_business' : 'new_business';
         $stage = $type === 'repeat_business' ? 'contacted' : 'new_lead';
 
         $client->deals()->create([
