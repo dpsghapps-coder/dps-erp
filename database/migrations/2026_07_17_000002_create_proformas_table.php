@@ -18,7 +18,10 @@ return new class extends Migration
             $table->date('valid_until')->nullable();
             $table->enum('status', ['draft', 'sent', 'accepted', 'rejected'])->default('draft');
 
-            $table->json('items')->default('[]');
+            // No ->default('[]') — MySQL rejects any default on JSON/BLOB/TEXT
+            // columns (MariaDB allows it since its JSON is just a checked
+            // LONGTEXT). Every insert path already provides items explicitly.
+            $table->json('items');
             $table->decimal('discount', 12, 2)->default(0);
             $table->enum('discount_type', ['percentage', 'flat'])->default('flat');
             $table->decimal('vat_rate', 5, 2)->default(20);
