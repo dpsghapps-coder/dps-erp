@@ -297,18 +297,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/procurement/goods/suppliers/{supplierPrice}', [GoodController::class, 'destroySupplierPrice'])->name('procurement.goods.suppliers.destroy');
     });
 
-    // Purchase Requests (must be before {po} wildcard)
-    Route::middleware('permission:pr.view')->group(function () use ($prCtrl) {
-        Route::get('/procurement/purchase-requests', [$prCtrl, 'index'])->name('procurement.purchase-requests.index');
-        Route::get('/procurement/purchase-requests/{purchaseRequest}', [$prCtrl, 'show'])->name('procurement.purchase-requests.show');
-    });
-
+    // Purchase Requests (must be before {po} wildcard, and /create before {purchaseRequest})
     Route::middleware('permission:pr.create')->group(function () use ($prCtrl) {
         Route::get('/procurement/purchase-requests/create', [$prCtrl, 'create'])->name('procurement.purchase-requests.create');
         Route::post('/procurement/purchase-requests', [$prCtrl, 'store'])->name('procurement.purchase-requests.store');
         Route::get('/procurement/purchase-requests/{purchaseRequest}/edit', [$prCtrl, 'edit'])->name('procurement.purchase-requests.edit');
         Route::put('/procurement/purchase-requests/{purchaseRequest}', [$prCtrl, 'update'])->name('procurement.purchase-requests.update');
         Route::post('/procurement/purchase-requests/{purchaseRequest}/submit', [$prCtrl, 'submit'])->name('procurement.purchase-requests.submit');
+    });
+
+    Route::middleware('permission:pr.view')->group(function () use ($prCtrl) {
+        Route::get('/procurement/purchase-requests', [$prCtrl, 'index'])->name('procurement.purchase-requests.index');
+        Route::get('/procurement/purchase-requests/{purchaseRequest}', [$prCtrl, 'show'])->name('procurement.purchase-requests.show');
     });
 
     Route::middleware('permission:pr.cancel')->group(function () use ($prCtrl) {
