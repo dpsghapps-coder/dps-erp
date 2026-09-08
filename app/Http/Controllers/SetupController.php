@@ -25,7 +25,6 @@ use Database\Seeders\RoleSeeder;
 use Database\Seeders\ServiceSeeder;
 use Database\Seeders\StudioSeeder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -148,8 +147,6 @@ class SetupController extends Controller
             return $admin;
         });
 
-        Auth::login($admin);
-
-        return redirect()->route('dashboard')->with('success', 'Setup complete — welcome to DPS-ERP!');
+        return redirect()->route('login')->with('status', 'Setup complete! Sign in with your new admin account to get started.');
     }
 }

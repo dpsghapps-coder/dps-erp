@@ -260,11 +260,18 @@ export default function Setup() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="relative min-h-screen overflow-hidden bg-white p-4 py-10 sm:py-16">
             <Head title="Set Up Your Business" />
-            <div className="w-full max-w-2xl">
+
+            <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                <div className="absolute -top-32 -left-24 h-96 w-96 rounded-full bg-[#8b0f0c]/10 blur-3xl" />
+                <div className="absolute -bottom-32 -right-24 h-96 w-96 rounded-full bg-[#8b0f0c]/10 blur-3xl" />
+            </div>
+
+            <div className="relative mx-auto w-full max-w-2xl">
                 <div className="text-center mb-6">
-                    <h1 className="text-2xl font-bold text-slate-900">Welcome to DPS-ERP</h1>
+                    <img src="/images/dp-logo.webp" alt="DP Solutions Gh." className="mx-auto h-20 w-auto" />
+                    <h1 className="mt-4 text-2xl font-bold text-slate-900">Welcome to DPS-ERP</h1>
                     <p className="text-slate-500 mt-1">Let's get your business set up.</p>
                 </div>
 
