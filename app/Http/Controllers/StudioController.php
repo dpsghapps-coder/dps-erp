@@ -45,6 +45,10 @@ class StudioController extends Controller
             return back()->withErrors(['client_id' => 'This client is greylisted and cannot receive new bookings.'])->withInput();
         }
 
+        if ($conflict = $this->findResourceConflict($validated['resource_ids'] ?? [], $validated['start_datetime'], $validated['end_datetime'])) {
+            return back()->withErrors(['resource_ids' => $conflict])->withInput();
+        }
+
         $booking = StudioBooking::create(array_merge($validated, [
             'booking_reference' => StudioBooking::generateBookingReference(),
             'created_by' => auth()->id(),
@@ -99,6 +103,10 @@ class StudioController extends Controller
             'resource_ids.*' => 'exists:studio_resources,id',
         ]);
 
+        if ($conflict = $this->findResourceConflict($validated['resource_ids'] ?? [], $validated['start_datetime'], $validated['end_datetime'], $booking->id)) {
+            return back()->withErrors(['resource_ids' => $conflict])->withInput();
+        }
+
         $booking->update($validated);
 
         if (isset($validated['resource_ids'])) {
@@ -113,5 +121,85 @@ class StudioController extends Controller
         $booking->delete();
 
         return redirect()->route('studio.index')->with('success', 'Booking deleted');
+    }
+
+    /**
+     * Returns a human-readable conflict message if any of the given resources
+     * are already booked (on a non-cancelled booking) during an overlapping
+     * time window, or null if there's no conflict.
+     */
+    private function findResourceConflict(array $resourceIds, string $start, string $end, ?int $excludeBookingId = null): ?string
+    {
+        if (empty($resourceIds)) {
+            return null;
+        }
+
+        $conflicting = StudioBooking::whereHas('resources', fn ($q) => $q->whereIn('studio_resources.id', $resourceIds))
+            ->where('status', '!=', 'cancelled')
+            ->when($excludeBookingId, fn ($q) => $q->where('id', '!=', $excludeBookingId))
+            ->where('start_datetime', '<', $end)
+            ->where('end_datetime', '>', $start)
+            ->with('resources')
+            ->get();
+
+        if ($conflicting->isEmpty()) {
+            return null;
+        }
+
+        $lines = $conflicting->map(function ($booking) use ($resourceIds) {
+            $names = $booking->resources->whereIn('id', $resourceIds)->pluck('name')->implode(', ');
+
+            return "{$names} — already booked for \"{$booking->title}\" ({$booking->booking_reference}) "
+                .$booking->start_datetime->format('M j, g:i A').' to '.$booking->end_datetime->format('M j, g:i A');
+        });
+
+        return $lines->implode(' | ');
+    }
+
+    public function resources()
+    {
+        return inertia('Studio/Resources', [
+            'resources' => StudioResource::orderBy('name')->get(),
+            'types' => StudioResource::TYPES,
+        ]);
+    }
+
+    public function storeResource(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:'.implode(',', StudioResource::TYPES),
+            'description' => 'nullable|string',
+            'is_available' => 'boolean',
+        ]);
+
+        StudioResource::create($validated);
+
+        return back()->with('success', 'Resource added');
+    }
+
+    public function updateResource(Request $request, StudioResource $resource)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:'.implode(',', StudioResource::TYPES),
+            'description' => 'nullable|string',
+            'is_available' => 'boolean',
+        ]);
+
+        $resource->update($validated);
+
+        return back()->with('success', 'Resource updated');
+    }
+
+    public function destroyResource(StudioResource $resource)
+    {
+        if ($resource->bookings()->exists()) {
+            return back()->withErrors(['resource' => 'Cannot delete a resource that has bookings — mark it unavailable instead.']);
+        }
+
+        $resource->delete();
+
+        return back()->with('success', 'Resource deleted');
     }
 }

@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge, EmptyState, Pagination } from '@/Components/ui';
 import { Head, usePage, Link } from '@inertiajs/react';
-import { Plus, Search, Calendar as CalendarIcon, Camera } from 'lucide-react';
+import { Plus, Search, Calendar as CalendarIcon, Camera, Settings } from 'lucide-react';
 import { useState } from 'react';
 
 const statusColors: Record<string, string> = {
@@ -28,13 +28,18 @@ export default function StudioIndex() {
         <AppLayout>
             <Head title="Studio" />
 
-            <PageHeader 
-                title="Studio" 
+            <PageHeader
+                title="Studio"
                 subtitle="Manage photo/video studio bookings"
                 action={
-                    <Link href="/studio/create" className="glass-button flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> New Booking
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link href="/studio/resources" className="glass-button-secondary flex items-center gap-2">
+                            <Settings className="w-4 h-4" /> Manage Resources
+                        </Link>
+                        <Link href="/studio/create" className="glass-button flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> New Booking
+                        </Link>
+                    </div>
                 }
             />
 

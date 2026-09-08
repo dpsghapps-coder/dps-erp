@@ -414,6 +414,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/studio', [StudioController::class, 'index'])->name('studio.index');
         Route::get('/studio/create', [StudioController::class, 'create'])->name('studio.create');
         Route::post('/studio', [StudioController::class, 'store'])->name('studio.store');
+
+        // Resource management (must be before {booking} wildcard)
+        Route::get('/studio/resources', [StudioController::class, 'resources'])->name('studio.resources.index');
+        Route::post('/studio/resources', [StudioController::class, 'storeResource'])->name('studio.resources.store');
+        Route::put('/studio/resources/{resource}', [StudioController::class, 'updateResource'])->name('studio.resources.update');
+        Route::delete('/studio/resources/{resource}', [StudioController::class, 'destroyResource'])->name('studio.resources.destroy');
+
         Route::get('/studio/{booking}', [StudioController::class, 'show'])->name('studio.show');
         Route::get('/studio/{booking}/edit', [StudioController::class, 'edit'])->name('studio.edit');
         Route::put('/studio/{booking}', [StudioController::class, 'update'])->name('studio.update');

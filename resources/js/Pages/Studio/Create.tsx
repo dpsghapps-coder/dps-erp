@@ -121,6 +121,9 @@ export default function StudioCreate() {
                         <GlassCard>
                             <h3 className="text-lg font-semibold mb-4">Resources</h3>
                             <p className="text-sm text-slate-400 mb-4">Select resources for this booking</p>
+                            {errors.resource_ids && (
+                                <p className="text-red-400 text-sm mb-4 bg-red-500/10 rounded-lg p-3">{errors.resource_ids}</p>
+                            )}
                             <div className="space-y-2">
                                 {(resources || []).map((resource: any) => (
                                     <label key={resource.id} className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-white/10">
