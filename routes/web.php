@@ -421,10 +421,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/studio/resources/{resource}', [StudioController::class, 'updateResource'])->name('studio.resources.update');
         Route::delete('/studio/resources/{resource}', [StudioController::class, 'destroyResource'])->name('studio.resources.destroy');
 
+        Route::put('/studio/deliverables/{deliverable}', [StudioController::class, 'updateDeliverable'])->name('studio.deliverables.update');
+        Route::delete('/studio/deliverables/{deliverable}', [StudioController::class, 'destroyDeliverable'])->name('studio.deliverables.destroy');
+
         Route::get('/studio/{booking}', [StudioController::class, 'show'])->name('studio.show');
         Route::get('/studio/{booking}/edit', [StudioController::class, 'edit'])->name('studio.edit');
         Route::put('/studio/{booking}', [StudioController::class, 'update'])->name('studio.update');
         Route::delete('/studio/{booking}', [StudioController::class, 'destroy'])->name('studio.destroy');
+        Route::post('/studio/{booking}/invoice', [StudioController::class, 'generateInvoice'])->name('studio.invoice');
+        Route::post('/studio/{booking}/deliverables', [StudioController::class, 'storeDeliverable'])->name('studio.deliverables.store');
     });
 
     // Finance Dashboard Route

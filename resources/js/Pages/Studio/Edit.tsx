@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import { Head, usePage, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import CrewPicker, { CrewMember } from '@/Components/Studio/CrewPicker';
 
 function toDatetimeLocal(value: string) {
     // <input type="datetime-local"> needs "YYYY-MM-DDTHH:mm", not a full ISO string.
@@ -9,7 +10,7 @@ function toDatetimeLocal(value: string) {
 }
 
 export default function StudioEdit() {
-    const { booking, clients, resources } = usePage().props as any;
+    const { booking, clients, resources, users } = usePage().props as any;
     const { data, setData, put, processing, errors } = useForm({
         title: booking.title || '',
         client_id: booking.client_id ? String(booking.client_id) : '',
@@ -18,6 +19,10 @@ export default function StudioEdit() {
         end_datetime: toDatetimeLocal(booking.end_datetime),
         notes: booking.notes || '',
         resource_ids: (booking.resources || []).map((r: any) => String(r.id)) as string[],
+        crew: (booking.crew || []).map((c: any) => ({ user_id: String(c.id), role_in_shoot: c.pivot?.role_in_shoot || '' })) as CrewMember[],
+        rate: booking.rate != null ? String(booking.rate) : '',
+        deposit_amount: booking.deposit_amount != null ? String(booking.deposit_amount) : '',
+        deposit_paid: Boolean(booking.deposit_paid),
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -126,6 +131,46 @@ export default function StudioEdit() {
                                 </div>
                             </div>
                         </GlassCard>
+
+                        <GlassCard>
+                            <h3 className="text-lg font-semibold mb-4">Pricing</h3>
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Rate</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={data.rate}
+                                        onChange={(e) => setData('rate', e.target.value)}
+                                        className="glass-input w-full"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Deposit Amount</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={data.deposit_amount}
+                                        onChange={(e) => setData('deposit_amount', e.target.value)}
+                                        className="glass-input w-full"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div className="md:col-span-2 flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="deposit_paid"
+                                        checked={data.deposit_paid}
+                                        onChange={(e) => setData('deposit_paid', e.target.checked)}
+                                        className="w-4 h-4 rounded"
+                                    />
+                                    <label htmlFor="deposit_paid" className="text-sm font-medium">Deposit collected</label>
+                                </div>
+                            </div>
+                        </GlassCard>
                     </div>
 
                     <div className="space-y-6">
@@ -151,6 +196,12 @@ export default function StudioEdit() {
                                     </label>
                                 ))}
                             </div>
+                        </GlassCard>
+
+                        <GlassCard>
+                            <h3 className="text-lg font-semibold mb-4">Crew</h3>
+                            <p className="text-sm text-slate-400 mb-4">Assign photographers or assistants to this shoot</p>
+                            <CrewPicker users={users || []} crew={data.crew} onChange={(crew) => setData('crew', crew)} />
                         </GlassCard>
 
                         <GlassCard>

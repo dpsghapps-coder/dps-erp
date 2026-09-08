@@ -2,9 +2,10 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import { Head, usePage, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
+import CrewPicker, { CrewMember } from '@/Components/Studio/CrewPicker';
 
 export default function StudioCreate() {
-    const { clients, resources } = usePage().props;
+    const { clients, resources, users } = usePage().props as any;
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         client_id: '',
@@ -13,6 +14,10 @@ export default function StudioCreate() {
         end_datetime: '',
         notes: '',
         resource_ids: [] as string[],
+        crew: [] as CrewMember[],
+        rate: '',
+        deposit_amount: '',
+        deposit_paid: false,
     });
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -106,12 +111,52 @@ export default function StudioCreate() {
 
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium mb-2">Notes</label>
-                                    <textarea 
+                                    <textarea
                                         value={data.notes}
                                         onChange={(e) => setData('notes', e.target.value)}
                                         className="glass-input w-full h-24"
                                         placeholder="Booking notes..."
                                     />
+                                </div>
+                            </div>
+                        </GlassCard>
+
+                        <GlassCard>
+                            <h3 className="text-lg font-semibold mb-4">Pricing</h3>
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Rate</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={data.rate}
+                                        onChange={(e) => setData('rate', e.target.value)}
+                                        className="glass-input w-full"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Deposit Amount</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={data.deposit_amount}
+                                        onChange={(e) => setData('deposit_amount', e.target.value)}
+                                        className="glass-input w-full"
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div className="md:col-span-2 flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="deposit_paid"
+                                        checked={data.deposit_paid}
+                                        onChange={(e) => setData('deposit_paid', e.target.checked)}
+                                        className="w-4 h-4 rounded"
+                                    />
+                                    <label htmlFor="deposit_paid" className="text-sm font-medium">Deposit collected</label>
                                 </div>
                             </div>
                         </GlassCard>
@@ -140,6 +185,12 @@ export default function StudioCreate() {
                                     </label>
                                 ))}
                             </div>
+                        </GlassCard>
+
+                        <GlassCard>
+                            <h3 className="text-lg font-semibold mb-4">Crew</h3>
+                            <p className="text-sm text-slate-400 mb-4">Assign photographers or assistants to this shoot</p>
+                            <CrewPicker users={users || []} crew={data.crew} onChange={(crew) => setData('crew', crew)} />
                         </GlassCard>
 
                         <GlassCard>

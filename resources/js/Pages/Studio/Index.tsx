@@ -1,22 +1,69 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge, EmptyState, Pagination } from '@/Components/ui';
-import { Head, usePage, Link } from '@inertiajs/react';
+import { Head, usePage, Link, router } from '@inertiajs/react';
 import { Plus, Search, Calendar as CalendarIcon, Camera, Settings } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { Calendar as BigCalendar, dateFnsLocalizer, Views, View } from 'react-big-calendar';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
+import 'react-big-calendar/lib/css/react-big-calendar.css';
 
-const statusColors: Record<string, string> = {
-    tentative: 'status-tentative',
-    confirmed: 'status-confirmed',
-    in_progress: 'status-in_progress',
-    completed: 'status-completed',
-    cancelled: 'status-cancelled',
+const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek: () => startOfWeek(new Date(), { weekStartsOn: 1 }),
+    getDay,
+    locales: {} as any,
+});
+
+const STATUS_COLORS: Record<string, string> = {
+    tentative: '#94a3b8',
+    confirmed: '#3b82f6',
+    in_progress: '#f59e0b',
+    completed: '#10b981',
+    cancelled: '#ef4444',
 };
 
+interface BookingEvent {
+    id: number;
+    title: string;
+    start: Date;
+    end: Date;
+    status: string;
+    booking: any;
+}
+
 export default function StudioIndex() {
-    const { bookings } = usePage().props;
+    const { bookings, calendarBookings } = usePage().props as any;
     const [view, setView] = useState<'calendar' | 'list'>('list');
+    const [calendarView, setCalendarView] = useState<View>(Views.MONTH);
+    const [calendarDate, setCalendarDate] = useState(new Date());
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+
+    const events: BookingEvent[] = useMemo(() => (calendarBookings || []).map((b: any) => ({
+        id: b.id,
+        title: b.title,
+        start: new Date(b.start_datetime),
+        end: new Date(b.end_datetime),
+        status: b.status,
+        booking: b,
+    })), [calendarBookings]);
+
+    const eventStyleGetter = useCallback((event: BookingEvent) => ({
+        style: {
+            backgroundColor: STATUS_COLORS[event.status] || '#6b7280',
+            borderRadius: '6px',
+            opacity: event.status === 'cancelled' ? 0.5 : 1,
+            color: 'white',
+            border: 'none',
+            fontSize: '12px',
+            padding: '2px 6px',
+        },
+    }), []);
+
+    const handleSelectEvent = useCallback((event: BookingEvent) => {
+        router.visit(`/studio/${event.id}`);
+    }, []);
 
     const filteredBookings = (bookings?.data || []).filter((b: any) => {
         const matchSearch = !search || b.title.toLowerCase().includes(search.toLowerCase()) || b.booking_reference.toLowerCase().includes(search.toLowerCase());
@@ -97,11 +144,23 @@ export default function StudioIndex() {
             </GlassCard>
 
             {view === 'calendar' ? (
-                <GlassCard>
-                    <div className="text-center py-12 text-slate-400">
-                        <CalendarIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                        <p>Calendar view coming soon</p>
-                        <p className="text-sm">Week/Month calendar will be available here</p>
+                <GlassCard className="overflow-hidden p-0">
+                    <div className="p-4" style={{ height: '650px' }}>
+                        <BigCalendar
+                            localizer={localizer}
+                            events={events}
+                            startAccessor="start"
+                            endAccessor="end"
+                            style={{ height: '100%' }}
+                            views={[Views.MONTH, Views.WEEK, Views.DAY, Views.AGENDA]}
+                            view={calendarView}
+                            date={calendarDate}
+                            onView={(v) => setCalendarView(v as View)}
+                            onNavigate={(date) => setCalendarDate(date)}
+                            eventPropGetter={eventStyleGetter}
+                            onSelectEvent={handleSelectEvent}
+                            popup
+                        />
                     </div>
                 </GlassCard>
             ) : (
