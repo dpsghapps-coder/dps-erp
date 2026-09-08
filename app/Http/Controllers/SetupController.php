@@ -104,7 +104,7 @@ class SetupController extends Controller
                 Setting::set('company_logo', $logoPath);
             }
             Setting::set('currency', $validated['currency']);
-            Setting::set('timezone', $validated['timezone'] ?? 'UTC');
+            Setting::set('timezone', $validated['timezone'] ?? 'Africa/Accra');
             Setting::set('date_format', $validated['date_format'] ?? 'Y-m-d');
             Setting::set('fiscal_year_start', $validated['fiscal_year_start'] ?? '01-01');
 

@@ -183,7 +183,7 @@ export default function Setup() {
         company_address: '',
         company_logo: null as File | null,
         currency: 'GHS',
-        timezone: 'UTC',
+        timezone: 'Africa/Accra',
         date_format: 'Y-m-d',
         fiscal_year_start: '01-01',
         uoms: [] as string[],
