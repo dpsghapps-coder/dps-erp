@@ -10,3 +10,11 @@ window.axios.interceptors.request.use((config) => {
     }
     return config;
 });
+
+// Service workers require a secure context (HTTPS or localhost) — silently
+// no-ops elsewhere (e.g. a plain-HTTP LAN IP), same as the Clipboard API.
+if ('serviceWorker' in navigator && window.isSecureContext) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+}

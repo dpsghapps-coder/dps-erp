@@ -1,0 +1,1 @@
+import{c as e}from"./createLucideIcon-9G_V4vLc.js";const t=[["rect",{x:"14",y:"4",width:"4",height:"16",rx:"1",key:"zuxfzm"}],["rect",{x:"6",y:"4",width:"4",height:"16",rx:"1",key:"1okwgv"}]],o=e("Pause",t);export{o as P};

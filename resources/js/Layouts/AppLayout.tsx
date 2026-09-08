@@ -163,6 +163,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const [showResults, setShowResults] = useState(false);
     const [isSearching, setIsSearching] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
     // A blocking inline script in app.blade.php already applies the correct
     // class to <html> before first paint, so read it here instead of
     // defaulting to 'light' (which would flash the wrong toggle icon).
@@ -191,6 +192,17 @@ export default function AppLayout({ children }: PropsWithChildren) {
         if (flash?.success) toast.success(flash.success);
         if (flash?.error) toast.error(flash.error);
     }, [flashKey]);
+
+    useEffect(() => {
+        const goOnline = () => setIsOnline(true);
+        const goOffline = () => setIsOnline(false);
+        window.addEventListener('online', goOnline);
+        window.addEventListener('offline', goOffline);
+        return () => {
+            window.removeEventListener('online', goOnline);
+            window.removeEventListener('offline', goOffline);
+        };
+    }, []);
 
     const currentPath = useMemo(() => typeof window !== 'undefined' ? window.location.pathname : '', []);
     const isCrmPage = currentPath.startsWith('/crm') && !currentPath.startsWith('/crm/proformas');
@@ -346,7 +358,14 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </svg>
                         )}
                     </button>
-                    <button 
+                    <div
+                        className="p-2 flex items-center justify-center"
+                        title={isOnline ? 'Online' : 'Offline'}
+                        aria-label={isOnline ? 'Online' : 'Offline'}
+                    >
+                        <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`} />
+                    </div>
+                    <button
                         onClick={() => setChatSidebarOpen(true)}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors relative"
                     >
@@ -1550,7 +1569,14 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </svg>
                         )}
                     </button>
-                    <button 
+                    <div
+                        className="p-2 flex items-center justify-center"
+                        title={isOnline ? 'Online' : 'Offline'}
+                        aria-label={isOnline ? 'Online' : 'Offline'}
+                    >
+                        <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`} />
+                    </div>
+                    <button
                         onClick={() => setChatSidebarOpen(true)}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative"
                     >
