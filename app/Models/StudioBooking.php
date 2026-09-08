@@ -18,6 +18,7 @@ class StudioBooking extends Model
         'order_id',
         'invoice_id',
         'client_id',
+        'shoot_type_id',
         'title',
         'description',
         'status',
@@ -52,6 +53,11 @@ class StudioBooking extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class, 'client_id');
+    }
+
+    public function shootType(): BelongsTo
+    {
+        return $this->belongsTo(StudioShootType::class, 'shoot_type_id');
     }
 
     public function createdBy(): BelongsTo

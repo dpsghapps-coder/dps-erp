@@ -421,6 +421,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/studio/resources/{resource}', [StudioController::class, 'updateResource'])->name('studio.resources.update');
         Route::delete('/studio/resources/{resource}', [StudioController::class, 'destroyResource'])->name('studio.resources.destroy');
 
+        Route::post('/studio/shoot-types', [StudioController::class, 'storeShootType'])->name('studio.shoot-types.store');
+        Route::put('/studio/shoot-types/{shootType}', [StudioController::class, 'updateShootType'])->name('studio.shoot-types.update');
+        Route::delete('/studio/shoot-types/{shootType}', [StudioController::class, 'destroyShootType'])->name('studio.shoot-types.destroy');
+
         Route::put('/studio/deliverables/{deliverable}', [StudioController::class, 'updateDeliverable'])->name('studio.deliverables.update');
         Route::delete('/studio/deliverables/{deliverable}', [StudioController::class, 'destroyDeliverable'])->name('studio.deliverables.destroy');
 

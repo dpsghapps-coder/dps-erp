@@ -95,6 +95,7 @@ class RoleSeeder extends Seeder
                 'permissions' => array_merge(
                     Permission::where('name', 'studio.view')->pluck('id')->toArray(),
                     Permission::where('name', 'studio.manage_bookings')->pluck('id')->toArray(),
+                    Permission::where('name', 'studio.crew_member')->pluck('id')->toArray(),
                     Permission::where('name', 'hrm.view')->pluck('id')->toArray(),
                 ),
             ],

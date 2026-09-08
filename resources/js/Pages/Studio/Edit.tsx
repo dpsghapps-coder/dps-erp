@@ -10,10 +10,11 @@ function toDatetimeLocal(value: string) {
 }
 
 export default function StudioEdit() {
-    const { booking, clients, resources, users } = usePage().props as any;
+    const { booking, clients, resources, users, shootTypes } = usePage().props as any;
     const { data, setData, put, processing, errors } = useForm({
         title: booking.title || '',
         client_id: booking.client_id ? String(booking.client_id) : '',
+        shoot_type_id: booking.shoot_type_id ? String(booking.shoot_type_id) : '',
         status: booking.status,
         start_datetime: toDatetimeLocal(booking.start_datetime),
         end_datetime: toDatetimeLocal(booking.end_datetime),
@@ -81,6 +82,20 @@ export default function StudioEdit() {
                                         ))}
                                     </select>
                                     {errors.client_id && <p className="text-red-400 text-sm mt-1">{errors.client_id}</p>}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Shoot Type</label>
+                                    <select
+                                        value={data.shoot_type_id}
+                                        onChange={(e) => setData('shoot_type_id', e.target.value)}
+                                        className="glass-input w-full"
+                                    >
+                                        <option value="">Select Shoot Type</option>
+                                        {(shootTypes || []).map((s: any) => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
 
                                 <div>

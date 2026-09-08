@@ -2,7 +2,7 @@ import { useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Trash2, Calendar, User, StickyNote, Camera, Users, Hash, Receipt, Package, Plus, ExternalLink, X } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Calendar, User, StickyNote, Camera, Users, Hash, Receipt, Package, Plus, ExternalLink, X, Tag } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 import Swal from 'sweetalert2';
 
@@ -184,6 +184,7 @@ export default function StudioShow() {
                         <div className="grid sm:grid-cols-2 gap-6">
                             <DetailRow label="Reference" icon={Hash}>{booking.booking_reference}</DetailRow>
                             <DetailRow label="Client" icon={User}>{booking.client?.company_name}</DetailRow>
+                            <DetailRow label="Shoot Type" icon={Tag}>{booking.shoot_type?.name}</DetailRow>
                             <DetailRow label="Starts" icon={Calendar}>{new Date(booking.start_datetime).toLocaleString()}</DetailRow>
                             <DetailRow label="Ends" icon={Calendar}>{new Date(booking.end_datetime).toLocaleString()}</DetailRow>
                         </div>

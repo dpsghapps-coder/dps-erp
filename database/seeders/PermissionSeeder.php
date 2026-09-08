@@ -101,6 +101,8 @@ class PermissionSeeder extends Seeder
             // Studio
             ['name' => 'studio.view', 'module' => 'studio', 'description' => 'View studio'],
             ['name' => 'studio.manage_bookings', 'module' => 'studio', 'description' => 'Manage bookings'],
+            ['name' => 'studio.crew_member', 'module' => 'studio', 'description' => 'Can be assigned as crew (photographer/assistant) on a booking'],
+            ['name' => 'studio.manage_pricing', 'module' => 'studio', 'description' => 'Add/edit shoot types and their prices'],
 
             // Marketing
             ['name' => 'marketing.view', 'module' => 'marketing', 'description' => 'View marketing module'],

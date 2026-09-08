@@ -5,10 +5,11 @@ import { ArrowLeft } from 'lucide-react';
 import CrewPicker, { CrewMember } from '@/Components/Studio/CrewPicker';
 
 export default function StudioCreate() {
-    const { clients, resources, users } = usePage().props as any;
+    const { clients, resources, users, shootTypes } = usePage().props as any;
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         client_id: '',
+        shoot_type_id: '',
         status: 'tentative',
         start_datetime: '',
         end_datetime: '',
@@ -23,6 +24,16 @@ export default function StudioCreate() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         post('/studio');
+    };
+
+    const handleShootTypeChange = (id: string) => {
+        const shootType = (shootTypes || []).find((s: any) => String(s.id) === id);
+        const shouldFillRate = !data.rate && shootType?.price != null;
+        setData((prev) => ({
+            ...prev,
+            shoot_type_id: id,
+            rate: shouldFillRate ? String(shootType.price) : prev.rate,
+        }));
     };
 
     const toggleResource = (id: string) => {
@@ -73,6 +84,20 @@ export default function StudioCreate() {
                                         <option value="">Select Client</option>
                                         {(clients || []).map((c: any) => (
                                             <option key={c.id} value={c.id}>{c.company_name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Shoot Type</label>
+                                    <select
+                                        value={data.shoot_type_id}
+                                        onChange={(e) => handleShootTypeChange(e.target.value)}
+                                        className="glass-input w-full"
+                                    >
+                                        <option value="">Select Shoot Type</option>
+                                        {(shootTypes || []).map((s: any) => (
+                                            <option key={s.id} value={s.id}>{s.name}</option>
                                         ))}
                                     </select>
                                 </div>
