@@ -330,7 +330,7 @@ export default function DecisionShow({ decision, employees }: Props) {
                                                             ))}
                                                         </div>
                                                     )}
-                                                    <ProgressUpdateForm actionItemId={item.id} decisionId={decision.id} />
+                                                    <ProgressUpdateForm actionItemId={item.id} />
                                                 </div>
                                             )}
                                         </div>
@@ -419,7 +419,7 @@ export default function DecisionShow({ decision, employees }: Props) {
     );
 }
 
-function ProgressUpdateForm({ actionItemId, decisionId }: { actionItemId: number; decisionId: number }) {
+function ProgressUpdateForm({ actionItemId }: { actionItemId: number }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         comment: '',
         progress: 0,
@@ -427,7 +427,7 @@ function ProgressUpdateForm({ actionItemId, decisionId }: { actionItemId: number
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(`/management/decisions/${decisionId}/action-items/${actionItemId}/progress`, {
+        post(`/management/action-items/${actionItemId}/updates`, {
             onSuccess: () => reset(),
         });
     };
