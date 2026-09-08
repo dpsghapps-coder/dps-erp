@@ -17,6 +17,7 @@ use App\Http\Controllers\Finance\LedgerController;
 use App\Http\Controllers\Finance\ReportController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HelpController;
+use App\Http\Controllers\HRM\EmployeeInviteController;
 use App\Http\Controllers\HRM\SettingController;
 use App\Http\Controllers\HrmController;
 use App\Http\Controllers\Inventory\InventoryController;
@@ -32,6 +33,7 @@ use App\Http\Controllers\Management\ReviewController;
 use App\Http\Controllers\Marketing\CampaignController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfficeIssueReportController;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderReportController;
 use App\Http\Controllers\Procurement\GoodController;
@@ -54,6 +56,12 @@ use Inertia\Inertia;
 
 Route::get('/setup', [SetupController::class, 'show'])->name('setup');
 Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
+
+// Public employee self-onboarding form — accessed via a tokenized link, no login required.
+Route::middleware('throttle:30,1')->group(function () {
+    Route::get('/onboarding/{token}', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('/onboarding/{token}', [OnboardingController::class, 'store'])->name('onboarding.store');
+});
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -387,6 +395,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/hrm/settings/staff-levels/{staffLevel}/edit', [SettingController::class, 'editStaffLevel'])->name('hrm.settings.staff-levels.edit');
         Route::put('/hrm/settings/staff-levels/{staffLevel}', [SettingController::class, 'updateStaffLevel'])->name('hrm.settings.staff-levels.update');
         Route::delete('/hrm/settings/staff-levels/{staffLevel}', [SettingController::class, 'destroyStaffLevel'])->name('hrm.settings.staff-levels.destroy');
+
+        // Employee self-onboarding invites (must be before {employee} wildcard)
+        Route::get('/hrm/invites', [EmployeeInviteController::class, 'index'])->name('hrm.invites.index');
+        Route::post('/hrm/invites', [EmployeeInviteController::class, 'store'])->name('hrm.invites.store');
+        Route::delete('/hrm/invites/{invite}', [EmployeeInviteController::class, 'destroy'])->name('hrm.invites.destroy');
+        Route::get('/hrm/invites/{invite}/review', [EmployeeInviteController::class, 'review'])->name('hrm.invites.review');
+        Route::post('/hrm/invites/{invite}/approve', [EmployeeInviteController::class, 'approve'])->name('hrm.invites.approve');
 
         Route::get('/hrm/{employee}', [HrmController::class, 'show'])->name('hrm.show');
         Route::get('/hrm/{employee}/edit', [HrmController::class, 'edit'])->name('hrm.edit');

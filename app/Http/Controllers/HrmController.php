@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AttendanceLog;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\EmployeeInvite;
 use App\Models\EmploymentType;
 use App\Models\Holiday;
 use App\Models\LeaveRequest;
@@ -193,6 +194,10 @@ class HrmController extends Controller
             'employees' => $employees,
             'departments' => $departments,
             'isManager' => $isManager,
+            'inviteLink' => session('inviteLink'),
+            'pendingApplicationsCount' => $isManager
+                ? EmployeeInvite::whereNotNull('submitted_at')->whereNull('approved_at')->count()
+                : 0,
         ]);
     }
 

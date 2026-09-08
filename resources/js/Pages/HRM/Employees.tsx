@@ -2,23 +2,25 @@ import { useState, useEffect } from 'react';
 import { usePage } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, EmptyState, Pagination, StatusChips } from '@/Components/ui';
-import { SlideDrawer } from '@/Components/HRM';
+import { SlideDrawer, InviteEmployeeModal } from '@/Components/HRM';
 import { Head, Link } from '@inertiajs/react';
 import { useCurrency } from '@/Utils/currency';
 import WhatsAppLink from '@/Components/WhatsAppLink';
-import { 
-    Search, 
-    Grid, 
-    List as ListIcon, 
-    Plus, 
-    User, 
-    Mail, 
-    Phone, 
+import {
+    Search,
+    Grid,
+    List as ListIcon,
+    Plus,
+    User,
+    Mail,
+    Phone,
     Calendar,
     Briefcase,
     Building,
     ChevronRight,
-    Pencil
+    Pencil,
+    UserPlus,
+    ClipboardList
 } from 'lucide-react';
 
 export default function HrmEmployees() {
@@ -29,6 +31,7 @@ export default function HrmEmployees() {
     const departmentsData = (props as any)?.departments;
     const departmentsProp = departmentsData || [];
     const isManager = Boolean((props as any)?.isManager);
+    const pendingApplicationsCount = Number((props as any)?.pendingApplicationsCount || 0);
 
     const [employees, setEmployees] = useState(employeesList);
     const [view, setView] = useState<'grid' | 'list'>('grid');
@@ -36,6 +39,7 @@ export default function HrmEmployees() {
     const [departmentFilter, setDepartmentFilter] = useState('all');
     const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
     useEffect(() => {
         let filtered = [...employeesList];
@@ -83,14 +87,27 @@ export default function HrmEmployees() {
                 ))}
             </div>
 
-            <PageHeader 
-                title="Employee Directory" 
+            <PageHeader
+                title="Employee Directory"
                 subtitle={`${employees.length} employees`}
                 action={
                     isManager ? (
-                        <Link href="/hrm/create" className="glass-button flex items-center gap-2">
-                            <Plus className="w-4 h-4" /> Add Employee
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            <Link href="/hrm/invites" className="glass-button-secondary flex items-center gap-2">
+                                <ClipboardList className="w-4 h-4" /> Applications
+                                {pendingApplicationsCount > 0 && (
+                                    <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full bg-amber-500 text-white text-xs font-semibold">
+                                        {pendingApplicationsCount}
+                                    </span>
+                                )}
+                            </Link>
+                            <button onClick={() => setInviteModalOpen(true)} className="glass-button-secondary flex items-center gap-2">
+                                <UserPlus className="w-4 h-4" /> Invite Employee
+                            </button>
+                            <Link href="/hrm/create" className="glass-button flex items-center gap-2">
+                                <Plus className="w-4 h-4" /> Add Employee
+                            </Link>
+                        </div>
                     ) : undefined
                 }
             />
@@ -352,6 +369,8 @@ export default function HrmEmployees() {
                     </div>
                 )}
             </SlideDrawer>
+
+            <InviteEmployeeModal isOpen={inviteModalOpen} onClose={() => setInviteModalOpen(false)} />
         </AppLayout>
     );
 }

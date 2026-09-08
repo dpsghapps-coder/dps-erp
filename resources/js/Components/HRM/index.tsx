@@ -6,3 +6,4 @@ export { TrendChart } from './TrendChart';
 export { TeamCalendar } from './TeamCalendar';
 export { RequestModal } from './RequestModal';
 export { AddHolidayModal } from './AddHolidayModal';
+export { InviteEmployeeModal } from './InviteEmployeeModal';

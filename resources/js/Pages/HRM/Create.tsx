@@ -5,26 +5,29 @@ import { ArrowLeft, Camera } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 export default function HrmCreate() {
-    const { departments, employmentTypes, staffLevels, managers, employeeNumber } = usePage().props as any;
+    const { departments, employmentTypes, staffLevels, managers, employeeNumber, invite } = usePage().props as any;
+    const isReview = Boolean(invite);
     const { data, setData, post, processing, errors } = useForm({
         employee_number: employeeNumber || '',
-        first_name: '',
-        last_name: '',
-        email: '',
+        first_name: invite?.first_name || '',
+        last_name: invite?.last_name || '',
+        email: invite?.email || '',
         department_id: '',
         staff_level_id: '',
         supervising_manager_id: '',
         employment_type_id: '',
         job_title: '',
         salary: '',
-        mobile_1: '',
-        mobile_2: '',
-        emergency_person: '',
+        mobile_1: invite?.mobile_1 || '',
+        mobile_2: invite?.mobile_2 || '',
+        emergency_person: invite?.emergency_person || '',
         pay_frequency: '',
         date_hired: '',
         avatar: null as File | null,
     });
-    const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+    const [avatarPreview, setAvatarPreview] = useState<string | null>(
+        invite?.avatar ? `/storage/${invite.avatar}` : null
+    );
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,20 +42,27 @@ export default function HrmCreate() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post('/hrm', data, { forceFormData: true });
+        if (isReview) {
+            router.post(`/hrm/invites/${invite.id}/approve`, data, { forceFormData: true });
+        } else {
+            router.post('/hrm', data, { forceFormData: true });
+        }
     };
 
     return (
         <AppLayout>
-            <Head title="Add Employee" />
+            <Head title={isReview ? 'Review Application' : 'Add Employee'} />
 
             <div className="mb-6">
-                <Link href="/hrm" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
-                    <ArrowLeft className="w-4 h-4" /> Back to HRM
+                <Link href={isReview ? '/hrm/invites' : '/hrm'} className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                    <ArrowLeft className="w-4 h-4" /> Back to {isReview ? 'Applications' : 'HRM'}
                 </Link>
             </div>
 
-            <PageHeader title="Add Employee" subtitle="Create a new employee record" />
+            <PageHeader
+                title={isReview ? 'Review Application' : 'Add Employee'}
+                subtitle={isReview ? 'Applicant-submitted details are pre-filled below — complete the rest to create the employee record' : 'Create a new employee record'}
+            />
 
             <form onSubmit={handleSubmit}>
                 <GlassCard>
@@ -266,9 +276,9 @@ export default function HrmCreate() {
                     </div>
 
                     <div className="flex justify-end gap-4 mt-6 pt-6 border-t border-slate-200 dark:border-white/10">
-                        <Link href="/hrm" className="glass-button">Cancel</Link>
+                        <Link href={isReview ? '/hrm/invites' : '/hrm'} className="glass-button">Cancel</Link>
                         <button type="submit" disabled={processing} className="glass-button">
-                            {processing ? 'Creating...' : 'Create Employee'}
+                            {processing ? 'Creating...' : isReview ? 'Approve & Create Employee' : 'Create Employee'}
                         </button>
                     </div>
                 </GlassCard>
