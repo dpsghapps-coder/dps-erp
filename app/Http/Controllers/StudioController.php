@@ -66,11 +66,21 @@ class StudioController extends Controller
 
     public function edit(StudioBooking $booking)
     {
-        $clients = Client::where('is_greylisted', false)->get();
-        $resources = StudioResource::where('is_available', true)->get();
+        $booking->load('resources');
+
+        // Include the booking's current client/resources even if they've since
+        // been greylisted or marked unavailable, so editing doesn't silently
+        // drop them from the form (and from the record on save).
+        $clients = Client::where('is_greylisted', false)
+            ->orWhere('id', $booking->client_id)
+            ->get();
+
+        $resources = StudioResource::where('is_available', true)
+            ->orWhereIn('id', $booking->resources->pluck('id'))
+            ->get();
 
         return inertia('Studio/Edit', [
-            'booking' => $booking->load('resources'),
+            'booking' => $booking,
             'clients' => $clients,
             'resources' => $resources,
         ]);
