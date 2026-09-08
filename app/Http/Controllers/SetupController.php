@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Department;
+use App\Models\EmploymentType;
 use App\Models\ProductCategory;
 use App\Models\Role;
 use App\Models\Setting;
@@ -72,6 +73,8 @@ class SetupController extends Controller
             'categories.*' => 'string|max:100',
             'departments' => 'nullable|array',
             'departments.*' => 'string|max:100',
+            'employment_types' => 'nullable|array',
+            'employment_types.*' => 'string|max:100',
         ]);
 
         $logoPath = $request->hasFile('company_logo')
@@ -133,6 +136,10 @@ class SetupController extends Controller
 
                 foreach ($validated['departments'] ?? [] as $department) {
                     Department::firstOrCreate(['name' => $department]);
+                }
+
+                foreach ($validated['employment_types'] ?? [] as $employmentType) {
+                    EmploymentType::firstOrCreate(['name' => $employmentType]);
                 }
             }
 

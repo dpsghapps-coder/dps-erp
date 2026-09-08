@@ -32,10 +32,11 @@ const UOM_GROUPS: { group: string; options: string[] }[] = [
 ];
 
 const STANDARD_DEPARTMENTS = [
-    'Sales & Marketing', 'Design / Creative', 'Production', 'Procurement',
-    'Finance / Accounts', 'Human Resources', 'Customer Service', 'Administration',
-    'Warehouse / Inventory', 'Quality Control', 'IT / Systems', 'Management',
+    'Management', 'Finance/Administration', 'Production',
+    'Customer Service', 'Sales', 'Marketing',
 ];
+
+const STANDARD_EMPLOYMENT_TYPES = ['Full Time', 'Part Time', 'Contract', 'Internship'];
 
 function SelectableChips({ label, hint, groups, items, onToggle, onAdd, onRemove, placeholder }: {
     label: string;
@@ -188,6 +189,7 @@ export default function Setup() {
         uoms: [] as string[],
         categories: [] as string[],
         departments: [] as string[],
+        employment_types: [] as string[],
     });
 
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -225,7 +227,7 @@ export default function Setup() {
         if (data.data_mode === 'clean') {
             base.push(
                 { key: 'catalog', label: 'Catalog Basics', icon: Package },
-                { key: 'departments', label: 'Departments', icon: Users },
+                { key: 'departments', label: 'Structure', icon: Users },
             );
         }
         base.push({ key: 'review', label: 'Finish', icon: CheckCircle2 });
@@ -463,9 +465,11 @@ export default function Setup() {
                         )}
 
                         {current === 'departments' && (
-                            <div>
-                                <h2 className="text-lg font-semibold mb-1">Departments</h2>
-                                <p className="text-sm text-slate-500 mb-4">Optional — needed before adding employees in HRM. You can add these later too.</p>
+                            <div className="space-y-6">
+                                <div>
+                                    <h2 className="text-lg font-semibold mb-1">Departments & Employment Types</h2>
+                                    <p className="text-sm text-slate-500 mb-4">Optional — needed before adding employees in HRM. You can add these later too.</p>
+                                </div>
                                 <SelectableChips
                                     label="Departments"
                                     hint="Select the ones you use, or add your own below."
@@ -475,6 +479,16 @@ export default function Setup() {
                                     onAdd={(v) => setData('departments', [...data.departments, v])}
                                     onRemove={(i) => setData('departments', data.departments.filter((_, idx) => idx !== i))}
                                     placeholder="Add a custom department"
+                                />
+                                <SelectableChips
+                                    label="Employment Types"
+                                    hint="Select the ones you use, or add your own below."
+                                    groups={[{ group: 'Standard Employment Types', options: STANDARD_EMPLOYMENT_TYPES }]}
+                                    items={data.employment_types}
+                                    onToggle={(v) => setData('employment_types', data.employment_types.includes(v) ? data.employment_types.filter((i) => i !== v) : [...data.employment_types, v])}
+                                    onAdd={(v) => setData('employment_types', [...data.employment_types, v])}
+                                    onRemove={(i) => setData('employment_types', data.employment_types.filter((_, idx) => idx !== i))}
+                                    placeholder="Add a custom employment type"
                                 />
                             </div>
                         )}
@@ -493,6 +507,7 @@ export default function Setup() {
                                             <div className="flex justify-between"><span className="text-slate-500">UOMs</span><span className="font-medium">{data.uoms.length ? data.uoms.join(', ') : '—'}</span></div>
                                             <div className="flex justify-between"><span className="text-slate-500">Categories</span><span className="font-medium">{data.categories.length ? data.categories.join(', ') : '—'}</span></div>
                                             <div className="flex justify-between"><span className="text-slate-500">Departments</span><span className="font-medium">{data.departments.length ? data.departments.join(', ') : '—'}</span></div>
+                                            <div className="flex justify-between"><span className="text-slate-500">Employment Types</span><span className="font-medium">{data.employment_types.length ? data.employment_types.join(', ') : '—'}</span></div>
                                         </>
                                     )}
                                 </div>
