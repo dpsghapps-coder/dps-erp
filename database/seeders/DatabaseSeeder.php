@@ -38,5 +38,16 @@ class DatabaseSeeder extends Seeder
         $this->call(HrmSeeder::class);
         $this->call(PurchaseRequestSeeder::class);
         $this->call(DecisionHubSeeder::class);
+
+        $this->call(ServiceSeeder::class);
+        $this->call(ProductServiceSeeder::class);
+        $this->call(OrderSeeder::class);
+        $this->call(ProductionSeeder::class);
+        $this->call(MarketingSeeder::class);
+        $this->call(ChatSeeder::class);
+        $this->call(StudioSeeder::class);
+        $this->call(ChartOfAccountsSeeder::class);
+        $this->call(FinanceSeeder::class);
+        $this->call(MiscMockDataSeeder::class);
     }
 }

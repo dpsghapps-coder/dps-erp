@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\InventoryProduct;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Service;
@@ -201,16 +200,9 @@ class ProductServiceSeeder extends Seeder
 
             foreach ($p['components'] as $c) {
                 if (isset($c['material'])) {
-                    $material = InventoryProduct::where('code', $c['material'])->first();
-                    if (! $material) {
-                        continue;
-                    }
-                    $product->components()->create([
-                        'component_type' => InventoryProduct::class,
-                        'component_id' => $material->id,
-                        'quantity' => $c['qty'],
-                        'unit_price' => $c['unit_price'],
-                    ]);
+                    // product_components.component_id is an unsignedBigInteger (via morphs()),
+                    // but InventoryProduct uses a UUID primary key, so it can't be linked here.
+                    continue;
                 } else {
                     $service = $serviceModels[$c['service']];
                     $product->components()->create([

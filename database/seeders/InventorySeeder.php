@@ -75,9 +75,10 @@ class InventorySeeder extends Seeder
         ];
 
         DB::table('stocks')->delete();
-        foreach ($products as $product) {
+        foreach ($products as $i => $product) {
             $productId = Str::uuid()->toString();
             $product['id'] = $productId;
+            $product['code'] = 'MAT-'.str_pad((string) ($i + 1), 5, '0', STR_PAD_LEFT);
             $product['created_at'] = now();
             $product['updated_at'] = now();
             $product['date_deactivated'] = $product['item_status'] === 'Disabled' ? now() : null;
