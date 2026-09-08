@@ -1,15 +1,108 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, DataTable } from '@/Components/ui';
 import { Head, useForm, usePage, router, Link } from '@inertiajs/react';
-import { Plus, Trash2, Pencil } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Plus, Trash2, Pencil, Save } from 'lucide-react';
 import Swal from 'sweetalert2';
 
+function LeaveTypeMatrix({ leaveTypes, leaveTypeNames, staffLevels }: { leaveTypes: any[]; leaveTypeNames: string[]; staffLevels: any[] }) {
+    const initialMatrix = useMemo(() => {
+        const m: Record<number, Record<string, string>> = {};
+        staffLevels.forEach((s: any) => {
+            m[s.id] = {};
+            leaveTypeNames.forEach((name) => { m[s.id][name] = ''; });
+        });
+        leaveTypes.forEach((lt: any) => {
+            if (m[lt.staff_level_id]) {
+                m[lt.staff_level_id][lt.name] = String(lt.days_per_year);
+            }
+        });
+        return m;
+    }, [leaveTypes, leaveTypeNames, staffLevels]);
+
+    const [matrix, setMatrix] = useState(initialMatrix);
+    const [saving, setSaving] = useState(false);
+    const errors = (usePage().props as any).errors || {};
+
+    const setCell = (staffLevelId: number, name: string, value: string) => {
+        setMatrix((prev) => ({
+            ...prev,
+            [staffLevelId]: { ...prev[staffLevelId], [name]: value },
+        }));
+    };
+
+    const save = () => {
+        const entries: { staff_level_id: number; name: string; days_per_year: number | null }[] = [];
+        staffLevels.forEach((s: any) => {
+            leaveTypeNames.forEach((name) => {
+                const raw = matrix[s.id]?.[name] ?? '';
+                entries.push({
+                    staff_level_id: s.id,
+                    name,
+                    days_per_year: raw === '' ? null : parseInt(raw, 10),
+                });
+            });
+        });
+
+        setSaving(true);
+        router.post('/hrm/settings/leave-types/matrix', { entries }, {
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: () => setSaving(false),
+        });
+    };
+
+    return (
+        <div>
+            <div className="overflow-x-auto -mx-2 px-2">
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="border-b border-slate-200 dark:border-white/10">
+                            <th className="text-left py-2 pr-3 font-medium text-slate-500">Staff Level</th>
+                            {leaveTypeNames.map((name) => (
+                                <th key={name} className="text-left py-2 px-2 font-medium text-slate-500">{name}</th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {staffLevels.map((s: any) => (
+                            <tr key={s.id} className="border-b border-slate-100 dark:border-white/5">
+                                <td className="py-2 pr-3 font-medium whitespace-nowrap">{s.name}</td>
+                                {leaveTypeNames.map((name) => (
+                                    <td key={name} className="py-2 px-2">
+                                        <input
+                                            type="number"
+                                            min={0}
+                                            placeholder="—"
+                                            className="glass-input w-20"
+                                            value={matrix[s.id]?.[name] ?? ''}
+                                            onChange={(e) => setCell(s.id, name, e.target.value)}
+                                        />
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                        {staffLevels.length === 0 && (
+                            <tr><td colSpan={leaveTypeNames.length + 1} className="py-4 text-center text-slate-400">Add a staff level first.</td></tr>
+                        )}
+                    </tbody>
+                </table>
+            </div>
+            {errors.entries && <p className="text-red-500 text-xs mt-3">{errors.entries}</p>}
+            <div className="flex justify-end mt-4">
+                <button onClick={save} disabled={saving || staffLevels.length === 0} className="glass-button flex items-center gap-2">
+                    <Save className="w-4 h-4" /> {saving ? 'Saving...' : 'Save Leave Types'}
+                </button>
+            </div>
+        </div>
+    );
+}
+
 export default function HrmSettingsIndex() {
-    const { departments, employmentTypes, leaveTypes, staffLevels } = usePage().props as any;
+    const { departments, employmentTypes, leaveTypes, leaveTypeNames, staffLevels } = usePage().props as any;
 
     const deptForm = useForm({ name: '' });
     const empTypeForm = useForm({ name: '' });
-    const leaveTypeForm = useForm({ name: '', staff_level_id: '', days_per_year: '' });
     const staffLevelForm = useForm({ name: '' });
 
     const handleDelete = (url: string, name: string) => {
@@ -94,40 +187,13 @@ export default function HrmSettingsIndex() {
                         ) }
                     ]} data={staffLevels} />
                 </GlassCard>
-
-                <GlassCard><div className="flex justify-between items-center mb-2"><h2 className="text-lg font-semibold">Leave Types</h2><span className="text-sm text-gray-500">{leaveTypes.length} items</span></div>
-                    <p className="text-xs text-gray-500 mb-3">Each leave type is set per staff level — e.g. Annual leave can be 15 days for Junior and 25 days for Manager.</p>
-                    <form onSubmit={(e) => { e.preventDefault(); leaveTypeForm.post('/hrm/settings/leave-types', { onSuccess: () => leaveTypeForm.reset() }); }}>
-                        <div className="space-y-2 mb-4">
-                            <select className="glass-input w-full" value={leaveTypeForm.data.name} onChange={e => leaveTypeForm.setData('name', e.target.value)}>
-                                <option value="">Select Leave Type</option>
-                                <option value="Annual">Annual</option>
-                                <option value="Sick">Sick</option>
-                                <option value="Emergency">Emergency</option>
-                            </select>
-                            <div className="flex gap-2">
-                                <select className="glass-input flex-1" value={leaveTypeForm.data.staff_level_id} onChange={e => leaveTypeForm.setData('staff_level_id', e.target.value)}>
-                                    <option value="">Select Staff Level</option>
-                                    {staffLevels.map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                </select>
-                                <input type="number" className="glass-input w-24" placeholder="Days" value={leaveTypeForm.data.days_per_year} onChange={e => leaveTypeForm.setData('days_per_year', e.target.value)} />
-                                <button className="glass-button" disabled={!leaveTypeForm.data.name || !leaveTypeForm.data.staff_level_id}><Plus className="w-4 h-4" /></button>
-                            </div>
-                        </div>
-                    </form>
-                    <DataTable columns={[
-                        { header: 'Name', key: 'name' },
-                        { header: 'Staff Level', render: (l: any) => l.staff_level?.name || '-' },
-                        { header: 'Days', key: 'days_per_year' },
-                        { header: 'Actions', className: 'text-right', render: (lt: any) => (
-                            <div className="flex items-center justify-end gap-3">
-                                <Link href={`/hrm/settings/leave-types/${lt.id}/edit`}><Pencil className="w-4 h-4 text-slate-400 hover:text-slate-700" /></Link>
-                                <button onClick={() => handleDelete(`/hrm/settings/leave-types/${lt.id}`, lt.name)}><Trash2 className="w-4 h-4 text-red-500" /></button>
-                            </div>
-                        ) }
-                    ]} data={leaveTypes} />
-                </GlassCard>
             </div>
+
+            <GlassCard className="mt-6">
+                <div className="flex justify-between items-center mb-2"><h2 className="text-lg font-semibold">Leave Types</h2><span className="text-sm text-gray-500">{leaveTypes.length} items</span></div>
+                <p className="text-xs text-gray-500 mb-3">Set days per year for each leave type, per staff level — fill in a whole row (e.g. Manager) at once, then Save.</p>
+                <LeaveTypeMatrix leaveTypes={leaveTypes} leaveTypeNames={leaveTypeNames} staffLevels={staffLevels} />
+            </GlassCard>
         </AppLayout>
     );
 }

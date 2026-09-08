@@ -19,6 +19,7 @@ class SettingController extends Controller
             'departments' => Department::all(),
             'employmentTypes' => EmploymentType::all(),
             'leaveTypes' => LeaveType::with('staffLevel')->get(),
+            'leaveTypeNames' => LeaveType::TYPES,
             'staffLevels' => StaffLevel::orderBy('sort_order')->get(),
         ]);
     }
@@ -61,26 +62,6 @@ class SettingController extends Controller
         return back()->with('success', 'Employment type updated');
     }
 
-    // Edit Leave Type
-    public function editLeaveType(LeaveType $leaveType)
-    {
-        return inertia('HRM/Settings/EditLeaveType', [
-            'leaveType' => $leaveType,
-            'staffLevels' => StaffLevel::orderBy('sort_order')->get(),
-        ]);
-    }
-
-    public function updateLeaveType(Request $request, LeaveType $leaveType)
-    {
-        $leaveType->update($request->validate([
-            'name' => 'required|in:'.implode(',', LeaveType::TYPES).'|unique:leave_types,name,'.$leaveType->id.',id,staff_level_id,'.$request->input('staff_level_id'),
-            'staff_level_id' => 'required|exists:staff_levels,id',
-            'days_per_year' => 'required|integer|min:0',
-        ]));
-
-        return back()->with('success', 'Leave type updated');
-    }
-
     public function storeDepartment(Request $request)
     {
         Department::create($request->validate(['name' => 'required|string|max:255']));
@@ -95,15 +76,56 @@ class SettingController extends Controller
         return back()->with('success', 'Employment type created');
     }
 
-    public function storeLeaveType(Request $request)
+    /**
+     * Bulk upsert leave-type allowances from the matrix (staff level x leave
+     * type name). A blank days_per_year deletes the corresponding entry —
+     * this is how a cell gets "unset" in the grid.
+     */
+    public function storeLeaveTypeMatrix(Request $request)
     {
-        LeaveType::create($request->validate([
-            'name' => 'required|in:'.implode(',', LeaveType::TYPES).'|unique:leave_types,name,NULL,id,staff_level_id,'.$request->input('staff_level_id'),
-            'staff_level_id' => 'required|exists:staff_levels,id',
-            'days_per_year' => 'required|integer|min:0',
-        ]));
+        $validated = $request->validate([
+            'entries' => 'required|array',
+            'entries.*.staff_level_id' => 'required|exists:staff_levels,id',
+            'entries.*.name' => 'required|in:'.implode(',', LeaveType::TYPES),
+            'entries.*.days_per_year' => 'nullable|integer|min:0',
+        ]);
 
-        return back()->with('success', 'Leave days created');
+        $blocked = [];
+
+        foreach ($validated['entries'] as $entry) {
+            if ($entry['days_per_year'] === null) {
+                $existing = LeaveType::where('staff_level_id', $entry['staff_level_id'])
+                    ->where('name', $entry['name'])
+                    ->first();
+
+                if (! $existing) {
+                    continue;
+                }
+
+                if (LeaveRequest::where('leave_type_id', $existing->id)->exists()) {
+                    $blocked[] = "{$existing->name} ({$existing->staffLevel?->name})";
+
+                    continue;
+                }
+
+                $existing->delete();
+
+                continue;
+            }
+
+            LeaveType::updateOrCreate(
+                ['staff_level_id' => $entry['staff_level_id'], 'name' => $entry['name']],
+                ['days_per_year' => $entry['days_per_year']]
+            );
+        }
+
+        if ($blocked) {
+            return back()->withErrors([
+                'entries' => 'Could not clear these — they have existing leave requests: '.implode(', ', $blocked),
+            ])->with('success', 'Other leave type changes were saved.');
+        }
+
+        return back()->with('success', 'Leave types updated');
     }
 
     public function destroyDepartment(Department $department)
@@ -126,17 +148,6 @@ class SettingController extends Controller
         $employmentType->delete();
 
         return back()->with('success', 'Employment type deleted');
-    }
-
-    public function destroyLeaveType(LeaveType $leaveType)
-    {
-        if (LeaveRequest::where('leave_type_id', $leaveType->id)->exists()) {
-            return back()->withErrors('Cannot delete leave type with existing leave requests.');
-        }
-
-        $leaveType->delete();
-
-        return back()->with('success', 'Leave type deleted');
     }
 
     // Staff Level CRUD

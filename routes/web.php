@@ -386,10 +386,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/hrm/settings/employment-types/{employmentType}', [SettingController::class, 'updateEmploymentType'])->name('hrm.settings.employment-types.update');
         Route::delete('/hrm/settings/employment-types/{employmentType}', [SettingController::class, 'destroyEmploymentType'])->name('hrm.settings.employment-types.destroy');
 
-        Route::post('/hrm/settings/leave-types', [SettingController::class, 'storeLeaveType'])->name('hrm.settings.leave-types.store');
-        Route::get('/hrm/settings/leave-types/{leaveType}/edit', [SettingController::class, 'editLeaveType'])->name('hrm.settings.leave-types.edit');
-        Route::put('/hrm/settings/leave-types/{leaveType}', [SettingController::class, 'updateLeaveType'])->name('hrm.settings.leave-types.update');
-        Route::delete('/hrm/settings/leave-types/{leaveType}', [SettingController::class, 'destroyLeaveType'])->name('hrm.settings.leave-types.destroy');
+        Route::post('/hrm/settings/leave-types/matrix', [SettingController::class, 'storeLeaveTypeMatrix'])->name('hrm.settings.leave-types.matrix');
 
         Route::post('/hrm/settings/staff-levels', [SettingController::class, 'storeStaffLevel'])->name('hrm.settings.staff-levels.store');
         Route::get('/hrm/settings/staff-levels/{staffLevel}/edit', [SettingController::class, 'editStaffLevel'])->name('hrm.settings.staff-levels.edit');

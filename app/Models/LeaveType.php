@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LeaveType extends Model
 {
-    const TYPES = ['Annual', 'Sick', 'Emergency'];
+    const TYPES = ['Annual', 'Sick', 'Casual', 'Emergency'];
 
     protected $fillable = ['name', 'staff_level_id', 'days_per_year'];
 
