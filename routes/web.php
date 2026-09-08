@@ -400,6 +400,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/hrm/invites/{invite}/review', [EmployeeInviteController::class, 'review'])->name('hrm.invites.review');
         Route::post('/hrm/invites/{invite}/approve', [EmployeeInviteController::class, 'approve'])->name('hrm.invites.approve');
 
+        // Office issue reports (must be before {employee} wildcard)
+        Route::get('/hrm/issue-reports', [OfficeIssueReportController::class, 'index'])->name('hrm.issue-reports');
+        Route::post('/hrm/issue-reports/{officeIssueReport}/status', [OfficeIssueReportController::class, 'updateStatus'])->name('hrm.issue-reports.status');
+
         Route::get('/hrm/{employee}', [HrmController::class, 'show'])->name('hrm.show');
         Route::get('/hrm/{employee}/edit', [HrmController::class, 'edit'])->name('hrm.edit');
         Route::put('/hrm/{employee}', [HrmController::class, 'update'])->name('hrm.update');
@@ -628,9 +632,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/performance', [ProfileController::class, 'performance'])->name('profile.performance');
     Route::get('/profile/report-issue', [OfficeIssueReportController::class, 'create'])->name('profile.report-issue');
     Route::post('/profile/report-issue', [OfficeIssueReportController::class, 'store'])->name('profile.report-issue.store');
-
-    Route::get('/hrm/issue-reports', [OfficeIssueReportController::class, 'index'])->name('hrm.issue-reports');
-    Route::post('/hrm/issue-reports/{officeIssueReport}/status', [OfficeIssueReportController::class, 'updateStatus'])->name('hrm.issue-reports.status');
 
     Route::get('/search', [SearchController::class, 'search'])->name('search');
 });
