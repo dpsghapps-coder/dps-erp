@@ -1,6 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, usePage, Link, useForm, router } from '@inertiajs/react';
+import { Head, usePage, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { useState, useRef } from 'react';
 
@@ -43,9 +43,9 @@ export default function HrmCreate() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (isReview) {
-            router.post(`/hrm/invites/${invite.id}/approve`, data, { forceFormData: true });
+            post(`/hrm/invites/${invite.id}/approve`, { forceFormData: true });
         } else {
-            router.post('/hrm', data, { forceFormData: true });
+            post('/hrm', { forceFormData: true });
         }
     };
 
