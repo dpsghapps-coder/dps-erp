@@ -7,6 +7,7 @@ use App\Models\EmploymentType;
 use App\Models\ProductCategory;
 use App\Models\Role;
 use App\Models\Setting;
+use App\Models\StaffLevel;
 use App\Models\User;
 use Database\Seeders\ChartOfAccountsSeeder;
 use Database\Seeders\ChatSeeder;
@@ -74,6 +75,8 @@ class SetupController extends Controller
             'departments.*' => 'string|max:100',
             'employment_types' => 'nullable|array',
             'employment_types.*' => 'string|max:100',
+            'staff_levels' => 'nullable|array',
+            'staff_levels.*' => 'string|max:100',
         ]);
 
         $logoPath = $request->hasFile('company_logo')
@@ -139,6 +142,14 @@ class SetupController extends Controller
 
                 foreach ($validated['employment_types'] ?? [] as $employmentType) {
                     EmploymentType::firstOrCreate(['name' => $employmentType]);
+                }
+
+                $managerLevels = ['Manager', 'General Manager', 'Managing Director'];
+                foreach ($validated['staff_levels'] ?? [] as $index => $staffLevel) {
+                    StaffLevel::firstOrCreate(
+                        ['name' => $staffLevel],
+                        ['sort_order' => $index + 1, 'is_manager' => in_array($staffLevel, $managerLevels, true)]
+                    );
                 }
             }
 

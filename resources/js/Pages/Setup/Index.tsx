@@ -38,6 +38,10 @@ const STANDARD_DEPARTMENTS = [
 
 const STANDARD_EMPLOYMENT_TYPES = ['Full Time', 'Part Time', 'Contract', 'Internship'];
 
+const STANDARD_STAFF_LEVELS = [
+    'Intern', 'Junior', 'Officer', 'Senior', 'Supervisor', 'Manager', 'General Manager', 'Managing Director',
+];
+
 function SelectableChips({ label, hint, groups, items, onToggle, onAdd, onRemove, placeholder }: {
     label: string;
     hint?: string;
@@ -190,6 +194,7 @@ export default function Setup() {
         categories: [] as string[],
         departments: [] as string[],
         employment_types: [] as string[],
+        staff_levels: [...STANDARD_STAFF_LEVELS] as string[],
     });
 
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
@@ -474,7 +479,7 @@ export default function Setup() {
                         {current === 'departments' && (
                             <div className="space-y-6">
                                 <div>
-                                    <h2 className="text-lg font-semibold mb-1">Departments & Employment Types</h2>
+                                    <h2 className="text-lg font-semibold mb-1">Departments, Employment Types & Staff Levels</h2>
                                     <p className="text-sm text-slate-500 mb-4">Optional — needed before adding employees in HRM. You can add these later too.</p>
                                 </div>
                                 <SelectableChips
@@ -497,6 +502,16 @@ export default function Setup() {
                                     onRemove={(i) => setData('employment_types', data.employment_types.filter((_, idx) => idx !== i))}
                                     placeholder="Add a custom employment type"
                                 />
+                                <SelectableChips
+                                    label="Staff Levels"
+                                    hint="Your seniority ladder, low to high. Deselect any you don't use, reorder later in HRM Settings."
+                                    groups={[{ group: 'Standard Staff Levels', options: STANDARD_STAFF_LEVELS }]}
+                                    items={data.staff_levels}
+                                    onToggle={(v) => setData('staff_levels', data.staff_levels.includes(v) ? data.staff_levels.filter((i) => i !== v) : [...data.staff_levels, v])}
+                                    onAdd={(v) => setData('staff_levels', [...data.staff_levels, v])}
+                                    onRemove={(i) => setData('staff_levels', data.staff_levels.filter((_, idx) => idx !== i))}
+                                    placeholder="Add a custom staff level"
+                                />
                             </div>
                         )}
 
@@ -515,6 +530,7 @@ export default function Setup() {
                                             <div className="flex justify-between"><span className="text-slate-500">Categories</span><span className="font-medium">{data.categories.length ? data.categories.join(', ') : '—'}</span></div>
                                             <div className="flex justify-between"><span className="text-slate-500">Departments</span><span className="font-medium">{data.departments.length ? data.departments.join(', ') : '—'}</span></div>
                                             <div className="flex justify-between"><span className="text-slate-500">Employment Types</span><span className="font-medium">{data.employment_types.length ? data.employment_types.join(', ') : '—'}</span></div>
+                                            <div className="flex justify-between"><span className="text-slate-500">Staff Levels</span><span className="font-medium">{data.staff_levels.length ? data.staff_levels.join(', ') : '—'}</span></div>
                                         </>
                                     )}
                                 </div>
