@@ -17,6 +17,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | Displayed in the UI (sidebar, login page) and bumped by hand to match
+    | the git tag on each release -- not read from git, since the deployed
+    | server may not have the .git directory available.
+    |
+    */
+
+    'version' => '1.0.1',
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

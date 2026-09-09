@@ -140,6 +140,7 @@ const systemNav: NavItem[] = [
 export default function AppLayout({ children }: PropsWithChildren) {
     const user = usePage().props.auth?.user as any;
     const permissions = (usePage().props as any).auth?.permissions as string[] || [];
+    const appVersion = (usePage().props as any).appVersion as string | undefined;
     const isAdmin = user?.role?.name === 'admin';
     const can = (perm: string) => isAdmin || permissions.includes('*') || permissions.includes(perm);
     const hasModulePermission = (module: string) => isAdmin || permissions.includes('*') || permissions.some(p => p.startsWith(module + '.'));
@@ -1491,6 +1492,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </div>
                         )}
                     </Link>
+                    {sidebarOpen && appVersion && (
+                        <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mt-2">v{appVersion}</p>
+                    )}
                 </div>
             </aside>
 

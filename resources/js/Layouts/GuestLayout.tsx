@@ -1,5 +1,5 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { Boxes, Factory, ShoppingCart, Users } from 'lucide-react';
 import { PropsWithChildren } from 'react';
 
@@ -11,6 +11,8 @@ const features = [
 ];
 
 export default function Guest({ children }: PropsWithChildren) {
+    const appVersion = (usePage().props as any).appVersion as string | undefined;
+
     return (
         <div className="grid min-h-screen lg:grid-cols-2">
             <div className="relative hidden overflow-hidden bg-[#8b0f0c] lg:flex lg:flex-col lg:justify-between lg:p-12">
@@ -68,7 +70,9 @@ export default function Guest({ children }: PropsWithChildren) {
                     </div>
                 </div>
 
-                <p className="relative z-10 text-sm text-white/50">DP Solutions Gh. — Total Printing Solutions</p>
+                <p className="relative z-10 text-sm text-white/50">
+                    DP Solutions Gh. — Total Printing Solutions{appVersion ? ` · v${appVersion}` : ''}
+                </p>
             </div>
 
             <div className="flex flex-col justify-center bg-[color:var(--color-bg)] px-6 py-12 sm:px-12 lg:px-16">

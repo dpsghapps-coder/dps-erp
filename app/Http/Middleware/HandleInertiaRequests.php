@@ -38,6 +38,7 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $user ? $user->getPermissionNames() : [],
             ],
             'currency' => \App\Models\Setting::get('currency', 'GHS'),
+            'appVersion' => config('app.version'),
         ];
     }
 }
