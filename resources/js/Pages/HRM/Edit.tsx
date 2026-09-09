@@ -1,12 +1,12 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 export default function HrmEdit() {
     const { employee, departments, employmentTypes, staffLevels, managers } = usePage().props as any;
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, transform, processing, errors } = useForm({
         first_name: employee?.first_name || '',
         last_name: employee?.last_name || '',
         email: employee?.email || '',
@@ -22,8 +22,8 @@ export default function HrmEdit() {
         emergency_person: employee?.emergency_person || '',
         pay_frequency: employee?.pay_frequency || '',
         leave_days: employee?.leave_days || '',
-        date_hired: employee?.date_hired || '',
-        date_terminated: employee?.date_terminated || '',
+        date_hired: employee?.date_hired ? employee.date_hired.slice(0, 10) : '',
+        date_terminated: employee?.date_terminated ? employee.date_terminated.slice(0, 10) : '',
         avatar: null as File | null,
     });
     const [avatarPreview, setAvatarPreview] = useState<string | null>(
@@ -61,8 +61,9 @@ export default function HrmEdit() {
                     <form onSubmit={(e) => {
                         e.preventDefault();
                         // PHP does not parse multipart bodies on PUT requests, so spoof via POST + _method
-                        // (Inertia's router.put doesn't do this automatically when forcing FormData).
-                        router.post(`/hrm/${employee?.id}`, { ...data, _method: 'put' }, { forceFormData: true });
+                        // (Inertia's put() doesn't do this automatically when forcing FormData).
+                        transform((data) => ({ ...data, _method: 'put' }));
+                        post(`/hrm/${employee?.id}`, { forceFormData: true });
                     }}>
                         <div className="grid md:grid-cols-2 gap-4">
                             <div className="md:col-span-2 flex items-center gap-4">
@@ -87,6 +88,7 @@ export default function HrmEdit() {
                                 <div>
                                     <p className="text-sm font-medium">Profile Picture</p>
                                     <p className="text-xs text-slate-500">JPG, PNG up to 2MB</p>
+                                    {errors.avatar && <p className="text-red-400 text-sm mt-1">{errors.avatar}</p>}
                                 </div>
                             </div>
                             <div>
@@ -147,6 +149,7 @@ export default function HrmEdit() {
                                         <option key={dept.id} value={dept.id}>{dept.name}</option>
                                     ))}
                                 </select>
+                                {errors.department_id && <p className="text-red-400 text-sm mt-1">{errors.department_id}</p>}
                             </div>
 
                             <div>
@@ -161,6 +164,7 @@ export default function HrmEdit() {
                                         <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
                                 </select>
+                                {errors.staff_level_id && <p className="text-red-400 text-sm mt-1">{errors.staff_level_id}</p>}
                             </div>
 
                             <div>
@@ -175,6 +179,7 @@ export default function HrmEdit() {
                                     <option key={m.id} value={m.id}>{m.first_name} {m.last_name} - {m.staff_level?.name || m.job_title}</option>
                                 ))}
                                 </select>
+                                {errors.supervising_manager_id && <p className="text-red-400 text-sm mt-1">{errors.supervising_manager_id}</p>}
                             </div>
 
                             <div>
@@ -211,6 +216,7 @@ export default function HrmEdit() {
                                     onChange={(e) => setData('job_title', e.target.value)}
                                     className="glass-input w-full"
                                 />
+                                {errors.job_title && <p className="text-red-400 text-sm mt-1">{errors.job_title}</p>}
                             </div>
 
                             <div>
@@ -221,6 +227,7 @@ export default function HrmEdit() {
                                     onChange={(e) => setData('mobile_1', e.target.value)}
                                     className="glass-input w-full"
                                 />
+                                {errors.mobile_1 && <p className="text-red-400 text-sm mt-1">{errors.mobile_1}</p>}
                             </div>
 
                             <div>
@@ -231,6 +238,7 @@ export default function HrmEdit() {
                                     onChange={(e) => setData('mobile_2', e.target.value)}
                                     className="glass-input w-full"
                                 />
+                                {errors.mobile_2 && <p className="text-red-400 text-sm mt-1">{errors.mobile_2}</p>}
                             </div>
 
                             <div>
@@ -243,6 +251,7 @@ export default function HrmEdit() {
                                     placeholder="0.00"
                                     step="0.01"
                                 />
+                                {errors.salary && <p className="text-red-400 text-sm mt-1">{errors.salary}</p>}
                             </div>
 
                             <div>
@@ -257,6 +266,7 @@ export default function HrmEdit() {
                                     <option value="bi_weekly">Bi-Weekly</option>
                                     <option value="monthly">Monthly</option>
                                 </select>
+                                {errors.pay_frequency && <p className="text-red-400 text-sm mt-1">{errors.pay_frequency}</p>}
                             </div>
 
                             <div>
@@ -269,6 +279,7 @@ export default function HrmEdit() {
                                     placeholder="0"
                                     step="0.5"
                                 />
+                                {errors.leave_days && <p className="text-red-400 text-sm mt-1">{errors.leave_days}</p>}
                             </div>
 
                             <div>
@@ -280,6 +291,7 @@ export default function HrmEdit() {
                                     className="glass-input w-full"
                                     placeholder="Name - Phone"
                                 />
+                                {errors.emergency_person && <p className="text-red-400 text-sm mt-1">{errors.emergency_person}</p>}
                             </div>
 
                             <div className="md:col-span-2">
@@ -292,6 +304,7 @@ export default function HrmEdit() {
                                     placeholder="Leave blank if active"
                                 />
                                 <p className="text-xs text-slate-500 mt-1">Leave blank if employee is still active</p>
+                                {errors.date_terminated && <p className="text-red-400 text-sm mt-1">{errors.date_terminated}</p>}
                             </div>
                         </div>
 
