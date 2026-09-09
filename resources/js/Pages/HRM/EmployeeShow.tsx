@@ -69,9 +69,18 @@ export default function EmployeeShow() {
 
             <PageHeader
                 title={
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span>{employee.first_name} {employee.last_name}</span>
-                        <StatusBadge status={isActive ? 'active' : 'inactive'} />
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-base font-semibold overflow-hidden shrink-0">
+                            {employee.avatar ? (
+                                <img src={`/storage/${employee.avatar}`} alt={`${employee.first_name} ${employee.last_name}`} className="w-full h-full object-cover" />
+                            ) : (
+                                <span>{employee.first_name?.charAt(0)}{employee.last_name?.charAt(0)}</span>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span>{employee.first_name} {employee.last_name}</span>
+                            <StatusBadge status={isActive ? 'active' : 'inactive'} />
+                        </div>
                     </div>
                 }
                 subtitle={employee.job_title || 'No title'}
