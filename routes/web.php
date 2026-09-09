@@ -46,6 +46,7 @@ use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProformaController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SalesOverviewController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceController;
@@ -80,6 +81,8 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/executive-dashboard', [DashboardController::class, 'executiveDashboard'])->name('executive-dashboard');
+    Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
 
     // Help Center
     Route::get('/help', [HelpController::class, 'index'])->name('help.index');

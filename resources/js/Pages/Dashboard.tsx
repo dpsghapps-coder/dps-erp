@@ -66,7 +66,7 @@ export default function Dashboard() {
                                     <stat.icon className={`w-8 h-8 ${stat.color}`} />
                                     <div>
                                         <p className="text-2xl font-semibold">{stat.value}</p>
-                                        <p className="text-sm text-slate-400">{stat.label}</p>
+                                        <p className="text-sm text-slate-400 dark:text-slate-300 dark:text-slate-300">{stat.label}</p>
                                     </div>
                                 </div>
                             </GlassCard>
@@ -97,7 +97,7 @@ export default function Dashboard() {
                                     <div key={order.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
                                         <div>
                                             <p className="font-medium">{order.order_number}</p>
-                                            <p className="text-sm text-slate-400">{order.client?.company_name}</p>
+                                            <p className="text-sm text-slate-400 dark:text-slate-300">{order.client?.company_name}</p>
                                         </div>
                                         <div className="text-right">
                                             <StatusBadge status={order.status} />
@@ -128,11 +128,11 @@ export default function Dashboard() {
                                         <div key={job.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
                                             <div>
                                                 <p className="font-medium">{job.job_number}</p>
-                                                <p className="text-sm text-slate-400">{job.title}</p>
+                                                <p className="text-sm text-slate-400 dark:text-slate-300">{job.title}</p>
                                             </div>
                                             <div className="text-right">
                                                 <StatusBadge status={job.status} />
-                                                <p className="text-sm mt-1 text-slate-400">{job.priority}</p>
+                                                <p className="text-sm mt-1 text-slate-400 dark:text-slate-300">{job.priority}</p>
                                             </div>
                                         </div>
                                     ))}

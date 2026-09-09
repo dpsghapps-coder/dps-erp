@@ -48,4 +48,29 @@ class DashboardController extends Controller
             'recent_jobs' => $recent_jobs,
         ]);
     }
+
+    public function executiveDashboard(Request $request)
+    {
+        $stats = [
+            'total_clients' => Client::count(),
+            'active_clients' => Client::whereNotNull('first_converted_at')->count(),
+            'total_orders' => Order::count(),
+            'pending_orders' => Order::where('status', 'draft')->count(),
+            'production_jobs' => ProductionJob::whereNotIn('status', [
+                ProductionJob::STATUS_COMPLETED,
+                ProductionJob::STATUS_PAUSED,
+                ProductionJob::STATUS_CANCELLED,
+            ])->count(),
+            'studio_bookings' => StudioBooking::whereIn('status', ['tentative', 'confirmed'])
+                ->where('start_datetime', '>=', now())
+                ->count(),
+            'total_products' => Product::count(),
+            'total_employees' => Employee::whereNull('date_terminated')->count(),
+            'total_revenue' => Order::sum('total_amount') ?? 0,
+        ];
+
+        return inertia('ExecutiveDashboard', [
+            'stats' => $stats,
+        ]);
+    }
 }

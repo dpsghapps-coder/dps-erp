@@ -192,7 +192,7 @@ export default function KanbanBoard({ jobs, users, orders = [] }: KanbanBoardPro
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
             >
-                <div className="flex gap-4 overflow-x-auto pb-4">
+                <div className="flex gap-4 overflow-x-auto pb-8 dark:pb-8">
                     {columns.map((col) => (
                         <KanbanColumn
                             key={col.id}

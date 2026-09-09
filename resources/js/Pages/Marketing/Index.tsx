@@ -170,7 +170,7 @@ export default function MarketingIndex() {
                         </div>
                         <div>
                             <p className="text-2xl font-semibold">{activeCampaigns}</p>
-                            <p className="text-sm text-slate-500">Active Campaigns</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Active Campaigns</p>
                         </div>
                     </div>
                 </GlassCard>
@@ -181,7 +181,7 @@ export default function MarketingIndex() {
                         </div>
                         <div>
                             <p className="text-2xl font-semibold">{upcomingCampaigns}</p>
-                            <p className="text-sm text-slate-500">Upcoming</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Upcoming</p>
                         </div>
                     </div>
                 </GlassCard>
@@ -192,13 +192,13 @@ export default function MarketingIndex() {
                         </div>
                         <div>
                             <p className="text-2xl font-semibold">{formatCurrency(totalBudget)}</p>
-                            <p className="text-sm text-slate-500">Total Budget</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Total Budget</p>
                         </div>
                     </div>
                 </GlassCard>
             </div>
 
-            <div className="flex items-center gap-2 mb-3 text-xs text-slate-400">
+            <div className="flex items-center gap-2 mb-3 text-xs text-slate-400 dark:text-slate-300">
                 <span
                     className="inline-block w-4 h-3 rounded-sm"
                     style={{ backgroundImage: 'linear-gradient(90deg, #ce1126 0 33%, #fcd116 33% 66%, #006b3f 66% 100%)' }}
@@ -232,37 +232,37 @@ export default function MarketingIndex() {
                     <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <p className="text-xs font-mono text-slate-500">{selectedCampaign.number}</p>
+                                <p className="text-xs font-mono text-slate-500 dark:text-slate-400">{selectedCampaign.number}</p>
                                 <h3 className="text-lg font-semibold">{selectedCampaign.title}</h3>
                             </div>
                             <StatusBadge status={selectedCampaign.status} />
                         </div>
                         <div className="space-y-2 text-sm mb-4">
                             <div className="flex justify-between">
-                                <span className="text-slate-500">Type</span>
+                                <span className="text-slate-500 dark:text-slate-400">Type</span>
                                 <span className="font-medium">{TYPE_LABELS[selectedCampaign.type] || selectedCampaign.type}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-500">Duration</span>
+                                <span className="text-slate-500 dark:text-slate-400">Duration</span>
                                 <span className="font-medium">
                                     {new Date(selectedCampaign.start_date).toLocaleDateString()} - {new Date(selectedCampaign.end_date).toLocaleDateString()}
                                 </span>
                             </div>
                             {selectedCampaign.client && (
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500">Client</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Client</span>
                                     <span className="font-medium">{selectedCampaign.client.company_name}</span>
                                 </div>
                             )}
                             {selectedCampaign.budget && (
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500">Budget</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Budget</span>
                                     <span className="font-medium">{formatCurrency(selectedCampaign.budget)}</span>
                                 </div>
                             )}
                             {selectedCampaign.assigned_to && (
                                 <div className="flex justify-between">
-                                    <span className="text-slate-500">Assigned To</span>
+                                    <span className="text-slate-500 dark:text-slate-400">Assigned To</span>
                                     <span className="font-medium">{selectedCampaign.assigned_to.name}</span>
                                 </div>
                             )}
@@ -292,7 +292,7 @@ export default function MarketingIndex() {
                     <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-start justify-between mb-3">
                             <div>
-                                <p className="text-xs font-medium text-slate-500 uppercase">Ghana Public Holiday</p>
+                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Ghana Public Holiday</p>
                                 <h3 className="text-lg font-semibold">{selectedHoliday.name}</h3>
                             </div>
                             <span
@@ -304,7 +304,7 @@ export default function MarketingIndex() {
                             {new Date(selectedHoliday.date).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                         </p>
                         {selectedHoliday.description && (
-                            <p className="text-sm text-slate-500">{selectedHoliday.description}</p>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">{selectedHoliday.description}</p>
                         )}
                         <div className="flex justify-end pt-4 mt-4 border-t">
                             <button onClick={() => setSelectedHoliday(null)} className="glass-button-secondary px-3 py-1.5 text-sm">

@@ -10,8 +10,8 @@ export default function ProductionIndex() {
             <Head title="Production" />
 
             <div className="mb-6">
-                <h1 className="text-2xl font-bold">Production</h1>
-                <p className="text-sm text-slate-400">Manage production jobs and workflow</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Production</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-300">Manage production jobs and workflow</p>
             </div>
 
             <KanbanBoard jobs={jobs as any[]} users={users as any[]} orders={orders as any[]} />

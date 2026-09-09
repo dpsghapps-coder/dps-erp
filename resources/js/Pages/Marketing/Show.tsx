@@ -45,7 +45,7 @@ export default function CampaignShow() {
             <Head title={campaign.title} />
 
             <div className="mb-6">
-                <Link href="/marketing" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors">
+                <Link href="/marketing" className="inline-flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 transition-colors">
                     <ArrowLeft className="w-4 h-4" /> Back to Marketing
                 </Link>
             </div>
@@ -73,26 +73,26 @@ export default function CampaignShow() {
                         <h2 className="text-lg font-semibold mb-4">Campaign Details</h2>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="flex items-center gap-3">
-                                <Calendar className="w-5 h-5 text-slate-400" />
+                                <Calendar className="w-5 h-5 text-slate-400 dark:text-slate-300" />
                                 <div>
-                                    <p className="text-sm text-slate-500">Duration</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Duration</p>
                                     <p className="font-medium">
                                         {new Date(campaign.start_date).toLocaleDateString()} - {new Date(campaign.end_date).toLocaleDateString()}
                                     </p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <Tag className="w-5 h-5 text-slate-400" />
+                                <Tag className="w-5 h-5 text-slate-400 dark:text-slate-300" />
                                 <div>
-                                    <p className="text-sm text-slate-500">Type</p>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Type</p>
                                     <p className="font-medium">{TYPE_LABELS[campaign.type] || campaign.type}</p>
                                 </div>
                             </div>
                             {campaign.client && (
                                 <div className="flex items-center gap-3">
-                                    <Building className="w-5 h-5 text-slate-400" />
+                                    <Building className="w-5 h-5 text-slate-400 dark:text-slate-300" />
                                     <div>
-                                        <p className="text-sm text-slate-500">Client</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Client</p>
                                         <Link href={`/crm/${campaign.client.id}`} className="font-medium text-indigo-600 hover:underline">
                                             {campaign.client.company_name}
                                         </Link>
@@ -101,9 +101,9 @@ export default function CampaignShow() {
                             )}
                             {campaign.assigned_to && (
                                 <div className="flex items-center gap-3">
-                                    <User className="w-5 h-5 text-slate-400" />
+                                    <User className="w-5 h-5 text-slate-400 dark:text-slate-300" />
                                     <div>
-                                        <p className="text-sm text-slate-500">Assigned To</p>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Assigned To</p>
                                         <p className="font-medium">{campaign.assigned_to.name}</p>
                                     </div>
                                 </div>
@@ -111,7 +111,7 @@ export default function CampaignShow() {
                         </div>
                         {campaign.description && (
                             <div className="mt-4 pt-4 border-t">
-                                <p className="text-sm text-slate-500 mb-1">Description</p>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 mb-1">Description</p>
                                 <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{campaign.description}</p>
                             </div>
                         )}
@@ -132,13 +132,13 @@ export default function CampaignShow() {
                         <h2 className="text-lg font-semibold mb-4">Budget</h2>
                         <div className="space-y-3">
                             <div className="flex justify-between">
-                                <span className="text-slate-500">Planned Budget</span>
+                                <span className="text-slate-500 dark:text-slate-400">Planned Budget</span>
                                 <span className="font-semibold text-lg">
                                     {campaign.budget ? formatCurrency(campaign.budget) : '-'}
                                 </span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-500">Actual Cost</span>
+                                <span className="text-slate-500 dark:text-slate-400">Actual Cost</span>
                                 <span className="font-semibold text-lg">
                                     {campaign.actual_cost ? formatCurrency(campaign.actual_cost) : '-'}
                                 </span>
@@ -146,7 +146,7 @@ export default function CampaignShow() {
                             {campaign.budget && campaign.actual_cost && (
                                 <div className="pt-2 border-t">
                                     <div className="flex justify-between">
-                                        <span className="text-slate-500">Remaining</span>
+                                        <span className="text-slate-500 dark:text-slate-400">Remaining</span>
                                         <span className={`font-semibold ${parseFloat(campaign.budget) - parseFloat(campaign.actual_cost) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                             {formatCurrency(parseFloat(campaign.budget) - parseFloat(campaign.actual_cost))}
                                         </span>
@@ -180,7 +180,7 @@ export default function CampaignShow() {
                                 {campaign.reminders.map((reminder: any) => (
                                     <div key={reminder.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-700/50">
                                         <div className="flex items-center gap-2">
-                                            <Clock className="w-4 h-4 text-slate-400" />
+                                            <Clock className="w-4 h-4 text-slate-400 dark:text-slate-300" />
                                             <span className="text-sm">{new Date(reminder.remind_at).toLocaleString()}</span>
                                         </div>
                                         {reminder.sent && (
@@ -190,7 +190,7 @@ export default function CampaignShow() {
                                 ))}
                             </div>
                         ) : (
-                            <p className="text-sm text-slate-400">No reminders set</p>
+                            <p className="text-sm text-slate-400 dark:text-slate-300">No reminders set</p>
                         )}
                         <Link href={`/marketing/${campaign.id}/edit`} className="text-sm text-indigo-600 hover:underline mt-3 inline-block">
                             + Add reminder
@@ -202,15 +202,15 @@ export default function CampaignShow() {
                         <h2 className="text-lg font-semibold mb-4">Info</h2>
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-slate-500">Created By</span>
+                                <span className="text-slate-500 dark:text-slate-400">Created By</span>
                                 <span>{campaign.created_by?.name}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-500">Created At</span>
+                                <span className="text-slate-500 dark:text-slate-400">Created At</span>
                                 <span>{new Date(campaign.created_at).toLocaleDateString()}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-slate-500">Updated At</span>
+                                <span className="text-slate-500 dark:text-slate-400">Updated At</span>
                                 <span>{new Date(campaign.updated_at).toLocaleDateString()}</span>
                             </div>
                         </div>
