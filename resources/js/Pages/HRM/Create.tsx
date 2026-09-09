@@ -89,17 +89,19 @@ export default function HrmCreate() {
                             <div>
                                 <p className="text-sm font-medium">Profile Picture</p>
                                 <p className="text-xs text-slate-500">JPG, PNG up to 2MB</p>
+                                {errors.avatar && <p className="text-red-400 text-sm mt-1">{errors.avatar}</p>}
                             </div>
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Employee Number *</label>
-                            <input 
+                            <input
                                 type="text"
                                 value={data.employee_number}
                                 readOnly
                                 className="glass-input w-full bg-slate-50 dark:bg-white/5"
                             />
+                            {errors.employee_number && <p className="text-red-400 text-sm mt-1">{errors.employee_number}</p>}
                         </div>
 
                         <div></div>
@@ -139,8 +141,8 @@ export default function HrmCreate() {
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium mb-2">Department</label>
-                            <select 
+                            <label className="block text-sm font-medium mb-2">Department *</label>
+                            <select
                                 value={data.department_id}
                                 onChange={(e) => setData('department_id', e.target.value)}
                                 className="glass-input w-full"
@@ -150,11 +152,12 @@ export default function HrmCreate() {
                                     <option key={d.id} value={d.id}>{d.name}</option>
                                 ))}
                             </select>
+                            {errors.department_id && <p className="text-red-400 text-sm mt-1">{errors.department_id}</p>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Staff Level</label>
-                            <select 
+                            <select
                                 value={data.staff_level_id}
                                 onChange={(e) => setData('staff_level_id', e.target.value)}
                                 className="glass-input w-full"
@@ -165,11 +168,12 @@ export default function HrmCreate() {
                                 ))}
                             </select>
                             <p className="text-xs text-slate-400 mt-1">Annual leave days are set automatically based on this staff level's Annual leave type.</p>
+                            {errors.staff_level_id && <p className="text-red-400 text-sm mt-1">{errors.staff_level_id}</p>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Supervising Manager</label>
-                            <select 
+                            <select
                                 value={data.supervising_manager_id}
                                 onChange={(e) => setData('supervising_manager_id', e.target.value)}
                                 className="glass-input w-full"
@@ -179,6 +183,7 @@ export default function HrmCreate() {
                                     <option key={m.id} value={m.id}>{m.first_name} {m.last_name} - {m.staff_level?.name || m.job_title}</option>
                                 ))}
                             </select>
+                            {errors.supervising_manager_id && <p className="text-red-400 text-sm mt-1">{errors.supervising_manager_id}</p>}
                         </div>
 
                         <div>
@@ -209,37 +214,40 @@ export default function HrmCreate() {
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Job Title</label>
-                            <input 
+                            <input
                                 type="text"
                                 value={data.job_title}
                                 onChange={(e) => setData('job_title', e.target.value)}
                                 className="glass-input w-full"
                             />
+                            {errors.job_title && <p className="text-red-400 text-sm mt-1">{errors.job_title}</p>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Mobile 1</label>
-                            <input 
+                            <input
                                 type="text"
                                 value={data.mobile_1}
                                 onChange={(e) => setData('mobile_1', e.target.value)}
                                 className="glass-input w-full"
                             />
+                            {errors.mobile_1 && <p className="text-red-400 text-sm mt-1">{errors.mobile_1}</p>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Mobile 2</label>
-                            <input 
+                            <input
                                 type="text"
                                 value={data.mobile_2}
                                 onChange={(e) => setData('mobile_2', e.target.value)}
                                 className="glass-input w-full"
                             />
+                            {errors.mobile_2 && <p className="text-red-400 text-sm mt-1">{errors.mobile_2}</p>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Salary</label>
-                            <input 
+                            <input
                                 type="number"
                                 value={data.salary}
                                 onChange={(e) => setData('salary', e.target.value)}
@@ -247,11 +255,12 @@ export default function HrmCreate() {
                                 placeholder="0.00"
                                 step="0.01"
                             />
+                            {errors.salary && <p className="text-red-400 text-sm mt-1">{errors.salary}</p>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Pay Frequency</label>
-                            <select 
+                            <select
                                 value={data.pay_frequency}
                                 onChange={(e) => setData('pay_frequency', e.target.value)}
                                 className="glass-input w-full"
@@ -261,17 +270,19 @@ export default function HrmCreate() {
                                 <option value="bi_weekly">Bi-Weekly</option>
                                 <option value="monthly">Monthly</option>
                             </select>
+                            {errors.pay_frequency && <p className="text-red-400 text-sm mt-1">{errors.pay_frequency}</p>}
                         </div>
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Emergency Person</label>
-                            <input 
+                            <input
                                 type="text"
                                 value={data.emergency_person}
                                 onChange={(e) => setData('emergency_person', e.target.value)}
                                 className="glass-input w-full"
                                 placeholder="Name - Phone"
                             />
+                            {errors.emergency_person && <p className="text-red-400 text-sm mt-1">{errors.emergency_person}</p>}
                         </div>
                     </div>
 
