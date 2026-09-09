@@ -202,7 +202,15 @@ export default function EmployeeShow() {
                                 ) : '—'}
                             </DetailRow>
                             <DetailRow label="Alternate Mobile">{employee.mobile_2 || '—'}</DetailRow>
-                            <DetailRow label="Emergency Contact">{employee.emergency_person || '—'}</DetailRow>
+                            <DetailRow label="Emergency Contact Name">{employee.emergency_contact_name || '—'}</DetailRow>
+                            <DetailRow label="Emergency Contact Phone">
+                                {employee.emergency_contact_phone ? (
+                                    <WhatsAppLink phone={employee.emergency_contact_phone} className="text-sm text-green-500 hover:underline">
+                                        {employee.emergency_contact_phone}
+                                    </WhatsAppLink>
+                                ) : '—'}
+                            </DetailRow>
+                            <DetailRow label="Relationship to Employee">{employee.emergency_contact_relation || '—'}</DetailRow>
                             <DetailRow label="Salary">{employee.salary ? formatCurrency(employee.salary) : '—'}</DetailRow>
                             <DetailRow label="Pay Frequency">
                                 <span className="capitalize">{employee.pay_frequency || '—'}</span>

@@ -48,14 +48,19 @@ class HrmSeeder extends Seeder
             $etIds[] = $type->id;
         }
 
+        // Order here must stay Junior, Officer, Senior, Supervisor, Manager, General
+        // Manager, Managing Director -- the $employees array below references these by
+        // array index (staff_level_idx). Intern is appended last (array position 6) but
+        // given sort_order 1 so it still displays first in the HRM UI.
         $staffLevels = [
-            ['name' => 'Junior', 'sort_order' => 1],
-            ['name' => 'Mid-Level', 'sort_order' => 2],
-            ['name' => 'Senior', 'sort_order' => 3],
-            ['name' => 'Lead', 'sort_order' => 4],
-            ['name' => 'Manager', 'sort_order' => 5],
-            ['name' => 'Director', 'sort_order' => 6],
-            ['name' => 'Executive', 'sort_order' => 7],
+            ['name' => 'Junior', 'sort_order' => 2, 'is_manager' => false],
+            ['name' => 'Officer', 'sort_order' => 3, 'is_manager' => false],
+            ['name' => 'Senior', 'sort_order' => 4, 'is_manager' => false],
+            ['name' => 'Supervisor', 'sort_order' => 5, 'is_manager' => false],
+            ['name' => 'Manager', 'sort_order' => 6, 'is_manager' => true],
+            ['name' => 'General Manager', 'sort_order' => 7, 'is_manager' => true],
+            ['name' => 'Managing Director', 'sort_order' => 8, 'is_manager' => true],
+            ['name' => 'Intern', 'sort_order' => 1, 'is_manager' => false],
         ];
         $slIds = [];
         foreach ($staffLevels as $sl) {
@@ -263,8 +268,13 @@ class HrmSeeder extends Seeder
                 'pay_frequency' => 'monthly',
                 'mobile_1' => $emp['mobile_1'],
                 'mobile_2' => $emp['mobile_2'],
-                'emergency_person' => $emp['emergency_person'],
             ];
+
+            // Seed data keeps the old "Name (Phone)" shorthand for brevity above; split it here.
+            if (preg_match('/^(.*?)\s*\(([^)]+)\)$/', $emp['emergency_person'], $emergencyMatch)) {
+                $data['emergency_contact_name'] = trim($emergencyMatch[1]);
+                $data['emergency_contact_phone'] = trim($emergencyMatch[2]);
+            }
 
             if ($emp['staff_level_idx'] >= 3 && $i > 0) {
                 $managerIdx = max(0, $i - $emp['staff_level_idx']);

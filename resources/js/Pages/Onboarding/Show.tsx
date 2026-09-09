@@ -38,7 +38,9 @@ export default function OnboardingShow() {
         email: '',
         mobile_1: '',
         mobile_2: '',
-        emergency_person: '',
+        emergency_contact_name: '',
+        emergency_contact_phone: '',
+        emergency_contact_relation: '',
         avatar: null as File | null,
     });
 
@@ -142,15 +144,39 @@ export default function OnboardingShow() {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Emergency Contact Name</label>
+                                    <input
+                                        type="text"
+                                        value={data.emergency_contact_name}
+                                        onChange={(e) => setData('emergency_contact_name', e.target.value)}
+                                        className="glass-input w-full"
+                                    />
+                                    {errors.emergency_contact_name && <p className="text-red-500 text-sm mt-1">{errors.emergency_contact_name}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-1">Emergency Contact Phone</label>
+                                    <input
+                                        type="text"
+                                        value={data.emergency_contact_phone}
+                                        onChange={(e) => setData('emergency_contact_phone', e.target.value)}
+                                        className="glass-input w-full"
+                                    />
+                                    {errors.emergency_contact_phone && <p className="text-red-500 text-sm mt-1">{errors.emergency_contact_phone}</p>}
+                                </div>
+                            </div>
+
                             <div>
-                                <label className="block text-sm font-medium mb-1">Emergency Contact</label>
+                                <label className="block text-sm font-medium mb-1">Relationship to You</label>
                                 <input
                                     type="text"
-                                    value={data.emergency_person}
-                                    onChange={(e) => setData('emergency_person', e.target.value)}
+                                    value={data.emergency_contact_relation}
+                                    onChange={(e) => setData('emergency_contact_relation', e.target.value)}
                                     className="glass-input w-full"
-                                    placeholder="Name - Phone"
+                                    placeholder="e.g. Spouse, Parent, Sibling"
                                 />
+                                {errors.emergency_contact_relation && <p className="text-red-500 text-sm mt-1">{errors.emergency_contact_relation}</p>}
                             </div>
 
                             <div className="pt-4">

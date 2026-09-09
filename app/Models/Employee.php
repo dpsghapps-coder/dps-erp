@@ -29,7 +29,9 @@ class Employee extends Model
         'pay_frequency',
         'mobile_1',
         'mobile_2',
-        'emergency_person',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'emergency_contact_relation',
         'supervising_manager_id',
     ];
 

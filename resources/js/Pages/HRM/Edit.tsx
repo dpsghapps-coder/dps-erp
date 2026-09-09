@@ -19,7 +19,9 @@ export default function HrmEdit() {
         salary: employee?.salary || '',
         mobile_1: employee?.mobile_1 || '',
         mobile_2: employee?.mobile_2 || '',
-        emergency_person: employee?.emergency_person || '',
+        emergency_contact_name: employee?.emergency_contact_name || '',
+        emergency_contact_phone: employee?.emergency_contact_phone || '',
+        emergency_contact_relation: employee?.emergency_contact_relation || '',
         pay_frequency: employee?.pay_frequency || '',
         leave_days: employee?.leave_days || '',
         date_hired: employee?.date_hired ? employee.date_hired.slice(0, 10) : '',
@@ -283,15 +285,37 @@ export default function HrmEdit() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium mb-2">Emergency Person</label>
+                                <label className="block text-sm font-medium mb-2">Emergency Contact Name</label>
                                 <input
                                     type="text"
-                                    value={data.emergency_person}
-                                    onChange={(e) => setData('emergency_person', e.target.value)}
+                                    value={data.emergency_contact_name}
+                                    onChange={(e) => setData('emergency_contact_name', e.target.value)}
                                     className="glass-input w-full"
-                                    placeholder="Name - Phone"
                                 />
-                                {errors.emergency_person && <p className="text-red-400 text-sm mt-1">{errors.emergency_person}</p>}
+                                {errors.emergency_contact_name && <p className="text-red-400 text-sm mt-1">{errors.emergency_contact_name}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Emergency Contact Phone</label>
+                                <input
+                                    type="text"
+                                    value={data.emergency_contact_phone}
+                                    onChange={(e) => setData('emergency_contact_phone', e.target.value)}
+                                    className="glass-input w-full"
+                                />
+                                {errors.emergency_contact_phone && <p className="text-red-400 text-sm mt-1">{errors.emergency_contact_phone}</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Relationship to Employee</label>
+                                <input
+                                    type="text"
+                                    value={data.emergency_contact_relation}
+                                    onChange={(e) => setData('emergency_contact_relation', e.target.value)}
+                                    className="glass-input w-full"
+                                    placeholder="e.g. Spouse, Parent, Sibling"
+                                />
+                                {errors.emergency_contact_relation && <p className="text-red-400 text-sm mt-1">{errors.emergency_contact_relation}</p>}
                             </div>
 
                             <div className="md:col-span-2">

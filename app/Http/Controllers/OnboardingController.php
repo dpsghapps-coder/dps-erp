@@ -35,7 +35,9 @@ class OnboardingController extends Controller
             'email' => 'required|email|max:255',
             'mobile_1' => 'required|string|max:255',
             'mobile_2' => 'nullable|string|max:255',
-            'emergency_person' => 'nullable|string|max:255',
+            'emergency_contact_name' => 'nullable|string|max:255',
+            'emergency_contact_phone' => 'nullable|string|max:255',
+            'emergency_contact_relation' => 'nullable|string|max:255',
             'avatar' => 'nullable|image|max:2048',
         ]);
 

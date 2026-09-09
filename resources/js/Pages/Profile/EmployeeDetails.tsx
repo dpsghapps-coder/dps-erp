@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
 import { Head, usePage } from '@inertiajs/react';
-import { Briefcase, Building2, Calendar, Phone, DollarSign, UserCog, Clock, IdCard } from 'lucide-react';
+import { Briefcase, Building2, Calendar, Phone, DollarSign, UserCog, Clock, IdCard, Heart } from 'lucide-react';
 import ProfileNav from '@/Components/ProfileNav';
 import { useCurrency } from '@/Utils/currency';
 import WhatsAppLink from '@/Components/WhatsAppLink';
@@ -45,7 +45,22 @@ export default function EmployeeDetails() {
                                 )}
                             </div>
                             <Field icon={Phone} label="Mobile 2" value={employee.mobile_2 || 'Not set'} />
-                            <Field icon={Phone} label="Emergency Contact" value={employee.emergency_person || 'Not set'} />
+                            <Field
+                                icon={Heart}
+                                label="Emergency Contact"
+                                value={employee.emergency_contact_name
+                                    ? `${employee.emergency_contact_name}${employee.emergency_contact_relation ? ` (${employee.emergency_contact_relation})` : ''}`
+                                    : 'Not set'}
+                            />
+                            <Field
+                                icon={Phone}
+                                label="Emergency Contact Phone"
+                                value={employee.emergency_contact_phone ? (
+                                    <WhatsAppLink phone={employee.emergency_contact_phone} className="text-green-600 dark:text-green-400 hover:underline">
+                                        {employee.emergency_contact_phone}
+                                    </WhatsAppLink>
+                                ) : 'Not set'}
+                            />
                         </div>
                     </GlassCard>
                 ) : (
