@@ -40,6 +40,11 @@ export function InviteEmployeeModal({ isOpen, onClose }: InviteEmployeeModalProp
         }
     };
 
+    const generateAnother = () => {
+        setCopied(false);
+        generateLink();
+    };
+
     return (
         <Modal show={isOpen} onClose={handleClose}>
             <div className="p-6">
@@ -102,6 +107,17 @@ export function InviteEmployeeModal({ isOpen, onClose }: InviteEmployeeModalProp
                             </button>
                         </div>
                         <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
+                            <button
+                                onClick={generateAnother}
+                                disabled={generating}
+                                className="glass-button-secondary flex items-center gap-2"
+                            >
+                                {generating ? (
+                                    <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</>
+                                ) : (
+                                    <><LinkIcon className="w-4 h-4" /> Generate New Link</>
+                                )}
+                            </button>
                             <button onClick={handleClose} className="glass-button">
                                 Done
                             </button>
