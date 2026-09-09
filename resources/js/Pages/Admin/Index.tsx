@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, usePage, Link } from '@inertiajs/react';
-import { Users, UserCheck, Shield, Building2, Settings, Plus, ArrowRight } from 'lucide-react';
+import { Users, UserCheck, Shield, Building2, Settings, Plus, ArrowRight, DatabaseBackup, Wrench } from 'lucide-react';
 
 export default function AdminIndex() {
     const { total_users, active_users, total_roles, total_departments, recent_activity } = usePage().props as any;
@@ -41,6 +41,20 @@ export default function AdminIndex() {
             icon: Settings,
             color: 'orange',
             href: '/admin/settings',
+        },
+        {
+            title: 'Database Backups',
+            description: 'Create on-demand backups and configure nightly email backups.',
+            icon: DatabaseBackup,
+            color: 'green',
+            href: '/admin/backups',
+        },
+        {
+            title: 'Technical Reports',
+            description: 'Software, equipment, and facilities issues reported by staff.',
+            icon: Wrench,
+            color: 'blue',
+            href: '/admin/technical-reports',
         },
     ];
 
@@ -106,6 +120,9 @@ export default function AdminIndex() {
                         </Link>
                         <Link href="/admin/roles/create" className="glass-button text-center">
                             New Role
+                        </Link>
+                        <Link href="/admin/backups" className="glass-button text-center">
+                            Backups
                         </Link>
                     </div>
                 </GlassCard>

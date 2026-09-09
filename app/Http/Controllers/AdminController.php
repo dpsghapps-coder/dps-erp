@@ -11,6 +11,7 @@ use App\Models\Role;
 use App\Models\Setting;
 use App\Models\StaffLevel;
 use App\Models\User;
+use App\Support\DatabaseBackup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -282,25 +283,16 @@ class AdminController extends Controller
 
         Log::warning("Factory reset initiated by user #{$admin->id} ({$admin->email})");
 
-        $connection = config('database.default');
-        $backupDir = storage_path('app/backups');
+        $backupPath = DatabaseBackup::create();
 
-        if (! is_dir($backupDir)) {
-            mkdir($backupDir, 0755, true);
-        }
-
-        $isSqlite = $connection === 'sqlite';
-        $backupPath = $backupDir.'/database-'.now()->format('Y-m-d_His').($isSqlite ? '.sqlite' : '.sql');
-
-        $backupOk = $isSqlite
-            ? copy(config('database.connections.sqlite.database'), $backupPath)
-            : $this->backupMysqlDatabase($connection, $backupPath);
-
-        if (! $backupOk) {
+        if (! $backupPath) {
             Log::error('Factory reset aborted: database backup failed.');
 
             return back()->withErrors(['password' => 'Backup failed — reset aborted. No data was changed.']);
         }
+
+        $connection = config('database.default');
+        $isSqlite = $connection === 'sqlite';
 
         if ($isSqlite) {
             $tableNames = collect(DB::select("SELECT name FROM sqlite_master WHERE type = 'table'"))->pluck('name');
@@ -346,36 +338,6 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', 'Factory reset complete. Business data has been wiped; a backup was saved on the server before the reset.');
-    }
-
-    private function backupMysqlDatabase(string $connection, string $backupPath): bool
-    {
-        $config = config("database.connections.$connection");
-        $mysqldump = env('DB_MYSQLDUMP_PATH', 'mysqldump');
-
-        // Password passed via MYSQL_PWD rather than --password= so it doesn't
-        // show up in the process list while the dump is running.
-        $command = sprintf(
-            '%s --user=%s --host=%s --port=%s %s > %s 2>&1',
-            escapeshellarg($mysqldump),
-            escapeshellarg($config['username']),
-            escapeshellarg($config['host']),
-            escapeshellarg((string) $config['port']),
-            escapeshellarg($config['database']),
-            escapeshellarg($backupPath)
-        );
-
-        putenv('MYSQL_PWD='.$config['password']);
-        exec($command, $output, $exitCode);
-        putenv('MYSQL_PWD');
-
-        if ($exitCode !== 0 || ! file_exists($backupPath) || filesize($backupPath) === 0) {
-            Log::error('mysqldump backup failed', ['output' => implode("\n", $output), 'exit_code' => $exitCode]);
-
-            return false;
-        }
-
-        return true;
     }
 
     public function settingsUpdate(Request $request)

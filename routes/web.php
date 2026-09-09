@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CrmController;
@@ -50,6 +51,7 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\StudioController;
+use App\Http\Controllers\TechnicalReportController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -598,6 +600,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/admin/settings/factory-reset', [AdminController::class, 'factoryReset'])->name('admin.settings.factory-reset');
     });
 
+    // Database backups — on-demand + scheduled email backups. Literal routes
+    // (/settings) before the {filename} wildcard.
+    Route::middleware('permission:admin.manage_backups')->group(function () {
+        Route::get('/admin/backups', [BackupController::class, 'index'])->name('admin.backups.index');
+        Route::post('/admin/backups', [BackupController::class, 'store'])->name('admin.backups.store');
+        Route::put('/admin/backups/settings', [BackupController::class, 'updateSettings'])->name('admin.backups.settings');
+        Route::get('/admin/backups/{filename}/download', [BackupController::class, 'download'])->name('admin.backups.download');
+        Route::delete('/admin/backups/{filename}', [BackupController::class, 'destroy'])->name('admin.backups.destroy');
+    });
+
+    // Technical reports review — permission checked inside the controller
+    // (technical_reports.manage) since submission itself is open to all
+    // authenticated users via /profile/technical-report above.
+    Route::get('/admin/technical-reports', [TechnicalReportController::class, 'index'])->name('admin.technical-reports.index');
+    Route::post('/admin/technical-reports/{technicalReport}/status', [TechnicalReportController::class, 'updateStatus'])->name('admin.technical-reports.status');
+
     // Chat Routes
     Route::middleware('permission:chat.view')->group(function () {
         Route::get('/chat/conversations', [ChatController::class, 'getConversations']);
@@ -648,6 +666,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/performance', [ProfileController::class, 'performance'])->name('profile.performance');
     Route::get('/profile/report-issue', [OfficeIssueReportController::class, 'create'])->name('profile.report-issue');
     Route::post('/profile/report-issue', [OfficeIssueReportController::class, 'store'])->name('profile.report-issue.store');
+    Route::get('/profile/technical-report', [TechnicalReportController::class, 'create'])->name('profile.technical-report');
+    Route::post('/profile/technical-report', [TechnicalReportController::class, 'store'])->name('profile.technical-report.store');
 
     Route::get('/search', [SearchController::class, 'search'])->name('search');
 });

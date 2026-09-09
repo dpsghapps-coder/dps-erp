@@ -117,6 +117,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'admin.view_audit_logs', 'module' => 'admin', 'description' => 'View audit logs'],
             ['name' => 'admin.manage_settings', 'module' => 'admin', 'description' => 'Manage system settings'],
             ['name' => 'admin.factory_reset', 'module' => 'admin', 'description' => 'Wipe all business data back to a clean install (irreversible without the backup)'],
+            ['name' => 'admin.manage_backups', 'module' => 'admin', 'description' => 'Create, download, and delete database backups; configure scheduled email backups'],
+
+            // Technical Reports
+            ['name' => 'technical_reports.manage', 'module' => 'technical_reports', 'description' => 'View, assign, and resolve technical/equipment reports submitted by staff'],
 
             // Chat
             ['name' => 'chat.view', 'module' => 'chat', 'description' => 'View and use chat'],
