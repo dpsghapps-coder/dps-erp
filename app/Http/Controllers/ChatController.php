@@ -21,7 +21,7 @@ class ChatController extends Controller
             $q->where('user_id', $user->id);
         })
             ->with(['participants' => function ($q) {
-                $q->with('user:id,name,avatar');
+                $q->with('user:id,name,employee_id');
             }])
             ->with(['latestMessage' => function ($q) {
                 $q->with('user:id,name');
@@ -54,7 +54,7 @@ class ChatController extends Controller
                 $q->where('user_id', $user->id);
             })
             ->with(['participants' => function ($q) {
-                $q->with('user:id,name,avatar');
+                $q->with('user:id,name,employee_id');
             }])
             ->firstOrFail();
 
@@ -72,7 +72,7 @@ class ChatController extends Controller
         }
 
         $messages = Message::where('conversation_id', $conversationId)
-            ->with(['user:id,name,avatar', 'attachments'])
+            ->with(['user:id,name,employee_id', 'attachments'])
             ->orderBy('created_at', 'asc')
             ->paginate(50);
 
@@ -114,7 +114,7 @@ class ChatController extends Controller
             }
         }
 
-        $message->load(['user:id,name,avatar', 'attachments']);
+        $message->load(['user:id,name,employee_id', 'attachments']);
 
         return response()->json($message);
     }
@@ -145,11 +145,11 @@ class ChatController extends Controller
                     $q->where('user_id', $otherUserId);
                 })
                 ->withCount('participants')
-                ->where('participants_count', 2)
+                ->having('participants_count', 2)
                 ->first();
 
             if ($existingDm) {
-                return response()->json($existingDm->load(['participants.user:id,name,avatar']));
+                return response()->json($existingDm->load(['participants.user:id,name,employee_id']));
             }
         }
 
@@ -175,7 +175,7 @@ class ChatController extends Controller
             ]);
         }
 
-        $conversation->load(['participants.user:id,name,avatar']);
+        $conversation->load(['participants.user:id,name,employee_id']);
 
         return response()->json($conversation);
     }
@@ -210,7 +210,7 @@ class ChatController extends Controller
         $messages = Message::whereIn('conversation_id', $conversationIds)
             ->where('is_deleted', false)
             ->where('content', 'LIKE', "%{$query}%")
-            ->with(['user:id,name,avatar', 'conversation:id,type,name'])
+            ->with(['user:id,name,employee_id', 'conversation:id,type,name'])
             ->orderBy('created_at', 'desc')
             ->limit(50)
             ->get();
@@ -262,7 +262,7 @@ class ChatController extends Controller
             ]);
         }
 
-        $conversation->load(['participants.user:id,name,avatar']);
+        $conversation->load(['participants.user:id,name,employee_id']);
 
         return response()->json($conversation);
     }
@@ -363,7 +363,7 @@ class ChatController extends Controller
             ->unique();
 
         $users = User::whereIn('id', $participantUserIds)
-            ->select('id', 'name', 'avatar', 'last_active_at')
+            ->select('id', 'name', 'employee_id', 'last_active_at')
             ->get()
             ->map(fn ($u) => [
                 'id' => $u->id,

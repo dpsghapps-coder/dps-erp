@@ -26,14 +26,22 @@ class SearchController extends Controller
 
         if ($type === 'users') {
             $currentUser = $request->user();
-            $users = User::where('is_active', true)
+            $users = User::with(['employee:id,avatar,department_id', 'employee.department:id,name'])
+                ->where('is_active', true)
                 ->where('id', '!=', $currentUser->id)
                 ->where(function ($q) use ($dbQuery) {
                     $q->where('name', 'like', $dbQuery)
                       ->orWhere('email', 'like', $dbQuery);
                 })
                 ->limit(15)
-                ->get(['id', 'name', 'email', 'avatar', 'department']);
+                ->get(['id', 'name', 'email', 'employee_id'])
+                ->map(fn ($user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar,
+                    'department' => $user->department,
+                ]);
 
             return response()->json(['users' => $users]);
         }

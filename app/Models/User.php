@@ -16,7 +16,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'avatar',
         'role_id',
         'is_active',
         'employee_id',
@@ -25,6 +24,15 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+    ];
+
+    // Both derive from the employee relation (avatar and department live on
+    // employees, not users -- see the 2026_07_17_000003 migration). Appending
+    // them keeps `user.avatar` / `user.department` working transparently
+    // anywhere a User is JSON-serialized, matching pre-migration behavior.
+    protected $appends = [
+        'avatar',
+        'department',
     ];
 
     protected function casts(): array
@@ -49,6 +57,11 @@ class User extends Authenticatable
     public function getDepartmentAttribute(): ?string
     {
         return $this->employee?->department?->name;
+    }
+
+    public function getAvatarAttribute(): ?string
+    {
+        return $this->employee?->avatar;
     }
 
     public function hasRole(string $roleName): bool
