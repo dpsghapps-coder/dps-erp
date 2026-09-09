@@ -38,13 +38,14 @@ class MiscMockDataSeeder extends Seeder
     private function seedLeaveTypes(): void
     {
         $days = [
+            'Intern' => ['Annual' => 10, 'Sick' => 5, 'Casual' => 3, 'Emergency' => 2],
             'Junior' => ['Annual' => 15, 'Sick' => 10, 'Casual' => 5, 'Emergency' => 3],
-            'Mid-Level' => ['Annual' => 18, 'Sick' => 10, 'Casual' => 6, 'Emergency' => 3],
+            'Officer' => ['Annual' => 18, 'Sick' => 10, 'Casual' => 6, 'Emergency' => 3],
             'Senior' => ['Annual' => 21, 'Sick' => 12, 'Casual' => 6, 'Emergency' => 4],
-            'Lead' => ['Annual' => 21, 'Sick' => 12, 'Casual' => 7, 'Emergency' => 4],
+            'Supervisor' => ['Annual' => 21, 'Sick' => 12, 'Casual' => 7, 'Emergency' => 4],
             'Manager' => ['Annual' => 24, 'Sick' => 14, 'Casual' => 7, 'Emergency' => 5],
-            'Director' => ['Annual' => 27, 'Sick' => 14, 'Casual' => 8, 'Emergency' => 5],
-            'Executive' => ['Annual' => 30, 'Sick' => 15, 'Casual' => 10, 'Emergency' => 5],
+            'General Manager' => ['Annual' => 27, 'Sick' => 14, 'Casual' => 8, 'Emergency' => 5],
+            'Managing Director' => ['Annual' => 30, 'Sick' => 15, 'Casual' => 10, 'Emergency' => 5],
         ];
 
         foreach (StaffLevel::all() as $level) {
