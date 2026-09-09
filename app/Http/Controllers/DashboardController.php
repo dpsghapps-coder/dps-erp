@@ -8,21 +8,24 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductionJob;
 use App\Models\StudioBooking;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $canViewProduction = $request->user()->hasPermission('production.view');
+
         $stats = [
             'total_clients' => Client::count(),
             'active_clients' => Client::whereNotNull('first_converted_at')->count(),
             'total_orders' => Order::count(),
             'pending_orders' => Order::where('status', 'draft')->count(),
-            'production_jobs' => ProductionJob::whereNotIn('status', [
+            'production_jobs' => $canViewProduction ? ProductionJob::whereNotIn('status', [
                 ProductionJob::STATUS_COMPLETED,
                 ProductionJob::STATUS_PAUSED,
                 ProductionJob::STATUS_CANCELLED,
-            ])->count(),
+            ])->count() : null,
             'studio_bookings' => StudioBooking::whereIn('status', ['tentative', 'confirmed'])
                 ->where('start_datetime', '>=', now())
                 ->count(),
@@ -35,10 +38,9 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        $recent_jobs = ProductionJob::with('assignedTo')
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+        $recent_jobs = $canViewProduction
+            ? ProductionJob::with('assignedTo')->orderBy('created_at', 'desc')->limit(5)->get()
+            : null;
 
         return inertia('Dashboard', [
             'stats' => $stats,

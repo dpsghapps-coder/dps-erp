@@ -26,13 +26,14 @@ const fadeInUp = {
 export default function Dashboard() {
     const { stats, recent_orders, recent_jobs } = usePage().props as any;
     const formatCurrency = useCurrency();
+    const canViewProduction = stats?.production_jobs != null;
 
     const statCards = [
         { label: 'Total Clients', value: stats?.total_clients || 0, icon: Users, color: 'text-blue-400', href: '/crm' },
         { label: 'Active Clients', value: stats?.active_clients || 0, icon: Users, color: 'text-green-400', href: '/crm' },
         { label: 'Total Orders', value: stats?.total_orders || 0, icon: ShoppingCart, color: 'text-purple-400', href: '/orders' },
         { label: 'Pending Orders', value: stats?.pending_orders || 0, icon: ShoppingCart, color: 'text-yellow-400', href: '/orders' },
-        { label: 'Active Jobs', value: stats?.production_jobs || 0, icon: Factory, color: 'text-orange-400', href: '/production' },
+        ...(canViewProduction ? [{ label: 'Active Jobs', value: stats.production_jobs, icon: Factory, color: 'text-orange-400', href: '/production' }] : []),
         { label: 'Bookings', value: stats?.studio_bookings || 0, icon: Camera, color: 'text-cyan-400', href: '/studio' },
         { label: 'Products', value: stats?.total_products || 0, icon: Package, color: 'text-pink-400', href: '/products' },
         { label: 'Employees', value: stats?.total_employees || 0, icon: UserCog, color: 'text-indigo-400', href: '/hrm' },
@@ -112,34 +113,36 @@ export default function Dashboard() {
                 </motion.div>
 
                 {/* Production Jobs */}
-                <motion.div variants={itemVariants}>
-                    <GlassCard>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold">Production Jobs</h2>
-                            <Link href="/production" className="text-sm text-blue-400 hover:underline flex items-center gap-1">
-                                View All <ArrowRight className="w-4 h-4" />
-                            </Link>
-                        </div>
-                        {recent_jobs?.length > 0 ? (
-                            <div className="space-y-3">
-                                {recent_jobs.slice(0, 4).map((job: any) => (
-                                    <div key={job.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
-                                        <div>
-                                            <p className="font-medium">{job.job_number}</p>
-                                            <p className="text-sm text-slate-400">{job.title}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <StatusBadge status={job.status} />
-                                            <p className="text-sm mt-1 text-slate-400">{job.priority}</p>
-                                        </div>
-                                    </div>
-                                ))}
+                {canViewProduction && (
+                    <motion.div variants={itemVariants}>
+                        <GlassCard>
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold">Production Jobs</h2>
+                                <Link href="/production" className="text-sm text-blue-400 hover:underline flex items-center gap-1">
+                                    View All <ArrowRight className="w-4 h-4" />
+                                </Link>
                             </div>
-                        ) : (
-                            <EmptyState icon={Factory} title="No jobs yet" />
-                        )}
-                    </GlassCard>
-                </motion.div>
+                            {recent_jobs?.length > 0 ? (
+                                <div className="space-y-3">
+                                    {recent_jobs.slice(0, 4).map((job: any) => (
+                                        <div key={job.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+                                            <div>
+                                                <p className="font-medium">{job.job_number}</p>
+                                                <p className="text-sm text-slate-400">{job.title}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <StatusBadge status={job.status} />
+                                                <p className="text-sm mt-1 text-slate-400">{job.priority}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <EmptyState icon={Factory} title="No jobs yet" />
+                            )}
+                        </GlassCard>
+                    </motion.div>
+                )}
 
                 {/* Quick Actions */}
                 <motion.div variants={itemVariants}>
