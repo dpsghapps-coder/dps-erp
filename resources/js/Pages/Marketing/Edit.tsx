@@ -1,11 +1,17 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, X, Plus } from 'lucide-react';
+import { ArrowLeft, X, Plus, Trash2, FileText, Download } from 'lucide-react';
 import { useState } from 'react';
 
+interface NewDocument {
+    file: File | null;
+    name: string;
+    description: string;
+}
+
 export default function CampaignEdit() {
-    const { campaign, clients, employees } = usePage().props as any;
+    const { campaign, clients, employees, unlinkedDocuments = [] } = usePage().props as any;
     const { data, setData, put, processing, errors } = useForm({
         title: campaign.title || '',
         description: campaign.description || '',
@@ -20,9 +26,27 @@ export default function CampaignEdit() {
         tags: campaign.tags || [] as string[],
         notes: campaign.notes || '',
         reminders: campaign.reminders?.map((r: any) => r.remind_at) || [] as string[],
+        new_documents: [] as NewDocument[],
+        existing_document_ids: [] as number[],
     });
     const [tagInput, setTagInput] = useState('');
     const [reminderInput, setReminderInput] = useState('');
+
+    const addDocument = () => setData('new_documents', [...data.new_documents, { file: null, name: '', description: '' }]);
+    const removeDocument = (index: number) => setData('new_documents', data.new_documents.filter((_, i) => i !== index));
+    const setDocumentField = (index: number, field: keyof NewDocument, value: any) => {
+        const next = [...data.new_documents];
+        next[index] = { ...next[index], [field]: value };
+        setData('new_documents', next);
+    };
+
+    const toggleExistingDocument = (id: number) => {
+        setData('existing_document_ids',
+            data.existing_document_ids.includes(id)
+                ? data.existing_document_ids.filter((docId) => docId !== id)
+                : [...data.existing_document_ids, id]
+        );
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -274,6 +298,117 @@ export default function CampaignEdit() {
                             )}
                             <p className="text-xs text-slate-400">Add custom reminder dates/times for this campaign</p>
                         </div>
+                    </GlassCard>
+
+                    {/* Documents */}
+                    <GlassCard className="lg:col-span-2">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold">Documents</h2>
+                            <button
+                                type="button"
+                                onClick={addDocument}
+                                className="glass-button-secondary flex items-center gap-2 text-sm"
+                            >
+                                <Plus className="w-4 h-4" /> Add Document
+                            </button>
+                        </div>
+
+                        {campaign.documents?.length > 0 && (
+                            <div className="mb-4">
+                                <p className="text-sm font-medium mb-2">Already linked</p>
+                                <div className="space-y-1">
+                                    {campaign.documents.map((doc: any) => (
+                                        <div key={doc.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/5">
+                                            <span className="flex items-center gap-2 text-sm truncate">
+                                                <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                                                {doc.name}
+                                            </span>
+                                            <a
+                                                href={`/storage/${doc.path}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-indigo-500 hover:text-indigo-600 flex-shrink-0"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </a>
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-slate-400 mt-2">Manage or unlink existing documents from the Documents page.</p>
+                            </div>
+                        )}
+
+                        {unlinkedDocuments.length > 0 && (
+                            <div className="mb-4">
+                                <p className="text-sm font-medium mb-2">Attach existing documents</p>
+                                <div className="grid sm:grid-cols-2 gap-2">
+                                    {unlinkedDocuments.map((doc: any) => (
+                                        <label
+                                            key={doc.id}
+                                            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={data.existing_document_ids.includes(doc.id)}
+                                                onChange={() => toggleExistingDocument(doc.id)}
+                                                className="rounded border-slate-300"
+                                            />
+                                            <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                                            <span className="text-sm truncate">{doc.name}</span>
+                                        </label>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {data.new_documents.length > 0 && (
+                            <div className="space-y-4">
+                                {data.new_documents.map((doc, index) => (
+                                    <div key={index} className="relative border border-slate-200 dark:border-white/10 rounded-xl p-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeDocument(index)}
+                                            className="absolute top-3 right-3 text-slate-400 hover:text-red-500 transition-colors"
+                                            aria-label="Remove document"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        <div className="grid sm:grid-cols-2 gap-3 pr-8">
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">File *</label>
+                                                <input
+                                                    type="file"
+                                                    accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx"
+                                                    onChange={(e) => setDocumentField(index, 'file', e.target.files?.[0] ?? null)}
+                                                    className="glass-input w-full text-sm"
+                                                />
+                                                {(errors as any)[`new_documents.${index}.file`] && (
+                                                    <p className="text-red-500 text-xs mt-1">{(errors as any)[`new_documents.${index}.file`]}</p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">Name *</label>
+                                                <input
+                                                    type="text"
+                                                    value={doc.name}
+                                                    onChange={(e) => setDocumentField(index, 'name', e.target.value)}
+                                                    className="glass-input w-full text-sm"
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-2">
+                                                <label className="block text-xs font-medium mb-1">Description</label>
+                                                <input
+                                                    type="text"
+                                                    value={doc.description}
+                                                    onChange={(e) => setDocumentField(index, 'description', e.target.value)}
+                                                    className="glass-input w-full text-sm"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </GlassCard>
 
                     {/* Notes */}

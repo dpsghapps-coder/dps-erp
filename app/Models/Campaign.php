@@ -51,4 +51,9 @@ class Campaign extends Model
     {
         return $this->hasMany(CampaignReminder::class);
     }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(MarketingDocument::class);
+    }
 }

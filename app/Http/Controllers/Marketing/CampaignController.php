@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use App\Models\CampaignReminder;
 use App\Models\Client;
 use App\Models\Holiday;
+use App\Models\MarketingDocument;
 use App\Models\User;
 use App\Notifications\CampaignNotification;
 use Illuminate\Http\Request;
@@ -28,10 +29,12 @@ class CampaignController extends Controller
     {
         $clients = Client::orderBy('company_name')->get();
         $employees = User::where('is_active', true)->orderBy('name')->get();
+        $unlinkedDocuments = MarketingDocument::whereNull('campaign_id')->orderByDesc('created_at')->get();
 
         return inertia('Marketing/Create', [
             'clients' => $clients,
             'employees' => $employees,
+            'unlinkedDocuments' => $unlinkedDocuments,
         ]);
     }
 
@@ -52,6 +55,12 @@ class CampaignController extends Controller
             'notes' => 'nullable|string',
             'reminders' => 'nullable|array',
             'reminders.*' => 'date|after:now',
+            'new_documents' => 'nullable|array',
+            'new_documents.*.name' => 'required_with:new_documents|string|max:255',
+            'new_documents.*.description' => 'nullable|string',
+            'new_documents.*.file' => ['required_with:new_documents', 'file', MarketingDocument::MIME_RULE, 'max:'.MarketingDocument::MAX_KB],
+            'existing_document_ids' => 'nullable|array',
+            'existing_document_ids.*' => 'exists:marketing_documents,id',
         ]);
 
         $campaign = Campaign::create([
@@ -81,6 +90,20 @@ class CampaignController extends Controller
             }
         }
 
+        foreach ($validated['new_documents'] ?? [] as $documentData) {
+            MarketingDocument::createFromUpload($documentData['file'], [
+                'name' => $documentData['name'],
+                'description' => $documentData['description'] ?? null,
+                'campaign_id' => $campaign->id,
+                'created_by' => auth()->id(),
+            ]);
+        }
+
+        if (! empty($validated['existing_document_ids'])) {
+            MarketingDocument::whereIn('id', $validated['existing_document_ids'])
+                ->update(['campaign_id' => $campaign->id]);
+        }
+
         $campaign->load(['client', 'assignedTo', 'createdBy']);
 
         $users = User::where('is_active', true)->get();
@@ -95,21 +118,23 @@ class CampaignController extends Controller
 
     public function show(Campaign $campaign)
     {
-        $campaign->load(['client', 'assignedTo', 'createdBy', 'reminders.user']);
+        $campaign->load(['client', 'assignedTo', 'createdBy', 'reminders.user', 'documents']);
 
         return inertia('Marketing/Show', ['campaign' => $campaign]);
     }
 
     public function edit(Campaign $campaign)
     {
-        $campaign->load(['assignedTo', 'reminders']);
+        $campaign->load(['assignedTo', 'reminders', 'documents']);
         $clients = Client::orderBy('company_name')->get();
         $employees = User::where('is_active', true)->orderBy('name')->get();
+        $unlinkedDocuments = MarketingDocument::whereNull('campaign_id')->orderByDesc('created_at')->get();
 
         return inertia('Marketing/Edit', [
             'campaign' => $campaign,
             'clients' => $clients,
             'employees' => $employees,
+            'unlinkedDocuments' => $unlinkedDocuments,
         ]);
     }
 
@@ -130,6 +155,12 @@ class CampaignController extends Controller
             'notes' => 'nullable|string',
             'reminders' => 'nullable|array',
             'reminders.*' => 'date|after:now',
+            'new_documents' => 'nullable|array',
+            'new_documents.*.name' => 'required_with:new_documents|string|max:255',
+            'new_documents.*.description' => 'nullable|string',
+            'new_documents.*.file' => ['required_with:new_documents', 'file', MarketingDocument::MIME_RULE, 'max:'.MarketingDocument::MAX_KB],
+            'existing_document_ids' => 'nullable|array',
+            'existing_document_ids.*' => 'exists:marketing_documents,id',
         ]);
 
         $oldStatus = $campaign->status;
@@ -158,6 +189,20 @@ class CampaignController extends Controller
                     'remind_at' => $remindAt,
                 ]);
             }
+        }
+
+        foreach ($validated['new_documents'] ?? [] as $documentData) {
+            MarketingDocument::createFromUpload($documentData['file'], [
+                'name' => $documentData['name'],
+                'description' => $documentData['description'] ?? null,
+                'campaign_id' => $campaign->id,
+                'created_by' => auth()->id(),
+            ]);
+        }
+
+        if (! empty($validated['existing_document_ids'])) {
+            MarketingDocument::whereIn('id', $validated['existing_document_ids'])
+                ->update(['campaign_id' => $campaign->id]);
         }
 
         $campaign->load(['client', 'assignedTo', 'createdBy']);

@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Trash2, Calendar, DollarSign, User, Building, Clock, Tag, Bell } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Calendar, DollarSign, User, Building, Clock, Tag, Bell, FileText, Download } from 'lucide-react';
 import Swal from 'sweetalert2';
 import { useCurrency } from '@/Utils/currency';
 
@@ -124,6 +124,41 @@ export default function CampaignShow() {
                             <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{campaign.notes}</p>
                         </GlassCard>
                     )}
+
+                    {/* Documents */}
+                    <GlassCard>
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold flex items-center gap-2">
+                                <FileText className="w-5 h-5" /> Documents
+                            </h2>
+                            <Link href={`/marketing/${campaign.id}/edit`} className="text-sm text-indigo-600 hover:underline">
+                                + Add document
+                            </Link>
+                        </div>
+                        {campaign.documents && campaign.documents.length > 0 ? (
+                            <div className="space-y-2">
+                                {campaign.documents.map((doc: any) => (
+                                    <div key={doc.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-700/50">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-medium truncate">{doc.name}</p>
+                                            {doc.description && <p className="text-xs text-slate-400 truncate">{doc.description}</p>}
+                                        </div>
+                                        <a
+                                            href={`/storage/${doc.path}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-indigo-500 hover:text-indigo-600 flex-shrink-0"
+                                            title="Download"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-400 dark:text-slate-300">No documents linked</p>
+                        )}
+                    </GlassCard>
                 </div>
 
                 <div className="space-y-6">

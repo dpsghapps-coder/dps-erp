@@ -107,6 +107,12 @@ class ProductCatalogController extends Controller
             'restock_threshold' => 'nullable|integer|min:0',
         ]);
 
+        if ($validated['uom'] !== $product->uom && $product->prices()->exists()) {
+            return back()->withErrors([
+                'uom' => 'Unit of measure can\'t be changed once price tiers exist for this material — the existing tier quantities are in the old unit and won\'t convert. Remove the price tiers first, or create a new material instead.',
+            ])->withInput();
+        }
+
         if ($request->filled('attributes')) {
             $validated['attributes'] = json_decode($request->input('attributes'), true);
         }
@@ -179,6 +185,7 @@ class ProductCatalogController extends Controller
             'attributes' => $attributes,
             'costTypes' => $costTypes,
             'categoryAttributes' => $categoryAttributes,
+            'hasPrices' => $product->prices->isNotEmpty(),
         ]);
     }
 
@@ -317,6 +324,7 @@ class ProductCatalogController extends Controller
             'uoms' => $uoms,
             'attributes' => $attributes,
             'categoryAttributes' => $categoryAttributes,
+            'hasPrices' => $product->prices()->exists(),
         ]);
     }
 }

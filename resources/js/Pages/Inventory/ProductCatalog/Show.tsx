@@ -6,7 +6,7 @@ import { useState } from 'react';
 import WhatsAppLink from '@/Components/WhatsAppLink';
 
 export default function ProductCatalogShow() {
-    const { product, suppliers, users, categories, uoms, attributes, costTypes, categoryAttributes } = usePage().props as any;
+    const { product, suppliers, users, categories, uoms, attributes, costTypes, categoryAttributes, hasPrices } = usePage().props as any;
     const [showAddModal, setShowAddModal] = useState(false);
     const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -713,13 +713,20 @@ export default function ProductCatalogShow() {
                                     <select
                                         value={editData.uom}
                                         onChange={(e) => setEditData({ ...editData, uom: e.target.value })}
-                                        className="glass-input w-full"
+                                        className="glass-input w-full disabled:opacity-60 disabled:cursor-not-allowed"
                                         required
+                                        disabled={hasPrices}
+                                        title={hasPrices ? "Can't change unit once price tiers exist for this material" : undefined}
                                     >
                                         {(uoms || []).map((u: string) => (
                                             <option key={u} value={u}>{u}</option>
                                         ))}
                                     </select>
+                                    {hasPrices && (
+                                        <p className="text-xs text-amber-500 mt-1">
+                                            Locked — price tiers exist for this unit. Remove them first, or create a new material to use a different unit.
+                                        </p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Picture</label>

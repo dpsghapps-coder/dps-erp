@@ -33,6 +33,7 @@ use App\Http\Controllers\Management\DecisionController;
 use App\Http\Controllers\Management\MeetingController;
 use App\Http\Controllers\Management\ReviewController;
 use App\Http\Controllers\Marketing\CampaignController;
+use App\Http\Controllers\Marketing\MarketingDocumentController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfficeIssueReportController;
 use App\Http\Controllers\OnboardingController;
@@ -652,6 +653,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/', [CampaignController::class, 'index'])->name('index');
         Route::get('/create', [CampaignController::class, 'create'])->name('create');
         Route::post('/', [CampaignController::class, 'store'])->name('store');
+
+        // Documents routes (must be before {campaign} wildcard)
+        Route::prefix('documents')->name('documents.')->group(function () {
+            Route::get('/', [MarketingDocumentController::class, 'index'])->name('index');
+            Route::post('/', [MarketingDocumentController::class, 'store'])
+                ->middleware('permission:marketing.create')
+                ->name('store');
+            Route::put('/{document}', [MarketingDocumentController::class, 'update'])
+                ->middleware('permission:marketing.edit')
+                ->name('update');
+            Route::delete('/{document}', [MarketingDocumentController::class, 'destroy'])
+                ->middleware('permission:marketing.delete')
+                ->name('destroy');
+        });
+
         Route::get('/{campaign}', [CampaignController::class, 'show'])->name('show');
         Route::get('/{campaign}/edit', [CampaignController::class, 'edit'])->name('edit');
         Route::put('/{campaign}', [CampaignController::class, 'update'])->name('update');

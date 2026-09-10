@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ProductCatalogEdit() {
-    const { product, suppliers, categories, uoms, categoryAttributes } = usePage().props as any;
+    const { product, suppliers, categories, uoms, categoryAttributes, hasPrices } = usePage().props as any;
 
     const productAttributes = product.attributes || {};
     const [attributeValues, setAttributeValues] = useState<Record<string, string>>(productAttributes);
@@ -115,13 +115,20 @@ export default function ProductCatalogEdit() {
                                 <select
                                     value={data.uom}
                                     onChange={(e) => setData('uom', e.target.value)}
-                                    className="glass-input w-full"
+                                    className="glass-input w-full disabled:opacity-60 disabled:cursor-not-allowed"
                                     required
+                                    disabled={hasPrices}
+                                    title={hasPrices ? "Can't change unit once price tiers exist for this material" : undefined}
                                 >
                                     {(uoms || []).map((u: string) => (
                                         <option key={u} value={u}>{u}</option>
                                     ))}
                                 </select>
+                                {hasPrices && (
+                                    <p className="text-xs text-amber-500 mt-1">
+                                        Locked — price tiers exist for this unit. Remove them first, or create a new material to use a different unit.
+                                    </p>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium mb-2">Picture</label>

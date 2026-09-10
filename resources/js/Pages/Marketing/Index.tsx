@@ -2,7 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import CrmTabs from '@/Components/CrmTabs';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Calendar, Eye, Pencil, Trash2, Globe } from 'lucide-react';
+import { Plus, Calendar, Eye, Pencil, Trash2, Globe, FileText } from 'lucide-react';
 import { useState, useMemo, useCallback } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer, Views, View } from 'react-big-calendar';
 import { format, parse, startOfWeek, getDay, addDays, startOfDay } from 'date-fns';
@@ -157,9 +157,14 @@ export default function MarketingIndex() {
                 title="Marketing"
                 subtitle={`${campaigns?.length || 0} campaigns total`}
                 action={
-                    <Link href="/marketing/create" className="glass-button flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> New Campaign
-                    </Link>
+                    <div className="flex items-center gap-2">
+                        <Link href="/marketing/documents" className="glass-button-secondary flex items-center gap-2">
+                            <FileText className="w-4 h-4" /> Documents
+                        </Link>
+                        <Link href="/marketing/create" className="glass-button flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> New Campaign
+                        </Link>
+                    </div>
                 }
             />
 
