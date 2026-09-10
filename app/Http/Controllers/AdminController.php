@@ -11,6 +11,7 @@ use App\Models\Role;
 use App\Models\Setting;
 use App\Models\StaffLevel;
 use App\Models\User;
+use App\Rules\EmailUniqueInTable;
 use App\Support\DatabaseBackup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -56,7 +57,7 @@ class AdminController extends Controller
     public function userStore(Request $request)
     {
         $validated = $request->validate([
-            'email' => 'required|email|unique:users',
+            'email' => ['required', 'email', 'unique:users', new EmailUniqueInTable('employees')],
             'password' => 'required|string|min:8',
             'role_id' => 'nullable|exists:roles,id',
             'is_active' => 'boolean',
@@ -108,7 +109,12 @@ class AdminController extends Controller
     public function userUpdate(Request $request, User $user)
     {
         $validated = $request->validate([
-            'email' => 'required|email|unique:users,email,'.$user->id,
+            'email' => [
+                'required',
+                'email',
+                'unique:users,email,'.$user->id,
+                new EmailUniqueInTable('employees', $user->employee_id),
+            ],
             'role_id' => 'nullable|exists:roles,id',
             'is_active' => 'boolean',
             'employee_id' => 'nullable|exists:employees,id',

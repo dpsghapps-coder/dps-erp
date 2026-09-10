@@ -21,6 +21,8 @@ class Client extends Model
         'address',
         'city',
         'country',
+        'region',
+        'neighbourhood',
         'status',
         'source',
         'notes',
@@ -47,6 +49,8 @@ class Client extends Model
     public const TIERS = ['bronze', 'silver', 'gold', 'platinum'];
 
     public const PHONE_REGEX = '/^0[0-9]{9}$/';
+
+    public const INTERNATIONAL_PHONE_REGEX = '/^\+[1-9][0-9\s]{6,17}$/';
 
     public function contacts(): HasMany
     {

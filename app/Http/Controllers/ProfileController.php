@@ -6,6 +6,7 @@ use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Models\Performance;
 use App\Models\UserNotificationPreference;
+use App\Rules\EmailUniqueInTable;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
@@ -70,7 +71,13 @@ class ProfileController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $request->user()->id,
+            'email' => [
+                'required',
+                'email',
+                'max:255',
+                'unique:users,email,'.$request->user()->id,
+                new EmailUniqueInTable('employees', $request->user()->employee_id),
+            ],
             'avatar' => 'nullable|image|max:2048',
         ]);
 

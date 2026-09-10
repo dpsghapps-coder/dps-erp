@@ -1,12 +1,29 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, SearchableSelect, PhoneInput } from '@/Components/ui';
 import GPSMapPicker from '@/Components/GPSMapPicker';
+import { COUNTRIES } from '@/Utils/countries';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, MapPin, X } from 'lucide-react';
+import { ArrowLeft, MapPin, Plus, Trash2, X } from 'lucide-react';
 import { useState } from 'react';
+
+interface ContactFormItem {
+    first_name: string;
+    last_name: string;
+    job_title: string;
+    phone: string;
+    branch: string;
+    region: string;
+    city: string;
+    neighbourhood: string;
+}
+
+const emptyContact: ContactFormItem = {
+    first_name: '', last_name: '', job_title: '', phone: '', branch: '', region: '', city: '', neighbourhood: '',
+};
 
 export default function ClientCreate() {
     const { url } = usePage();
+    const { sources = [], industries = [], regions = [], cities = [], neighbourhoods = [] } = usePage().props as any;
     const fromLeads = url.includes('from=leads');
     const { data, setData, post, processing, errors } = useForm({
         company_name: '',
@@ -15,20 +32,31 @@ export default function ClientCreate() {
         industry: '',
         website: '',
         address: '',
-        city: '',
-        country: '',
+        city: 'Accra',
+        country: 'Ghana',
+        region: 'Greater Accra',
+        neighbourhood: '',
         location: '',
         source: '',
         estimated_value: '',
-        create_lead: true,
+        create_lead: false,
         notes: '',
         linkedin: '',
         facebook: '',
         instagram: '',
         twitter: '',
         tiktok: '',
+        contacts: [] as ContactFormItem[],
     });
     const [showMapModal, setShowMapModal] = useState(false);
+
+    const addContact = () => setData('contacts', [...data.contacts, { ...emptyContact }]);
+    const removeContact = (index: number) => setData('contacts', data.contacts.filter((_, i) => i !== index));
+    const setContactField = (index: number, field: keyof ContactFormItem, value: string) => {
+        const next = [...data.contacts];
+        next[index] = { ...next[index], [field]: value };
+        setData('contacts', next);
+    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,7 +82,7 @@ export default function ClientCreate() {
                         <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-2">Company Name *</label>
+                                <label className="block text-sm font-medium mb-2">Company/Client Name *</label>
                                 <input 
                                     type="text"
                                     value={data.company_name}
@@ -67,12 +95,11 @@ export default function ClientCreate() {
 
                             <div>
                                 <label className="block text-sm font-medium mb-2">Industry</label>
-                                <input
-                                    type="text"
+                                <SearchableSelect
                                     value={data.industry}
-                                    onChange={(e) => setData('industry', e.target.value)}
-                                    className="glass-input w-full"
-                                    placeholder="Industry"
+                                    onChange={(value) => setData('industry', value)}
+                                    options={industries}
+                                    placeholder="Select industry"
                                 />
                             </div>
 
@@ -90,12 +117,11 @@ export default function ClientCreate() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Source</label>
-                                    <input
-                                        type="text"
+                                    <SearchableSelect
                                         value={data.source}
-                                        onChange={(e) => setData('source', e.target.value)}
-                                        className="glass-input w-full"
-                                        placeholder="Referral, Ads, etc."
+                                        onChange={(value) => setData('source', value)}
+                                        options={sources}
+                                        placeholder="Select source"
                                     />
                                 </div>
                                 {data.create_lead && (
@@ -150,16 +176,11 @@ export default function ClientCreate() {
 
                             <div>
                                 <label className="block text-sm font-medium mb-2">Phone</label>
-                                <input 
-                                    type="text"
+                                <PhoneInput
                                     value={data.phone}
-                                    onChange={(e) => setData('phone', e.target.value)}
-                                    className="glass-input w-full"
-                                    placeholder="0XXXXXXXXX (10 digits starting with 0)"
-                                    maxLength={10}
+                                    onChange={(value) => setData('phone', value)}
+                                    error={errors.phone}
                                 />
-                                <p className="text-xs text-slate-400 mt-1">10 digits starting with 0</p>
-                                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                             </div>
 
                             <div>
@@ -174,22 +195,42 @@ export default function ClientCreate() {
 
                         <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">City</label>
-                                    <input 
-                                        type="text"
-                                        value={data.city}
-                                        onChange={(e) => setData('city', e.target.value)}
-                                        className="glass-input w-full"
+                                    <label className="block text-sm font-medium mb-2">Region</label>
+                                    <SearchableSelect
+                                        value={data.region}
+                                        onChange={(value) => setData('region', value)}
+                                        options={regions}
+                                        placeholder="Select region"
                                     />
                                 </div>
-                                
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">City</label>
+                                    <SearchableSelect
+                                        value={data.city}
+                                        onChange={(value) => setData('city', value)}
+                                        options={cities}
+                                        placeholder="Select city"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Neighbourhood</label>
+                                    <SearchableSelect
+                                        value={data.neighbourhood}
+                                        onChange={(value) => setData('neighbourhood', value)}
+                                        options={neighbourhoods}
+                                        placeholder="Select neighbourhood"
+                                    />
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Country</label>
-                                    <input 
-                                        type="text"
+                                    <SearchableSelect
                                         value={data.country}
-                                        onChange={(e) => setData('country', e.target.value)}
-                                        className="glass-input w-full"
+                                        onChange={(value) => setData('country', value)}
+                                        options={COUNTRIES}
+                                        placeholder="Select country"
                                     />
                                 </div>
                             </div>
@@ -223,6 +264,116 @@ export default function ClientCreate() {
                                 )}
                             </div>
                         </div>
+                    </GlassCard>
+
+                    {/* Contacts */}
+                    <GlassCard className="lg:col-span-2">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold">Contacts</h2>
+                            <button
+                                type="button"
+                                onClick={addContact}
+                                className="glass-button-secondary flex items-center gap-2 text-sm"
+                            >
+                                <Plus className="w-4 h-4" /> Add Contact
+                            </button>
+                        </div>
+                        {data.contacts.length === 0 ? (
+                            <p className="text-sm text-slate-400">
+                                No contacts added yet. You can add people at this company now, or later from the client page.
+                            </p>
+                        ) : (
+                            <div className="space-y-4">
+                                {data.contacts.map((contact, index) => (
+                                    <div key={index} className="relative border border-slate-200 dark:border-white/10 rounded-xl p-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => removeContact(index)}
+                                            className="absolute top-3 right-3 text-slate-400 hover:text-red-500 transition-colors"
+                                            aria-label="Remove contact"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 pr-8">
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">First Name *</label>
+                                                <input
+                                                    type="text"
+                                                    value={contact.first_name}
+                                                    onChange={(e) => setContactField(index, 'first_name', e.target.value)}
+                                                    className="glass-input w-full"
+                                                />
+                                                {(errors as any)[`contacts.${index}.first_name`] && (
+                                                    <p className="text-red-500 text-xs mt-1">{(errors as any)[`contacts.${index}.first_name`]}</p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">Last Name</label>
+                                                <input
+                                                    type="text"
+                                                    value={contact.last_name}
+                                                    onChange={(e) => setContactField(index, 'last_name', e.target.value)}
+                                                    className="glass-input w-full"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">Job Title</label>
+                                                <input
+                                                    type="text"
+                                                    value={contact.job_title}
+                                                    onChange={(e) => setContactField(index, 'job_title', e.target.value)}
+                                                    className="glass-input w-full"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">Phone</label>
+                                                <PhoneInput
+                                                    value={contact.phone}
+                                                    onChange={(value) => setContactField(index, 'phone', value)}
+                                                    error={(errors as any)[`contacts.${index}.phone`]}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">Branch</label>
+                                                <input
+                                                    type="text"
+                                                    value={contact.branch}
+                                                    onChange={(e) => setContactField(index, 'branch', e.target.value)}
+                                                    className="glass-input w-full"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">Region</label>
+                                                <SearchableSelect
+                                                    value={contact.region}
+                                                    onChange={(value) => setContactField(index, 'region', value)}
+                                                    options={regions}
+                                                    placeholder="Select region"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">City</label>
+                                                <SearchableSelect
+                                                    value={contact.city}
+                                                    onChange={(value) => setContactField(index, 'city', value)}
+                                                    options={cities}
+                                                    placeholder="Select city"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1">Neighbourhood</label>
+                                                <SearchableSelect
+                                                    value={contact.neighbourhood}
+                                                    onChange={(value) => setContactField(index, 'neighbourhood', value)}
+                                                    options={neighbourhoods}
+                                                    placeholder="Select neighbourhood"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </GlassCard>
 
                     {/* Notes */}

@@ -6,6 +6,7 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\CrmController;
 use App\Http\Controllers\CrmLeadController;
 use App\Http\Controllers\CrmReportController;
+use App\Http\Controllers\CrmSettingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DealController;
 use App\Http\Controllers\Finance\AccountController;
@@ -92,6 +93,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('permission:crm.create_clients')->group(function () {
         Route::get('/crm/create', [CrmController::class, 'create'])->name('crm.create');
         Route::post('/crm', [CrmController::class, 'store'])->name('crm.store');
+    });
+
+    // CRM Settings routes (must be before {client} wildcard)
+    Route::middleware('permission:crm.manage_settings')->group(function () {
+        Route::get('/crm/settings', [CrmSettingController::class, 'index'])->name('crm.settings.index');
+        Route::post('/crm/settings/{type}', [CrmSettingController::class, 'store'])->name('crm.settings.store');
+        Route::put('/crm/settings/{type}/{id}', [CrmSettingController::class, 'update'])->name('crm.settings.update');
+        Route::delete('/crm/settings/{type}/{id}', [CrmSettingController::class, 'destroy'])->name('crm.settings.destroy');
     });
 
     Route::middleware('permission:crm.view')->group(function () {

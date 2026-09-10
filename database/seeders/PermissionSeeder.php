@@ -20,6 +20,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'crm.view_leads', 'module' => 'crm', 'description' => 'View leads'],
             ['name' => 'crm.view_reports', 'module' => 'crm', 'description' => 'View CRM reports'],
             ['name' => 'crm.approve-greylist', 'module' => 'crm', 'description' => 'Lift a client greylist status'],
+            ['name' => 'crm.manage_settings', 'module' => 'crm', 'description' => 'Manage CRM dropdown lists (source, industry, region, city, neighbourhood)'],
 
             // Products
             ['name' => 'products.view', 'module' => 'products', 'description' => 'View products'],

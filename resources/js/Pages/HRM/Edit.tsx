@@ -3,6 +3,7 @@ import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { useState, useRef } from 'react';
+import { RELATIONSHIP_OPTIONS } from '@/Utils/relationships';
 
 export default function HrmEdit() {
     const { employee, departments, employmentTypes, staffLevels, managers } = usePage().props as any;
@@ -308,13 +309,16 @@ export default function HrmEdit() {
 
                             <div>
                                 <label className="block text-sm font-medium mb-2">Relationship to Employee</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={data.emergency_contact_relation}
                                     onChange={(e) => setData('emergency_contact_relation', e.target.value)}
                                     className="glass-input w-full"
-                                    placeholder="e.g. Spouse, Parent, Sibling"
-                                />
+                                >
+                                    <option value="">Select Relationship</option>
+                                    {RELATIONSHIP_OPTIONS.map((r) => (
+                                        <option key={r} value={r}>{r}</option>
+                                    ))}
+                                </select>
                                 {errors.emergency_contact_relation && <p className="text-red-400 text-sm mt-1">{errors.emergency_contact_relation}</p>}
                             </div>
 

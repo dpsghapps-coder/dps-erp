@@ -54,6 +54,15 @@ class User extends Authenticatable
         return $this->belongsTo(Employee::class);
     }
 
+    protected static function booted(): void
+    {
+        static::saved(function (User $user) {
+            if ($user->wasChanged('email') && $user->employee && $user->employee->email !== $user->email) {
+                $user->employee->updateQuietly(['email' => $user->email]);
+            }
+        });
+    }
+
     public function getDepartmentAttribute(): ?string
     {
         return $this->employee?->department?->name;

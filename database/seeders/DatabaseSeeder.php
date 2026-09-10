@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             'is_default' => true,
         ]);
 
+        $this->call(CrmLookupSeeder::class);
         $this->call(ClientSeeder::class);
 
         $this->call(InventorySeeder::class);

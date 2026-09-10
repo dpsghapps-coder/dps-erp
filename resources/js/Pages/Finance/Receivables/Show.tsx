@@ -170,6 +170,7 @@ export default function ShowInvoice() {
             <div className="grid md:grid-cols-2 gap-6">
                 <GlassCard>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Line Items</h3>
+                    <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b border-slate-200/60 dark:border-slate-700/60">
@@ -190,6 +191,7 @@ export default function ShowInvoice() {
                             ))}
                         </tbody>
                     </table>
+                    </div>
                     {invoice.notes && <p className="text-sm text-slate-500 mt-4 italic">{invoice.notes}</p>}
                 </GlassCard>
 

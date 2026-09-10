@@ -1,5 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
+import CrmTabs from '@/Components/CrmTabs';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { Plus, Calendar, Eye, Pencil, Trash2, Globe } from 'lucide-react';
 import { useState, useMemo, useCallback } from 'react';
@@ -161,6 +162,8 @@ export default function MarketingIndex() {
                     </Link>
                 }
             />
+
+            <CrmTabs activeTab="marketing" />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <GlassCard variant="bordered" size="sm">

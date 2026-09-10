@@ -17,6 +17,9 @@ class Contact extends Model
         'last_name',
         'branch',
         'location',
+        'region',
+        'city',
+        'neighbourhood',
         'job_title',
         'phone',
     ];

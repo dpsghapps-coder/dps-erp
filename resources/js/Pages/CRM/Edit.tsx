@@ -1,12 +1,13 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips, SearchableSelect, PhoneInput } from '@/Components/ui';
 import GPSMapPicker from '@/Components/GPSMapPicker';
+import { COUNTRIES } from '@/Utils/countries';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, MapPin, X } from 'lucide-react';
 import { useState } from 'react';
 
 export default function ClientEdit() {
-    const { client } = usePage().props as any;
+    const { client, sources = [], industries = [], regions = [], cities = [], neighbourhoods = [] } = usePage().props as any;
     const { data, setData, put, processing, errors } = useForm({
         company_name: client?.company_name || '',
         email: client?.email || '',
@@ -17,6 +18,8 @@ export default function ClientEdit() {
         address: client?.address || '',
         city: client?.city || '',
         country: client?.country || '',
+        region: client?.region || '',
+        neighbourhood: client?.neighbourhood || '',
         location: client?.location || '',
         source: client?.source || '',
         notes: client?.notes || '',
@@ -52,7 +55,7 @@ export default function ClientEdit() {
                         <h2 className="text-lg font-semibold mb-4">Basic Information</h2>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium mb-2">Company Name *</label>
+                                <label className="block text-sm font-medium mb-2">Company/Client Name *</label>
                                 <input 
                                     type="text"
                                     value={data.company_name}
@@ -79,11 +82,11 @@ export default function ClientEdit() {
 
                             <div>
                                 <label className="block text-sm font-medium mb-2">Industry</label>
-                                <input
-                                    type="text"
+                                <SearchableSelect
                                     value={data.industry}
-                                    onChange={(e) => setData('industry', e.target.value)}
-                                    className="glass-input w-full"
+                                    onChange={(value) => setData('industry', value)}
+                                    options={industries}
+                                    placeholder="Select industry"
                                 />
                             </div>
 
@@ -100,12 +103,11 @@ export default function ClientEdit() {
 
                             <div>
                                 <label className="block text-sm font-medium mb-2">Source</label>
-                                <input
-                                    type="text"
+                                <SearchableSelect
                                     value={data.source}
-                                    onChange={(e) => setData('source', e.target.value)}
-                                    className="glass-input w-full"
-                                    placeholder="Referral, Ads, etc."
+                                    onChange={(value) => setData('source', value)}
+                                    options={sources}
+                                    placeholder="Select source"
                                 />
                             </div>
                         </div>
@@ -129,16 +131,11 @@ export default function ClientEdit() {
 
                             <div>
                                 <label className="block text-sm font-medium mb-2">Phone</label>
-                                <input 
-                                    type="text"
+                                <PhoneInput
                                     value={data.phone}
-                                    onChange={(e) => setData('phone', e.target.value)}
-                                    className="glass-input w-full"
-                                    placeholder="0XXXXXXXXX (10 digits starting with 0)"
-                                    maxLength={10}
+                                    onChange={(value) => setData('phone', value)}
+                                    error={errors.phone}
                                 />
-                                <p className="text-xs text-slate-400 mt-1">10 digits starting with 0</p>
-                                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                             </div>
 
                             <div>
@@ -153,22 +150,42 @@ export default function ClientEdit() {
 
                         <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">City</label>
-                                    <input 
-                                        type="text"
-                                        value={data.city}
-                                        onChange={(e) => setData('city', e.target.value)}
-                                        className="glass-input w-full"
+                                    <label className="block text-sm font-medium mb-2">Region</label>
+                                    <SearchableSelect
+                                        value={data.region}
+                                        onChange={(value) => setData('region', value)}
+                                        options={regions}
+                                        placeholder="Select region"
                                     />
                                 </div>
-                                
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">City</label>
+                                    <SearchableSelect
+                                        value={data.city}
+                                        onChange={(value) => setData('city', value)}
+                                        options={cities}
+                                        placeholder="Select city"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Neighbourhood</label>
+                                    <SearchableSelect
+                                        value={data.neighbourhood}
+                                        onChange={(value) => setData('neighbourhood', value)}
+                                        options={neighbourhoods}
+                                        placeholder="Select neighbourhood"
+                                    />
+                                </div>
+
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Country</label>
-                                    <input 
-                                        type="text"
+                                    <SearchableSelect
                                         value={data.country}
-                                        onChange={(e) => setData('country', e.target.value)}
-                                        className="glass-input w-full"
+                                        onChange={(value) => setData('country', value)}
+                                        options={COUNTRIES}
+                                        placeholder="Select country"
                                     />
                                 </div>
                             </div>

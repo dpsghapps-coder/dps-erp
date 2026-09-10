@@ -71,6 +71,7 @@ export default function ProductShow() {
                         </div>
                     </div>
                     {product.components?.length > 0 ? (
+                        <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-slate-200 dark:border-white/10">
@@ -109,6 +110,7 @@ export default function ProductShow() {
                                 })}
                             </tbody>
                         </table>
+                        </div>
                     ) : (
                         <p className="text-slate-400">No components added to this product.</p>
                     )}
@@ -117,6 +119,7 @@ export default function ProductShow() {
                 <GlassCard className="md:col-span-2">
                     <h3 className="text-lg font-medium mb-4">Tiered Pricing</h3>
                     {product.prices?.length > 0 ? (
+                        <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
                                 <tr className="border-b border-slate-200 dark:border-white/10">
@@ -135,6 +138,7 @@ export default function ProductShow() {
                                 ))}
                             </tbody>
                         </table>
+                        </div>
                     ) : (
                         <p className="text-slate-400">No pricing tiers defined.</p>
                     )}

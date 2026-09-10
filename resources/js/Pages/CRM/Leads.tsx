@@ -1,6 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips, PhoneInput } from '@/Components/ui';
 import PipelineBoard from '@/Components/PipelineBoard';
+import CrmTabs from '@/Components/CrmTabs';
 import { Head, usePage, Link, router, useForm } from '@inertiajs/react';
 import { Plus, Search, Users, TrendingUp, Target, Clock, AlertTriangle, User, MapPin, ChevronDown, ChevronUp, Link2, Check, X, LayoutGrid, List, DollarSign, XCircle, Rocket } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
@@ -278,6 +279,8 @@ export default function LeadsIndex() {
                     </div>
                 }
             />
+
+            <CrmTabs activeTab="sales" />
 
             <div className="mb-3">
                 <button
@@ -795,7 +798,7 @@ export default function LeadsIndex() {
 
                         <form onSubmit={handleQuickLeadSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">Company Name *</label>
+                                <label className="block text-xs text-slate-400 mb-1">Company/Client Name *</label>
                                 <input
                                     type="text"
                                     value={quickLeadForm.data.company_name}
@@ -810,14 +813,12 @@ export default function LeadsIndex() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-xs text-slate-400 mb-1">Phone Number</label>
-                                    <input
-                                        type="text"
+                                    <PhoneInput
                                         value={quickLeadForm.data.phone}
-                                        onChange={(e) => quickLeadForm.setData('phone', e.target.value)}
+                                        onChange={(value) => quickLeadForm.setData('phone', value)}
+                                        error={quickLeadForm.errors.phone}
                                         className="glass-input w-full text-sm"
-                                        placeholder="054XXXXXXX"
                                     />
-                                    {quickLeadForm.errors.phone && <p className="text-red-400 text-xs mt-1">{quickLeadForm.errors.phone}</p>}
                                 </div>
                                 <div>
                                     <label className="block text-xs text-slate-400 mb-1">Email</label>

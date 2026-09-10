@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, StatusChips, StatusBadge } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusChips, StatusBadge, SearchableSelect, PhoneInput } from '@/Components/ui';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
 import { ArrowLeft, Pencil, MapPin, Plus, Clock, X, History as HistoryIcon, DollarSign, ShoppingBag, FileText, Calendar, Star, ArrowRight, ShoppingCart, Trash2, AlertTriangle, Rocket, ShieldAlert, ShieldCheck, Briefcase } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
@@ -133,7 +133,7 @@ function renderValuesDiff(entry: any) {
 
 export default function ClientShow() {
     const page = usePage().props as any;
-    const { client, auditLogs } = page;
+    const { client, auditLogs, regions = [], cities = [], neighbourhoods = [] } = page;
     const historyList = auditLogs || [];
     const permissions = (page.auth?.permissions as string[]) || [];
     const canApproveGreylist = permissions.includes('*') || permissions.includes('crm.approve-greylist');
@@ -195,6 +195,9 @@ export default function ClientShow() {
         last_name: '',
         branch: '',
         location: '',
+        region: '',
+        city: '',
+        neighbourhood: '',
         job_title: '',
         phone: '',
     });
@@ -226,6 +229,9 @@ export default function ClientShow() {
             last_name: contact.last_name || '',
             branch: contact.branch || '',
             location: contact.location || '',
+            region: contact.region || '',
+            city: contact.city || '',
+            neighbourhood: contact.neighbourhood || '',
             job_title: contact.job_title || '',
             phone: contact.phone || '',
         });
@@ -438,7 +444,7 @@ export default function ClientShow() {
                                         <span className="text-slate-600">No active deal</span>
                                     )}
                                 </div>
-                                <DetailRow label="Company Name">{client?.company_name}</DetailRow>
+                                <DetailRow label="Company/Client Name">{client?.company_name}</DetailRow>
                                 <DetailRow label="Industry">{client?.industry}</DetailRow>
                                 <DetailRow label="Source">{client?.source}</DetailRow>
                                 <DetailRow label="Website">
@@ -465,7 +471,9 @@ export default function ClientShow() {
                         <GlassCard>
                             <h2 className="text-lg font-semibold mb-4">Contact Information</h2>
                             <div className="grid md:grid-cols-2 gap-4">
+                                <DetailRow label="Region">{client?.region}</DetailRow>
                                 <DetailRow label="City">{client?.city}</DetailRow>
+                                <DetailRow label="Neighbourhood">{client?.neighbourhood}</DetailRow>
                                 <DetailRow label="Country">{client?.country}</DetailRow>
                                 <div className="md:col-span-2">
                                     <DetailRow label="Address">
@@ -522,6 +530,29 @@ export default function ClientShow() {
                                         onChange={(e) => contactForm.setData('branch', e.target.value)}
                                         className="glass-input text-sm"
                                     />
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <SearchableSelect
+                                            value={contactForm.data.region}
+                                            onChange={(value) => contactForm.setData('region', value)}
+                                            options={regions}
+                                            placeholder="Region"
+                                            className="glass-input text-sm w-full"
+                                        />
+                                        <SearchableSelect
+                                            value={contactForm.data.city}
+                                            onChange={(value) => contactForm.setData('city', value)}
+                                            options={cities}
+                                            placeholder="City"
+                                            className="glass-input text-sm w-full"
+                                        />
+                                    </div>
+                                    <SearchableSelect
+                                        value={contactForm.data.neighbourhood}
+                                        onChange={(value) => contactForm.setData('neighbourhood', value)}
+                                        options={neighbourhoods}
+                                        placeholder="Neighbourhood"
+                                        className="glass-input text-sm w-full"
+                                    />
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
@@ -538,23 +569,18 @@ export default function ClientShow() {
                                             <MapPin className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <input
-                                            type="text"
-                                            placeholder="Position"
-                                            value={contactForm.data.job_title}
-                                            onChange={(e) => contactForm.setData('job_title', e.target.value)}
-                                            className="glass-input text-sm"
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="Phone"
-                                            value={contactForm.data.phone}
-                                            onChange={(e) => contactForm.setData('phone', e.target.value)}
-                                            className="glass-input text-sm"
-                                            maxLength={10}
-                                        />
-                                    </div>
+                                    <input
+                                        type="text"
+                                        placeholder="Position"
+                                        value={contactForm.data.job_title}
+                                        onChange={(e) => contactForm.setData('job_title', e.target.value)}
+                                        className="glass-input text-sm"
+                                    />
+                                    <PhoneInput
+                                        value={contactForm.data.phone}
+                                        onChange={(value) => contactForm.setData('phone', value)}
+                                        className="glass-input text-sm w-full"
+                                    />
                                     {contactForm.errors.first_name && <p className="text-red-400 text-xs">{contactForm.errors.first_name}</p>}
                                     <div className="flex gap-2">
                                         <button type="submit" disabled={contactForm.processing} className="glass-button text-xs">
@@ -606,6 +632,11 @@ export default function ClientShow() {
                                                 </div>
                                             </div>
                                             {contact.branch && <p className="text-xs text-slate-400">{contact.branch}</p>}
+                                            {(contact.neighbourhood || contact.city || contact.region) && (
+                                                <p className="text-xs text-slate-400">
+                                                    {[contact.neighbourhood, contact.city, contact.region].filter(Boolean).join(', ')}
+                                                </p>
+                                            )}
                                             {contact.location && (
                                                 <a
                                                     href={`https://www.google.com/maps?q=${contact.location}`}

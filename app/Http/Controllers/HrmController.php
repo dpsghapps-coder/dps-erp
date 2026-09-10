@@ -15,11 +15,13 @@ use App\Models\Payroll;
 use App\Models\Performance;
 use App\Models\StaffLevel;
 use App\Notifications\HrmNotification;
+use App\Rules\EmailUniqueInTable;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class HrmController extends Controller
 {
@@ -762,7 +764,7 @@ class HrmController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:employees',
+            'email' => ['required', 'email', 'unique:employees', new EmailUniqueInTable('users')],
             'employee_number' => 'required|string|unique:employees',
             'department_id' => 'required|exists:departments,id',
             'staff_level_id' => 'nullable|exists:staff_levels,id',
@@ -774,7 +776,7 @@ class HrmController extends Controller
             'mobile_2' => 'nullable|string|max:255',
             'emergency_contact_name' => 'nullable|string|max:255',
             'emergency_contact_phone' => 'nullable|string|max:255',
-            'emergency_contact_relation' => 'nullable|string|max:255',
+            'emergency_contact_relation' => ['nullable', 'string', Rule::in(Employee::RELATIONSHIPS)],
             'pay_frequency' => 'nullable|string|in:weekly,bi_weekly,monthly',
             'date_hired' => 'required|date',
             'avatar' => 'nullable|image|max:2048',
@@ -836,7 +838,12 @@ class HrmController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|email|unique:employees,email,'.$employee->id,
+            'email' => [
+                'required',
+                'email',
+                'unique:employees,email,'.$employee->id,
+                new EmailUniqueInTable('users', $employee->user_id),
+            ],
             'department_id' => 'required|exists:departments,id',
             'staff_level_id' => 'nullable|exists:staff_levels,id',
             'supervising_manager_id' => 'nullable|exists:employees,id|not_in:'.$employee->id,
@@ -847,7 +854,7 @@ class HrmController extends Controller
             'mobile_2' => 'nullable|string|max:255',
             'emergency_contact_name' => 'nullable|string|max:255',
             'emergency_contact_phone' => 'nullable|string|max:255',
-            'emergency_contact_relation' => 'nullable|string|max:255',
+            'emergency_contact_relation' => ['nullable', 'string', Rule::in(Employee::RELATIONSHIPS)],
             'pay_frequency' => 'nullable|string|in:weekly,bi_weekly,monthly',
             'leave_days' => 'nullable|numeric|min:0',
             'date_hired' => 'required|date',

@@ -144,6 +144,7 @@ export default function ProformaShow() {
 
                 {/* Line Items Table */}
                 <div className="px-8 py-6">
+                <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                         <thead>
                             <tr className="border-b-2 border-gray-900">
@@ -169,6 +170,7 @@ export default function ProformaShow() {
                             ))}
                         </tbody>
                     </table>
+                </div>
 
                     {/* Totals */}
                     <div className="flex justify-end mt-6">

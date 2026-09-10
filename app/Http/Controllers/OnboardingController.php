@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\EmployeeInvite;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class OnboardingController extends Controller
 {
@@ -37,7 +39,7 @@ class OnboardingController extends Controller
             'mobile_2' => 'nullable|string|max:255',
             'emergency_contact_name' => 'nullable|string|max:255',
             'emergency_contact_phone' => 'nullable|string|max:255',
-            'emergency_contact_relation' => 'nullable|string|max:255',
+            'emergency_contact_relation' => ['nullable', 'string', Rule::in(Employee::RELATIONSHIPS)],
             'avatar' => 'nullable|image|max:2048',
         ]);
 

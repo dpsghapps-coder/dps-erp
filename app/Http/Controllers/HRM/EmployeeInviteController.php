@@ -12,6 +12,7 @@ use App\Models\StaffLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class EmployeeInviteController extends Controller
@@ -114,7 +115,7 @@ class EmployeeInviteController extends Controller
             'mobile_2' => 'nullable|string|max:255',
             'emergency_contact_name' => 'nullable|string|max:255',
             'emergency_contact_phone' => 'nullable|string|max:255',
-            'emergency_contact_relation' => 'nullable|string|max:255',
+            'emergency_contact_relation' => ['nullable', 'string', Rule::in(Employee::RELATIONSHIPS)],
             'pay_frequency' => 'nullable|string|in:weekly,bi_weekly,monthly',
             'date_hired' => 'required|date',
             'avatar' => 'nullable|image|max:2048',

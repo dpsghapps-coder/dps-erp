@@ -3,13 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\City;
 use App\Models\Client;
+use App\Models\ClientSource;
 use App\Models\Contact;
 use App\Models\Deal;
+use App\Models\Industry;
+use App\Models\Neighbourhood;
+use App\Models\Region;
+use App\Rules\PhoneNumber;
 use Illuminate\Http\Request;
 
 class CrmController extends Controller
 {
+    private function lookupLists(): array
+    {
+        return [
+            'sources' => ClientSource::active()->ordered()->pluck('name'),
+            'industries' => Industry::active()->ordered()->pluck('name'),
+            'regions' => Region::active()->ordered()->pluck('name'),
+            'cities' => City::active()->ordered()->pluck('name'),
+            'neighbourhoods' => Neighbourhood::active()->ordered()->pluck('name'),
+        ];
+    }
+
     public function index()
     {
         $clients = Client::with(['primaryContact'])
@@ -22,7 +39,7 @@ class CrmController extends Controller
 
     public function create()
     {
-        return inertia('CRM/Create');
+        return inertia('CRM/Create', $this->lookupLists());
     }
 
     public function store(Request $request)
@@ -30,7 +47,7 @@ class CrmController extends Controller
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:clients,email',
-            'phone' => ['nullable', 'string', 'max:10', 'regex:'.Client::PHONE_REGEX],
+            'phone' => ['nullable', 'string', 'max:20', new PhoneNumber()],
             'estimated_value' => 'nullable|numeric|min:0',
             'next_follow_up_at' => 'nullable|date',
             'create_lead' => 'nullable|boolean',
@@ -39,6 +56,8 @@ class CrmController extends Controller
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
+            'region' => 'nullable|string|max:100',
+            'neighbourhood' => 'nullable|string|max:100',
             'location' => 'nullable|string|max:50',
             'source' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
@@ -47,14 +66,28 @@ class CrmController extends Controller
             'instagram' => 'nullable|url',
             'twitter' => 'nullable|url',
             'tiktok' => 'nullable|url',
+            'contacts' => 'nullable|array',
+            'contacts.*.first_name' => 'required_with:contacts|string|max:255',
+            'contacts.*.last_name' => 'nullable|string|max:255',
+            'contacts.*.branch' => 'nullable|string|max:255',
+            'contacts.*.job_title' => 'nullable|string|max:255',
+            'contacts.*.phone' => ['nullable', 'string', 'max:20', new PhoneNumber()],
+            'contacts.*.region' => 'nullable|string|max:100',
+            'contacts.*.city' => 'nullable|string|max:100',
+            'contacts.*.neighbourhood' => 'nullable|string|max:100',
         ]);
 
         $estimatedValue = $validated['estimated_value'] ?? 0;
         $nextFollowUpAt = $validated['next_follow_up_at'] ?? null;
-        $createLead = $validated['create_lead'] ?? true;
-        unset($validated['estimated_value'], $validated['next_follow_up_at'], $validated['create_lead']);
+        $createLead = $validated['create_lead'] ?? false;
+        $contacts = $validated['contacts'] ?? [];
+        unset($validated['estimated_value'], $validated['next_follow_up_at'], $validated['create_lead'], $validated['contacts']);
 
         $client = Client::create($validated);
+
+        foreach ($contacts as $contact) {
+            $client->contacts()->create($contact);
+        }
 
         if ($createLead) {
             $client->deals()->create([
@@ -89,12 +122,13 @@ class CrmController extends Controller
         return inertia('CRM/Show', [
             'client' => $client,
             'auditLogs' => $auditLogs,
+            ...$this->lookupLists(),
         ]);
     }
 
     public function edit(Client $client)
     {
-        return inertia('CRM/Edit', ['client' => $client]);
+        return inertia('CRM/Edit', ['client' => $client, ...$this->lookupLists()]);
     }
 
     public function update(Request $request, Client $client)
@@ -102,13 +136,15 @@ class CrmController extends Controller
         $validated = $request->validate([
             'company_name' => 'required|string|max:255',
             'email' => 'nullable|email|unique:clients,email,'.$client->id,
-            'phone' => ['nullable', 'string', 'max:10', 'regex:'.Client::PHONE_REGEX],
+            'phone' => ['nullable', 'string', 'max:20', new PhoneNumber()],
             'status' => 'nullable|in:'.implode(',', Client::TIERS),
             'industry' => 'nullable|string|max:100',
             'website' => 'nullable|url',
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:100',
             'country' => 'nullable|string|max:100',
+            'region' => 'nullable|string|max:100',
+            'neighbourhood' => 'nullable|string|max:100',
             'location' => 'nullable|string|max:50',
             'source' => 'nullable|string|max:100',
             'notes' => 'nullable|string',
@@ -245,8 +281,11 @@ class CrmController extends Controller
             'last_name' => 'nullable|string|max:255',
             'branch' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:50',
+            'region' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'neighbourhood' => 'nullable|string|max:100',
             'job_title' => 'nullable|string|max:255',
-            'phone' => ['nullable', 'string', 'max:10', 'regex:'.Client::PHONE_REGEX],
+            'phone' => ['nullable', 'string', 'max:20', new PhoneNumber()],
         ]);
 
         $client->contacts()->create($validated);
@@ -261,8 +300,11 @@ class CrmController extends Controller
             'last_name' => 'nullable|string|max:255',
             'branch' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:50',
+            'region' => 'nullable|string|max:100',
+            'city' => 'nullable|string|max:100',
+            'neighbourhood' => 'nullable|string|max:100',
             'job_title' => 'nullable|string|max:255',
-            'phone' => ['nullable', 'string', 'max:10', 'regex:'.Client::PHONE_REGEX],
+            'phone' => ['nullable', 'string', 'max:20', new PhoneNumber()],
         ]);
 
         $contact->update($validated);

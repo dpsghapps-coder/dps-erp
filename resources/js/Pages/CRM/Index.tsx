@@ -1,5 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
+import CrmTabs from '@/Components/CrmTabs';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Plus, Search, Building, User, MapPin, Pencil, Trash2, Rocket } from 'lucide-react';
 import { useState, useMemo } from 'react';
@@ -73,6 +74,8 @@ export default function CrmIndex() {
                     ) : undefined
                 }
             />
+
+            <CrmTabs activeTab="clients" />
 
             <div className="flex gap-6">
                 <aside className="hidden lg:block w-16 shrink-0">

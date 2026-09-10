@@ -11,6 +11,22 @@ class Employee extends Model
 {
     use Auditable;
 
+    public const RELATIONSHIPS = [
+        'Father',
+        'Mother',
+        'Brother',
+        'Sister',
+        'Son',
+        'Daughter',
+        'Aunty',
+        'Uncle',
+        'Grandmother',
+        'Grandfather',
+        'Cousin',
+        'Niece',
+        'Nephew',
+    ];
+
     protected $fillable = [
         'user_id',
         'employee_number',
@@ -45,6 +61,15 @@ class Employee extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(function (Employee $employee) {
+            if ($employee->wasChanged('email') && $employee->user && $employee->user->email !== $employee->email) {
+                $employee->user->updateQuietly(['email' => $employee->email]);
+            }
+        });
     }
 
     public function department(): BelongsTo

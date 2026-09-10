@@ -1,5 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
+import CrmTabs from '@/Components/CrmTabs';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Users, TrendingUp, BarChart3, ArrowRight, DollarSign, Trophy, Medal, Award, Crown, Gem } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
@@ -34,10 +35,12 @@ export default function Reports() {
         <AppLayout>
             <Head title="CRM Reports" />
 
-            <PageHeader 
-                title="CRM Reports" 
+            <PageHeader
+                title="CRM Reports"
                 subtitle="Analytics and insights"
             />
+
+            <CrmTabs activeTab="dashboard" />
 
             {/* Overview Stats */}
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">

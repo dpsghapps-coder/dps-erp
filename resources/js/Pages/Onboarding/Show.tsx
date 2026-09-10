@@ -1,6 +1,7 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { CheckCircle2, Clock, Upload, ImageOff, Ban, Loader2 } from 'lucide-react';
+import { RELATIONSHIP_OPTIONS } from '@/Utils/relationships';
 
 type Status = 'pending' | 'submitted' | 'approved' | 'expired' | 'not_found';
 
@@ -169,13 +170,16 @@ export default function OnboardingShow() {
 
                             <div>
                                 <label className="block text-sm font-medium mb-1">Relationship to You</label>
-                                <input
-                                    type="text"
+                                <select
                                     value={data.emergency_contact_relation}
                                     onChange={(e) => setData('emergency_contact_relation', e.target.value)}
                                     className="glass-input w-full"
-                                    placeholder="e.g. Spouse, Parent, Sibling"
-                                />
+                                >
+                                    <option value="">Select Relationship</option>
+                                    {RELATIONSHIP_OPTIONS.map((r) => (
+                                        <option key={r} value={r}>{r}</option>
+                                    ))}
+                                </select>
                                 {errors.emergency_contact_relation && <p className="text-red-500 text-sm mt-1">{errors.emergency_contact_relation}</p>}
                             </div>
 
