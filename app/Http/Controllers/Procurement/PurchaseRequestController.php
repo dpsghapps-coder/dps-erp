@@ -98,6 +98,7 @@ class PurchaseRequestController extends Controller
             'items.*.cost_items' => 'nullable|array',
             'items.*.cost_items.*.label' => 'required|string|max:100',
             'items.*.cost_items.*.amount' => 'required|numeric|min:0',
+            'items.*.attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,doc,docx|max:10240',
         ]);
 
         $user = $request->user();
@@ -118,7 +119,7 @@ class PurchaseRequestController extends Controller
                 'created_by' => $user->id,
             ]);
 
-            foreach ($validated['items'] as $itemData) {
+            foreach ($validated['items'] as $index => $itemData) {
                 $product = InventoryProduct::findOrFail($itemData['product_id']);
 
                 $item = $pr->items()->create([
@@ -134,8 +135,8 @@ class PurchaseRequestController extends Controller
                     $item->costItems()->create($costItem);
                 }
 
-                if ($request->hasFile("items.{$item->id}.attachments")) {
-                    foreach ($request->file("items.{$item->id}.attachments") as $file) {
+                if ($request->hasFile("items.{$index}.attachments")) {
+                    foreach ($request->file("items.{$index}.attachments") as $file) {
                         $path = $file->store('purchase-requests/attachments', 'public');
                         $item->attachments()->create([
                             'file_name' => $file->getClientOriginalName(),
@@ -230,6 +231,7 @@ class PurchaseRequestController extends Controller
             'items.*.cost_items' => 'nullable|array',
             'items.*.cost_items.*.label' => 'required|string|max:100',
             'items.*.cost_items.*.amount' => 'required|numeric|min:0',
+            'items.*.attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,doc,docx|max:10240',
         ]);
 
         DB::transaction(function () use ($validated, $purchaseRequest, $request) {
@@ -242,7 +244,7 @@ class PurchaseRequestController extends Controller
 
             $purchaseRequest->items()->delete();
 
-            foreach ($validated['items'] as $itemData) {
+            foreach ($validated['items'] as $index => $itemData) {
                 $product = InventoryProduct::findOrFail($itemData['product_id']);
 
                 $item = $purchaseRequest->items()->create([
@@ -258,8 +260,8 @@ class PurchaseRequestController extends Controller
                     $item->costItems()->create($costItem);
                 }
 
-                if ($request->hasFile("items.{$item->id}.attachments")) {
-                    foreach ($request->file("items.{$item->id}.attachments") as $file) {
+                if ($request->hasFile("items.{$index}.attachments")) {
+                    foreach ($request->file("items.{$index}.attachments") as $file) {
                         $path = $file->store('purchase-requests/attachments', 'public');
                         $item->attachments()->create([
                             'file_name' => $file->getClientOriginalName(),
