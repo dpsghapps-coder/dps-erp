@@ -195,6 +195,13 @@ export default function AppLayout({ children }: PropsWithChildren) {
         if (flash?.error) toast.error(flash.error);
     }, [flashKey]);
 
+    // Generic validation/authorization errors from back()->withErrors(['error' => ...])
+    const genericError = (page.props as any).errors?.error as string | undefined;
+    const genericErrorKey = useMemo(() => genericError, [genericError]);
+    useEffect(() => {
+        if (genericErrorKey) toast.error(genericErrorKey);
+    }, [genericErrorKey]);
+
     useEffect(() => {
         const goOnline = () => setIsOnline(true);
         const goOffline = () => setIsOnline(false);

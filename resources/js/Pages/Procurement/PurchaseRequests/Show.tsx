@@ -123,6 +123,10 @@ export default function PurchaseRequestShow() {
     const canClosePo = permissions.includes('procurement.close');
     const canCancel = pr.requester_id === user?.id || canApprove || canFinanceReview;
 
+    const lastQueryEntry = pr.status === 'queried'
+        ? [...(pr.history || [])].reverse().find((h: any) => h.status === 'queried')
+        : null;
+
     const handleDeptReview = (action: string) => {
         router.post(`/procurement/purchase-requests/${pr.id}/dept-review`, {
             action,
@@ -237,13 +241,17 @@ export default function PurchaseRequestShow() {
 
             <WorkflowStepper status={pr.status} />
 
-            {pr.status === 'queried' && pr.dept_manager_comment && (
+            {pr.status === 'queried' && lastQueryEntry && (
                 <GlassCard className="mb-6 border-l-4 border-orange-400">
                     <div className="flex items-start gap-3">
                         <MessageSquare className="w-5 h-5 text-orange-500 mt-0.5" />
                         <div>
-                            <p className="text-sm font-medium text-orange-800 dark:text-orange-200">Query from Department Manager</p>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{pr.dept_manager_comment}</p>
+                            <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
+                                Query from {lastQueryEntry.user?.name || 'Reviewer'}
+                            </p>
+                            {lastQueryEntry.comment && (
+                                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">{lastQueryEntry.comment}</p>
+                            )}
                         </div>
                     </div>
                 </GlassCard>
@@ -475,6 +483,12 @@ export default function PurchaseRequestShow() {
                                     <button onClick={() => setShowRejectModal(true)} className="glass-button w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700">
                                         <X className="w-4 h-4" /> Reject
                                     </button>
+                                    <Link
+                                        href={`/procurement/purchase-requests/${pr.id}/edit`}
+                                        className="glass-button-secondary w-full flex items-center justify-center gap-2"
+                                    >
+                                        Edit PR
+                                    </Link>
                                 </>
                             )}
 
@@ -496,6 +510,12 @@ export default function PurchaseRequestShow() {
                                     <button onClick={() => setShowRejectModal(true)} className="glass-button w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700">
                                         <X className="w-4 h-4" /> Reject
                                     </button>
+                                    <Link
+                                        href={`/procurement/purchase-requests/${pr.id}/edit`}
+                                        className="glass-button-secondary w-full flex items-center justify-center gap-2"
+                                    >
+                                        Edit PR
+                                    </Link>
                                 </>
                             )}
 

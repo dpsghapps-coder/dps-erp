@@ -180,15 +180,32 @@ class PurchaseRequestController extends Controller
         ]);
     }
 
+    private function canManagePr(PurchaseRequest $purchaseRequest, User $user): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if ($purchaseRequest->requester_id === $user->id) {
+            return in_array($purchaseRequest->status, ['draft', 'queried']);
+        }
+
+        if ($user->hasPermission('pr.approve') && $purchaseRequest->department === $user->department) {
+            return in_array($purchaseRequest->status, ['pending', 'queried']);
+        }
+
+        if ($user->hasPermission('pr.finance.review')) {
+            return $purchaseRequest->status === 'dept_approved';
+        }
+
+        return false;
+    }
+
     public function edit(PurchaseRequest $purchaseRequest)
     {
         $user = auth()->user();
-        if ($purchaseRequest->requester_id !== $user->id && ! $user->hasRole('admin')) {
+        if (! $this->canManagePr($purchaseRequest, $user)) {
             abort(403, 'You do not have permission to edit this purchase request');
-        }
-
-        if (! in_array($purchaseRequest->status, ['draft', 'queried'])) {
-            return back()->withErrors(['error' => 'Cannot edit a PR that is not in draft or queried status']);
         }
 
         $purchaseRequest->load(['items.attachments', 'items.product', 'items.costItems']);
@@ -207,12 +224,8 @@ class PurchaseRequestController extends Controller
     public function update(Request $request, PurchaseRequest $purchaseRequest)
     {
         $user = $request->user();
-        if ($purchaseRequest->requester_id !== $user->id && ! $user->hasRole('admin')) {
+        if (! $this->canManagePr($purchaseRequest, $user)) {
             abort(403, 'You do not have permission to update this purchase request');
-        }
-
-        if (! in_array($purchaseRequest->status, ['draft', 'queried'])) {
-            return back()->withErrors(['error' => 'Cannot update a PR that is not in draft or queried status']);
         }
 
         $departmentNames = Department::where('is_active', true)->pluck('name')->toArray();
@@ -234,7 +247,10 @@ class PurchaseRequestController extends Controller
             'items.*.attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,gif,pdf,doc,docx|max:10240',
         ]);
 
-        DB::transaction(function () use ($validated, $purchaseRequest, $request) {
+        DB::transaction(function () use ($validated, $purchaseRequest, $request, $user) {
+            $wasQueried = $purchaseRequest->status === 'queried';
+            $isRequester = $purchaseRequest->requester_id === $user->id;
+
             $purchaseRequest->update([
                 'department' => $validated['department'],
                 'priority' => $validated['priority'],
@@ -273,13 +289,20 @@ class PurchaseRequestController extends Controller
                 }
             }
 
-            if ($purchaseRequest->status === 'queried') {
+            if ($wasQueried && $isRequester) {
                 $purchaseRequest->update(['status' => 'pending']);
                 PurchaseRequestHistory::create([
                     'purchase_request_id' => $purchaseRequest->id,
                     'status' => 'pending',
-                    'changed_by' => auth()->id(),
+                    'changed_by' => $user->id,
                     'comment' => 'PR updated after query, resubmitted',
+                ]);
+            } elseif (! $isRequester) {
+                PurchaseRequestHistory::create([
+                    'purchase_request_id' => $purchaseRequest->id,
+                    'status' => $purchaseRequest->status,
+                    'changed_by' => $user->id,
+                    'comment' => 'PR details edited by reviewer',
                 ]);
             }
         });

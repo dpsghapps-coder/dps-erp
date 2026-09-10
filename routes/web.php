@@ -316,9 +316,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('permission:pr.create')->group(function () use ($prCtrl) {
         Route::get('/procurement/purchase-requests/create', [$prCtrl, 'create'])->name('procurement.purchase-requests.create');
         Route::post('/procurement/purchase-requests', [$prCtrl, 'store'])->name('procurement.purchase-requests.store');
+        Route::post('/procurement/purchase-requests/{purchaseRequest}/submit', [$prCtrl, 'submit'])->name('procurement.purchase-requests.submit');
+    });
+
+    // Edit/update also allow dept and finance reviewers (not just the pr.create'd requester) to
+    // fix a PR directly during their review stage -- canManagePr() in the controller does the
+    // precise per-PR scoping (requester/department/status), this just gets them past the gate.
+    Route::middleware('permission:pr.create,pr.approve,pr.finance.review')->group(function () use ($prCtrl) {
         Route::get('/procurement/purchase-requests/{purchaseRequest}/edit', [$prCtrl, 'edit'])->name('procurement.purchase-requests.edit');
         Route::put('/procurement/purchase-requests/{purchaseRequest}', [$prCtrl, 'update'])->name('procurement.purchase-requests.update');
-        Route::post('/procurement/purchase-requests/{purchaseRequest}/submit', [$prCtrl, 'submit'])->name('procurement.purchase-requests.submit');
     });
 
     Route::middleware('permission:pr.view')->group(function () use ($prCtrl) {
