@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Procurement;
 
 use App\Http\Controllers\Controller;
 use App\Models\Department;
+use App\Models\Employee;
 use App\Models\InventoryProduct;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
@@ -32,12 +33,13 @@ class PurchaseRequestController extends Controller
                     ->orWhere('requester_id', $user->id);
             });
         } elseif ($user->hasPermission('pr.approve')) {
-            // Managers see PRs from their direct reports (per Employee.supervising_manager_id) + their own
+            // Managers see PRs from anyone in their reporting chain (at any depth), + their own
             $employeeId = $user->employee?->id;
-            $query->where(function ($q) use ($user, $employeeId) {
+            $subordinateIds = $employeeId ? $this->subordinateEmployeeIds($employeeId) : [];
+            $query->where(function ($q) use ($user, $subordinateIds) {
                 $q->where('requester_id', $user->id);
-                if ($employeeId) {
-                    $q->orWhereHas('requester.employee', fn ($q2) => $q2->where('supervising_manager_id', $employeeId));
+                if ($subordinateIds) {
+                    $q->orWhereHas('requester.employee', fn ($q2) => $q2->whereIn('id', $subordinateIds));
                 }
             });
         } else {
@@ -105,7 +107,7 @@ class PurchaseRequestController extends Controller
         ]);
 
         $user = $request->user();
-        $deptManager = $user->employee?->supervisingManager?->user;
+        $deptManager = $this->nearestApprovingManager($user->employee);
 
         return DB::transaction(function () use ($validated, $user, $deptManager, $request) {
             $pr = PurchaseRequest::create([
@@ -182,17 +184,72 @@ class PurchaseRequestController extends Controller
     }
 
     /**
-     * True when $user is the direct supervising manager of the PR's requester,
-     * per Employee.supervising_manager_id -- the same link the Leave module
-     * uses to route a request to a specific person's actual manager, rather
-     * than to anyone sharing a department string.
+     * All employee ids anywhere below $managerEmployeeId in the reporting
+     * chain (Employee.supervising_manager_id), at any depth -- not just
+     * direct reports. A senior staffer with no approval permission can sit
+     * between an intern and their department manager without breaking the
+     * manager's ability to review the intern's PRs.
      */
-    private function isDirectManagerOf(PurchaseRequest $purchaseRequest, User $user): bool
+    private function subordinateEmployeeIds(int $managerEmployeeId): array
+    {
+        $childrenOf = [];
+        foreach (Employee::whereNotNull('supervising_manager_id')->pluck('supervising_manager_id', 'id') as $employeeId => $managerId) {
+            $childrenOf[$managerId][] = $employeeId;
+        }
+
+        $result = [];
+        $queue = $childrenOf[$managerEmployeeId] ?? [];
+        while ($queue) {
+            $id = array_shift($queue);
+            if (in_array($id, $result, true)) {
+                continue; // cycle guard
+            }
+            $result[] = $id;
+            foreach ($childrenOf[$id] ?? [] as $childId) {
+                $queue[] = $childId;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * True when $user sits anywhere above the PR's requester in the
+     * reporting chain -- their direct manager, or that manager's manager,
+     * and so on -- per Employee.supervising_manager_id.
+     */
+    private function isInManagementChainOf(PurchaseRequest $purchaseRequest, User $user): bool
     {
         $reviewerEmployeeId = $user->employee?->id;
-        $requesterManagerId = $purchaseRequest->requester?->employee?->supervising_manager_id;
+        $requesterEmployeeId = $purchaseRequest->requester?->employee?->id;
 
-        return $reviewerEmployeeId && $requesterManagerId && $requesterManagerId === $reviewerEmployeeId;
+        if (! $reviewerEmployeeId || ! $requesterEmployeeId) {
+            return false;
+        }
+
+        return in_array($requesterEmployeeId, $this->subordinateEmployeeIds($reviewerEmployeeId), true);
+    }
+
+    /**
+     * Walk up the requester's reporting chain and return the nearest
+     * ancestor who actually holds pr.approve -- so a PR still routes to a
+     * real approver even when the requester's immediate supervisor doesn't
+     * have approval rights themselves.
+     */
+    private function nearestApprovingManager(?Employee $employee): ?User
+    {
+        $current = $employee?->supervisingManager;
+        $guard = 0;
+
+        while ($current && $guard < 20) {
+            if ($current->user && $current->user->hasPermission('pr.approve')) {
+                return $current->user;
+            }
+            $current = $current->supervisingManager;
+            $guard++;
+        }
+
+        return null;
     }
 
     private function canManagePr(PurchaseRequest $purchaseRequest, User $user): bool
@@ -205,7 +262,7 @@ class PurchaseRequestController extends Controller
             return in_array($purchaseRequest->status, ['draft', 'queried']);
         }
 
-        if ($user->hasPermission('pr.approve') && $this->isDirectManagerOf($purchaseRequest, $user)) {
+        if ($user->hasPermission('pr.approve') && $this->isInManagementChainOf($purchaseRequest, $user)) {
             return in_array($purchaseRequest->status, ['pending', 'queried']);
         }
 
@@ -347,8 +404,8 @@ class PurchaseRequestController extends Controller
             ]);
         });
 
-        $manager = $purchaseRequest->requester?->employee?->supervisingManager?->user;
-        if ($manager && $manager->hasPermission('pr.approve')) {
+        $manager = $this->nearestApprovingManager($purchaseRequest->requester?->employee);
+        if ($manager) {
             $manager->notify(new PurchaseRequestNotification($purchaseRequest, 'submitted'));
         }
 
@@ -359,7 +416,7 @@ class PurchaseRequestController extends Controller
     {
         $user = $request->user();
         $canReview = $user->hasRole('admin') || $user->hasRole('md') || $user->hasRole('general')
-            || ($user->hasPermission('pr.approve') && $this->isDirectManagerOf($purchaseRequest, $user));
+            || ($user->hasPermission('pr.approve') && $this->isInManagementChainOf($purchaseRequest, $user));
 
         if (! $canReview) {
             return back()->withErrors(['error' => 'You do not have permission to review this purchase request']);
