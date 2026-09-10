@@ -8,41 +8,48 @@ interface Props {
     purchaseRequest: any;
     products: any[];
     departments: string[];
+    uoms: string[];
+    costTypes: string[];
 }
 
-export default function PurchaseRequestEdit({ purchaseRequest, products, departments }: Props) {
+interface CostItem {
+    label: string;
+    amount: string | number;
+}
+
+export default function PurchaseRequestEdit({ purchaseRequest, products, departments, costTypes }: Props) {
     const { data, setData, put, processing, errors } = useForm({
         department: purchaseRequest.department || '',
         priority: purchaseRequest.priority || 'Normal',
         required_by_date: purchaseRequest.required_by_date ? purchaseRequest.required_by_date.split('T')[0] : '',
         purpose: purchaseRequest.purpose || '',
         items: purchaseRequest.items?.map((item: any) => ({
-            item_name: item.item_name || '',
             item_description: item.item_description || '',
             product_id: item.product_id || '',
             estimated_cost: item.estimated_cost || 0,
             qty_requested: item.qty_requested || 1,
-            uom: item.uom || 'Pieces',
+            uom: item.uom || '',
+            cost_items: (item.cost_items || []).map((c: any) => ({ label: c.label, amount: String(c.amount) })) as CostItem[],
             attachments: [] as File[],
         })) || [{
-            item_name: '',
             item_description: '',
             product_id: '',
             estimated_cost: 0,
             qty_requested: 1,
-            uom: 'Pieces',
+            uom: '',
+            cost_items: [] as CostItem[],
             attachments: [] as File[],
         }],
     });
 
     const addItem = () => {
         setData('items', [...data.items, {
-            item_name: '',
             item_description: '',
             product_id: '',
             estimated_cost: 0,
             qty_requested: 1,
-            uom: 'Pieces',
+            uom: '',
+            cost_items: [],
             attachments: [],
         }]);
     };
@@ -60,11 +67,30 @@ export default function PurchaseRequestEdit({ purchaseRequest, products, departm
         if (field === 'product_id' && value) {
             const product = products.find(p => p.id === value);
             if (product) {
-                (newItems[index] as any).item_name = product.item_name;
-                (newItems[index] as any).uom = product.uom || 'Pieces';
+                (newItems[index] as any).uom = product.uom || '';
             }
         }
 
+        setData('items', newItems);
+    };
+
+    const addCostItem = (itemIndex: number) => {
+        const newItems = [...data.items];
+        (newItems[itemIndex] as any).cost_items = [...(newItems[itemIndex] as any).cost_items, { label: costTypes?.[0] || '', amount: '' }];
+        setData('items', newItems);
+    };
+
+    const removeCostItem = (itemIndex: number, costIndex: number) => {
+        const newItems = [...data.items];
+        (newItems[itemIndex] as any).cost_items = (newItems[itemIndex] as any).cost_items.filter((_: any, i: number) => i !== costIndex);
+        setData('items', newItems);
+    };
+
+    const updateCostItem = (itemIndex: number, costIndex: number, field: 'label' | 'amount', value: string) => {
+        const newItems = [...data.items];
+        const costItems = [...(newItems[itemIndex] as any).cost_items];
+        costItems[costIndex] = { ...costItems[costIndex], [field]: value };
+        (newItems[itemIndex] as any).cost_items = costItems;
         setData('items', newItems);
     };
 
@@ -80,7 +106,12 @@ export default function PurchaseRequestEdit({ purchaseRequest, products, departm
         put(`/procurement/purchase-requests/${purchaseRequest.id}`);
     };
 
-    const totalEstimated = data.items.reduce((sum: number, item: any) => sum + (item.estimated_cost * item.qty_requested), 0);
+    const itemTotal = (item: any) => {
+        const extra = (item.cost_items || []).reduce((sum: number, c: CostItem) => sum + Number(c.amount || 0), 0);
+        return Number(item.estimated_cost || 0) * Number(item.qty_requested || 0) + extra;
+    };
+
+    const totalEstimated = data.items.reduce((sum: number, item: any) => sum + itemTotal(item), 0);
     const formatCurrency = useCurrency();
 
     return (
@@ -236,11 +267,29 @@ export default function PurchaseRequestEdit({ purchaseRequest, products, departm
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-medium mb-1 text-slate-500">Est. Cost (per unit) *</label>
+                                                {(() => {
+                                                    const prices = products.find((p: any) => p.id === item.product_id)?.prices || [];
+                                                    return prices.length > 0 && (
+                                                        <select
+                                                            className="glass-input w-full mb-1 text-xs"
+                                                            value=""
+                                                            onChange={(e) => e.target.value && updateItem(index, 'estimated_cost', e.target.value)}
+                                                        >
+                                                            <option value="">Use a collected price...</option>
+                                                            {prices.map((price: any) => (
+                                                                <option key={price.id} value={price.price}>
+                                                                    {formatCurrency(price.price)} — {price.supplier?.company_name || 'Unknown supplier'} ({new Date(price.collection_date).toLocaleDateString()})
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    );
+                                                })()}
                                                 <input
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
                                                     className="glass-input w-full"
+                                                    placeholder="Or type your own"
                                                     value={item.estimated_cost}
                                                     onChange={(e) => updateItem(index, 'estimated_cost', e.target.value)}
                                                     required

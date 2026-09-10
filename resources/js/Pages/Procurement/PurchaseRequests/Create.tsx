@@ -9,33 +9,40 @@ interface Props {
     suppliers: any[];
     users: any[];
     departments: string[];
+    uoms: string[];
+    costTypes: string[];
 }
 
-export default function PurchaseRequestCreate({ products, suppliers, users, departments }: Props) {
+interface CostItem {
+    label: string;
+    amount: string | number;
+}
+
+export default function PurchaseRequestCreate({ products, suppliers, users, departments, costTypes }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         department: '',
         priority: 'Normal',
         required_by_date: '',
         purpose: '',
         items: [{
-            item_name: '',
             item_description: '',
             product_id: '',
             estimated_cost: 0,
             qty_requested: 1,
-            uom: 'Pieces',
+            uom: '',
+            cost_items: [] as CostItem[],
             attachments: [] as File[],
         }],
     });
 
     const addItem = () => {
         setData('items', [...data.items, {
-            item_name: '',
             item_description: '',
             product_id: '',
             estimated_cost: 0,
             qty_requested: 1,
-            uom: 'Pieces',
+            uom: '',
+            cost_items: [],
             attachments: [],
         }]);
     };
@@ -53,11 +60,30 @@ export default function PurchaseRequestCreate({ products, suppliers, users, depa
         if (field === 'product_id' && value) {
             const product = products.find(p => p.id === value);
             if (product) {
-                (newItems[index] as any).item_name = product.item_name;
-                (newItems[index] as any).uom = product.uom || 'Pieces';
+                (newItems[index] as any).uom = product.uom || '';
             }
         }
 
+        setData('items', newItems);
+    };
+
+    const addCostItem = (itemIndex: number) => {
+        const newItems = [...data.items];
+        (newItems[itemIndex] as any).cost_items = [...(newItems[itemIndex] as any).cost_items, { label: costTypes?.[0] || '', amount: '' }];
+        setData('items', newItems);
+    };
+
+    const removeCostItem = (itemIndex: number, costIndex: number) => {
+        const newItems = [...data.items];
+        (newItems[itemIndex] as any).cost_items = (newItems[itemIndex] as any).cost_items.filter((_: any, i: number) => i !== costIndex);
+        setData('items', newItems);
+    };
+
+    const updateCostItem = (itemIndex: number, costIndex: number, field: 'label' | 'amount', value: string) => {
+        const newItems = [...data.items];
+        const costItems = [...(newItems[itemIndex] as any).cost_items];
+        costItems[costIndex] = { ...costItems[costIndex], [field]: value };
+        (newItems[itemIndex] as any).cost_items = costItems;
         setData('items', newItems);
     };
 
@@ -73,7 +99,12 @@ export default function PurchaseRequestCreate({ products, suppliers, users, depa
         post('/procurement/purchase-requests');
     };
 
-    const totalEstimated = data.items.reduce((sum, item) => sum + (item.estimated_cost * item.qty_requested), 0);
+    const itemTotal = (item: typeof data.items[number]) => {
+        const extra = (item.cost_items || []).reduce((sum: number, c: CostItem) => sum + Number(c.amount || 0), 0);
+        return Number(item.estimated_cost || 0) * Number(item.qty_requested || 0) + extra;
+    };
+
+    const totalEstimated = data.items.reduce((sum, item) => sum + itemTotal(item), 0);
     const formatCurrency = useCurrency();
 
     return (
@@ -164,25 +195,15 @@ export default function PurchaseRequestCreate({ products, suppliers, users, depa
                                             )}
                                         </div>
                                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                            <div className="md:col-span-2">
-                                                <label className="block text-xs font-medium mb-1 text-slate-500">Item Name *</label>
-                                                <input
-                                                    type="text"
-                                                    className="glass-input w-full"
-                                                    placeholder="Item name"
-                                                    value={item.item_name}
-                                                    onChange={(e) => updateItem(index, 'item_name', e.target.value)}
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium mb-1 text-slate-500">Product (Optional)</label>
+                                            <div className="md:col-span-3">
+                                                <label className="block text-xs font-medium mb-1 text-slate-500">Product *</label>
                                                 <select
                                                     className="glass-input w-full"
                                                     value={item.product_id}
                                                     onChange={(e) => updateItem(index, 'product_id', e.target.value)}
+                                                    required
                                                 >
-                                                    <option value="">None</option>
+                                                    <option value="">Select product</option>
                                                     {products.map(p => (
                                                         <option key={p.id} value={p.id}>{p.item_name}</option>
                                                     ))}
@@ -199,7 +220,9 @@ export default function PurchaseRequestCreate({ products, suppliers, users, depa
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-medium mb-1 text-slate-500">Qty *</label>
+                                                <label className="block text-xs font-medium mb-1 text-slate-500">
+                                                    Units {item.uom ? `(${item.uom})` : ''} *
+                                                </label>
                                                 <input
                                                     type="number"
                                                     min="0.01"
@@ -211,33 +234,84 @@ export default function PurchaseRequestCreate({ products, suppliers, users, depa
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-medium mb-1 text-slate-500">UOM *</label>
-                                                <select
-                                                    className="glass-input w-full"
-                                                    value={item.uom}
-                                                    onChange={(e) => updateItem(index, 'uom', e.target.value)}
-                                                    required
-                                                >
-                                                    <option value="Pieces">Pieces</option>
-                                                    <option value="Kg">Kg</option>
-                                                    <option value="Liters">Liters</option>
-                                                    <option value="Meters">Meters</option>
-                                                    <option value="Boxes">Boxes</option>
-                                                    <option value="Sets">Sets</option>
-                                                    <option value="Pairs">Pairs</option>
-                                                </select>
-                                            </div>
-                                            <div>
                                                 <label className="block text-xs font-medium mb-1 text-slate-500">Est. Cost (per unit) *</label>
+                                                {(() => {
+                                                    const prices = products.find(p => p.id === item.product_id)?.prices || [];
+                                                    return prices.length > 0 && (
+                                                        <select
+                                                            className="glass-input w-full mb-1 text-xs"
+                                                            value=""
+                                                            onChange={(e) => e.target.value && updateItem(index, 'estimated_cost', e.target.value)}
+                                                        >
+                                                            <option value="">Use a collected price...</option>
+                                                            {prices.map((price: any) => (
+                                                                <option key={price.id} value={price.price}>
+                                                                    {formatCurrency(price.price)} — {price.supplier?.company_name || 'Unknown supplier'} ({new Date(price.collection_date).toLocaleDateString()})
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    );
+                                                })()}
                                                 <input
                                                     type="number"
                                                     min="0"
                                                     step="0.01"
                                                     className="glass-input w-full"
+                                                    placeholder="Or type your own"
                                                     value={item.estimated_cost}
                                                     onChange={(e) => updateItem(index, 'estimated_cost', e.target.value)}
                                                     required
                                                 />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-medium mb-1 text-slate-500">Line Total</label>
+                                                <div className="glass-input w-full flex items-center h-9 px-3 bg-slate-50 text-slate-700 font-semibold text-sm">
+                                                    {formatCurrency(itemTotal(item))}
+                                                </div>
+                                            </div>
+                                            <div className="md:col-span-3">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <label className="block text-xs font-medium text-slate-500">Additional Costs</label>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => addCostItem(index)}
+                                                        className="text-indigo-500 hover:text-indigo-600 text-xs inline-flex items-center gap-1"
+                                                    >
+                                                        <Plus className="w-3.5 h-3.5" /> Add cost
+                                                    </button>
+                                                </div>
+                                                {item.cost_items.length > 0 && (
+                                                    <div className="space-y-2">
+                                                        {item.cost_items.map((cost, costIndex) => (
+                                                            <div key={costIndex} className="flex gap-2 items-center">
+                                                                <select
+                                                                    value={cost.label}
+                                                                    onChange={(e) => updateCostItem(index, costIndex, 'label', e.target.value)}
+                                                                    className="glass-input flex-1"
+                                                                    required
+                                                                >
+                                                                    <option value="">Select type</option>
+                                                                    {(costTypes || []).map((type: string) => (
+                                                                        <option key={type} value={type}>{type}</option>
+                                                                    ))}
+                                                                </select>
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.01"
+                                                                    min="0"
+                                                                    placeholder="Amount"
+                                                                    value={cost.amount}
+                                                                    onChange={(e) => updateCostItem(index, costIndex, 'amount', e.target.value)}
+                                                                    className="glass-input w-28"
+                                                                    required
+                                                                />
+                                                                <button type="button" onClick={() => removeCostItem(index, costIndex)} className="p-2 text-red-400 hover:bg-slate-100 rounded">
+                                                                    <X className="w-4 h-4" />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="md:col-span-3">
                                                 <label className="block text-xs font-medium mb-1 text-slate-500">Attachments</label>

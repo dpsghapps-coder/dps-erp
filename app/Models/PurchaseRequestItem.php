@@ -37,4 +37,9 @@ class PurchaseRequestItem extends Model
     {
         return $this->hasMany(PurchaseRequestAttachment::class, 'purchase_request_item_id');
     }
+
+    public function costItems(): HasMany
+    {
+        return $this->hasMany(PurchaseRequestItemCostItem::class);
+    }
 }

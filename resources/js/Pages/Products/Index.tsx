@@ -211,10 +211,10 @@ export default function ProductsIndex() {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 text-sm text-slate-400 mb-2">
-                                    {product.category?.name && <span>{product.category.name}</span>}
-                                    <span className={`status-badge type-${product.type}`}>{product.type}</span>
-                                    <span>{product.unit}</span>
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-400 mb-2">
+                                    {product.category?.name && <span className="truncate max-w-full">{product.category.name}</span>}
+                                    <span className={`status-badge type-${product.type} flex-shrink-0`}>{product.type}</span>
+                                    <span className="truncate max-w-full">{product.unit}</span>
                                 </div>
                                 <p className="text-sm text-emerald-400 font-medium mb-2">{formatCurrency(product.total_value || 0)}</p>
                                 {sortedPrices(product).length > 0 ? (

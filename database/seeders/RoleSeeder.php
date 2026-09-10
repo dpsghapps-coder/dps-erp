@@ -162,8 +162,14 @@ class RoleSeeder extends Seeder
             ],
         ];
 
+        // Every staff member can submit and track their own Purchase Requests,
+        // regardless of role -- this is separate from the broader Procurement
+        // module (managing suppliers, goods receipt, etc.), which stays
+        // restricted to the roles above that were explicitly granted it.
+        $prSelfServicePerms = Permission::whereIn('name', ['pr.create', 'pr.view'])->pluck('id')->toArray();
+
         foreach ($roles as $roleData) {
-            $permissions = $roleData['permissions'];
+            $permissions = array_unique(array_merge($roleData['permissions'], $prSelfServicePerms));
             unset($roleData['permissions']);
 
             $role = Role::updateOrCreate(

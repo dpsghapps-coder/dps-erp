@@ -249,26 +249,24 @@ export default function ProductCatalogIndex() {
                                             ))}
                                         </div>
                                     )}
-                                    <div className="flex gap-4">
+                                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                                         {product.item_category && (
-                                            <span>{product.item_category}</span>
+                                            <span className="truncate max-w-full">{product.item_category}</span>
                                         )}
-                                        <span>{product.uom}</span>
+                                        <span className="truncate max-w-full">{product.uom}</span>
                                         {product.primary_supplier?.company_name && (
-                                            <span>{product.primary_supplier.company_name}</span>
+                                            <span className="truncate max-w-full">{product.primary_supplier.company_name}</span>
                                         )}
-                                        <span>
-                                            {(() => {
-                                                const low = product.restock_threshold > 0 && product.available_stock <= product.restock_threshold;
-                                                return low ? (
-                                                    <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">
-                                                        <AlertTriangle className="w-3 h-3" /> Low Stock
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">Stock: {product.available_stock}</span>
-                                                );
-                                            })()}
-                                        </span>
+                                        {(() => {
+                                            const low = product.restock_threshold > 0 && product.available_stock <= product.restock_threshold;
+                                            return low ? (
+                                                <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 flex-shrink-0">
+                                                    <AlertTriangle className="w-3 h-3" /> Low Stock
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 flex-shrink-0">Stock: {product.available_stock}</span>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             </div>

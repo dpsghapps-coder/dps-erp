@@ -185,9 +185,9 @@ export default function ServicesIndex() {
                                         </button>
                                     </div>
                                 </div>
-                                <div className="flex gap-3 text-sm text-slate-400 mb-2">
-                                    {service.category?.name && <span>{service.category.name}</span>}
-                                    <span>{service.unit}</span>
+                                <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-400 mb-2">
+                                    {service.category?.name && <span className="truncate max-w-full">{service.category.name}</span>}
+                                    <span className="truncate max-w-full">{service.unit}</span>
                                 </div>
                                 {sortedPrices(service).length > 0 ? (
                                     <div className="flex flex-wrap gap-1.5">

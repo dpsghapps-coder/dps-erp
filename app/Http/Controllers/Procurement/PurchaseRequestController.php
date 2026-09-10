@@ -8,6 +8,7 @@ use App\Models\InventoryProduct;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestHistory;
+use App\Models\Setting;
 use App\Models\Stock;
 use App\Models\Supplier;
 use App\Models\User;
@@ -68,10 +69,14 @@ class PurchaseRequestController extends Controller
     public function create()
     {
         return inertia('Procurement/PurchaseRequests/Create', [
-            'products' => InventoryProduct::where('item_status', 'Active')->get(),
+            'products' => InventoryProduct::where('item_status', 'Active')
+                ->with(['prices' => fn ($q) => $q->with('supplier:id,company_name')->orderByDesc('collection_date')])
+                ->get(),
             'suppliers' => Supplier::where('is_active', true)->get(),
             'users' => User::all(),
             'departments' => Department::where('is_active', true)->orderBy('name')->pluck('name'),
+            'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+            'costTypes' => Setting::where('key', 'like', 'extra_cost_%')->pluck('value'),
         ]);
     }
 
@@ -86,12 +91,13 @@ class PurchaseRequestController extends Controller
             'required_by_date' => 'nullable|date|after:today',
             'purpose' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.item_name' => 'required|string',
             'items.*.item_description' => 'nullable|string',
-            'items.*.product_id' => 'nullable|uuid|exists:inventory_products,id',
+            'items.*.product_id' => 'required|uuid|exists:inventory_products,id',
             'items.*.estimated_cost' => 'required|numeric|min:0',
             'items.*.qty_requested' => 'required|numeric|min:0.01',
-            'items.*.uom' => 'required|string',
+            'items.*.cost_items' => 'nullable|array',
+            'items.*.cost_items.*.label' => 'required|string|max:100',
+            'items.*.cost_items.*.amount' => 'required|numeric|min:0',
         ]);
 
         $user = $request->user();
@@ -113,14 +119,20 @@ class PurchaseRequestController extends Controller
             ]);
 
             foreach ($validated['items'] as $itemData) {
+                $product = InventoryProduct::findOrFail($itemData['product_id']);
+
                 $item = $pr->items()->create([
-                    'item_name' => $itemData['item_name'],
+                    'item_name' => $product->item_name,
                     'item_description' => $itemData['item_description'] ?? null,
-                    'product_id' => $itemData['product_id'] ?? null,
+                    'product_id' => $product->id,
                     'estimated_cost' => $itemData['estimated_cost'],
                     'qty_requested' => $itemData['qty_requested'],
-                    'uom' => $itemData['uom'],
+                    'uom' => $product->uom,
                 ]);
+
+                foreach ($itemData['cost_items'] ?? [] as $costItem) {
+                    $item->costItems()->create($costItem);
+                }
 
                 if ($request->hasFile("items.{$item->id}.attachments")) {
                     foreach ($request->file("items.{$item->id}.attachments") as $file) {
@@ -158,6 +170,7 @@ class PurchaseRequestController extends Controller
             'purchaseOrder.items.product',
             'items.product',
             'items.attachments',
+            'items.costItems',
             'history.user',
         ]);
 
@@ -177,12 +190,16 @@ class PurchaseRequestController extends Controller
             return back()->withErrors(['error' => 'Cannot edit a PR that is not in draft or queried status']);
         }
 
-        $purchaseRequest->load(['items.attachments', 'items.product']);
+        $purchaseRequest->load(['items.attachments', 'items.product', 'items.costItems']);
 
         return inertia('Procurement/PurchaseRequests/Edit', [
             'purchaseRequest' => $purchaseRequest,
-            'products' => InventoryProduct::where('item_status', 'Active')->get(),
+            'products' => InventoryProduct::where('item_status', 'Active')
+                ->with(['prices' => fn ($q) => $q->with('supplier:id,company_name')->orderByDesc('collection_date')])
+                ->get(),
             'departments' => Department::where('is_active', true)->orderBy('name')->pluck('name'),
+            'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+            'costTypes' => Setting::where('key', 'like', 'extra_cost_%')->pluck('value'),
         ]);
     }
 
@@ -206,12 +223,13 @@ class PurchaseRequestController extends Controller
             'required_by_date' => 'nullable|date|after:today',
             'purpose' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.item_name' => 'required|string',
             'items.*.item_description' => 'nullable|string',
-            'items.*.product_id' => 'nullable|uuid|exists:inventory_products,id',
+            'items.*.product_id' => 'required|uuid|exists:inventory_products,id',
             'items.*.estimated_cost' => 'required|numeric|min:0',
             'items.*.qty_requested' => 'required|numeric|min:0.01',
-            'items.*.uom' => 'required|string',
+            'items.*.cost_items' => 'nullable|array',
+            'items.*.cost_items.*.label' => 'required|string|max:100',
+            'items.*.cost_items.*.amount' => 'required|numeric|min:0',
         ]);
 
         DB::transaction(function () use ($validated, $purchaseRequest, $request) {
@@ -225,14 +243,20 @@ class PurchaseRequestController extends Controller
             $purchaseRequest->items()->delete();
 
             foreach ($validated['items'] as $itemData) {
+                $product = InventoryProduct::findOrFail($itemData['product_id']);
+
                 $item = $purchaseRequest->items()->create([
-                    'item_name' => $itemData['item_name'],
+                    'item_name' => $product->item_name,
                     'item_description' => $itemData['item_description'] ?? null,
-                    'product_id' => $itemData['product_id'] ?? null,
+                    'product_id' => $product->id,
                     'estimated_cost' => $itemData['estimated_cost'],
                     'qty_requested' => $itemData['qty_requested'],
-                    'uom' => $itemData['uom'],
+                    'uom' => $product->uom,
                 ]);
+
+                foreach ($itemData['cost_items'] ?? [] as $costItem) {
+                    $item->costItems()->create($costItem);
+                }
 
                 if ($request->hasFile("items.{$item->id}.attachments")) {
                     foreach ($request->file("items.{$item->id}.attachments") as $file) {

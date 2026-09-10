@@ -225,11 +225,11 @@ export default function GoodsIndex() {
                                             {Object.entries(good.attributes).map(([k, v]) => `${k}: ${v}`).join(', ')}
                                         </span>
                                     )}
-                                    <div className="flex gap-4">
+                                    <div className="flex flex-wrap gap-x-4 gap-y-1">
                                         {good.item_category && (
-                                            <span>{good.item_category}</span>
+                                            <span className="truncate max-w-full">{good.item_category}</span>
                                         )}
-                                        <span>{good.uom}</span>
+                                        <span className="truncate max-w-full">{good.uom}</span>
                                     </div>
                                 </div>
                             </div>
