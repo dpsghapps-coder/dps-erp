@@ -102,7 +102,9 @@ function AuditTimeline({ history }: { history: any[] }) {
 export default function PurchaseRequestShow() {
     const { purchaseRequest: pr } = usePage().props as any;
     const formatCurrency = useCurrency();
-    const user = (usePage().props as any).auth?.user;
+    const auth = (usePage().props as any).auth;
+    const user = auth?.user;
+    const permissions: string[] = auth?.permissions || [];
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showQueryModal, setShowQueryModal] = useState(false);
     const [showHoldModal, setShowHoldModal] = useState(false);
@@ -115,10 +117,10 @@ export default function PurchaseRequestShow() {
     const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
     const [inspectionItems, setInspectionItems] = useState<any[]>([]);
 
-    const canApprove = user?.permissions?.some((p: any) => p.name === 'pr.approve');
-    const canFinanceReview = user?.permissions?.some((p: any) => p.name === 'pr.finance.review');
-    const canInspect = user?.permissions?.some((p: any) => p.name === 'procurement.inspect');
-    const canClosePo = user?.permissions?.some((p: any) => p.name === 'procurement.close');
+    const canApprove = permissions.includes('pr.approve');
+    const canFinanceReview = permissions.includes('pr.finance.review');
+    const canInspect = permissions.includes('procurement.inspect');
+    const canClosePo = permissions.includes('procurement.close');
     const canCancel = pr.requester_id === user?.id || canApprove || canFinanceReview;
 
     const handleDeptReview = (action: string) => {
