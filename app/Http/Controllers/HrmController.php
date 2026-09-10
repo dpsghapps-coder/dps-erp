@@ -203,6 +203,21 @@ class HrmController extends Controller
         ]);
     }
 
+    public function orgChart()
+    {
+        $employees = Employee::with(['department:id,name', 'staffLevel:id,name'])
+            ->whereNull('date_terminated')
+            ->orderBy('first_name')
+            ->get([
+                'id', 'first_name', 'last_name', 'avatar', 'job_title',
+                'department_id', 'staff_level_id', 'supervising_manager_id',
+            ]);
+
+        return inertia('HRM/OrgChart', [
+            'employees' => $employees,
+        ]);
+    }
+
     public function employeeShow(Employee $employee)
     {
         if (! $this->isHrmManager() && $this->currentEmployee()?->id !== $employee->id) {

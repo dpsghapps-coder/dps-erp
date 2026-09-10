@@ -32,10 +32,13 @@ class PurchaseRequestController extends Controller
                     ->orWhere('requester_id', $user->id);
             });
         } elseif ($user->hasPermission('pr.approve')) {
-            // Dept managers see their department's PRs + their own
-            $query->where(function ($q) use ($user) {
-                $q->where('department', $user->department)
-                    ->orWhere('requester_id', $user->id);
+            // Managers see PRs from their direct reports (per Employee.supervising_manager_id) + their own
+            $employeeId = $user->employee?->id;
+            $query->where(function ($q) use ($user, $employeeId) {
+                $q->where('requester_id', $user->id);
+                if ($employeeId) {
+                    $q->orWhereHas('requester.employee', fn ($q2) => $q2->where('supervising_manager_id', $employeeId));
+                }
             });
         } else {
             // Regular users see only their own
@@ -102,9 +105,7 @@ class PurchaseRequestController extends Controller
         ]);
 
         $user = $request->user();
-        $deptManager = User::whereHas('employee.department', fn ($q) => $q->where('name', $validated['department']))
-            ->whereHas('role', fn ($q) => $q->where('name', 'manager'))
-            ->first();
+        $deptManager = $user->employee?->supervisingManager?->user;
 
         return DB::transaction(function () use ($validated, $user, $deptManager, $request) {
             $pr = PurchaseRequest::create([
@@ -180,6 +181,20 @@ class PurchaseRequestController extends Controller
         ]);
     }
 
+    /**
+     * True when $user is the direct supervising manager of the PR's requester,
+     * per Employee.supervising_manager_id -- the same link the Leave module
+     * uses to route a request to a specific person's actual manager, rather
+     * than to anyone sharing a department string.
+     */
+    private function isDirectManagerOf(PurchaseRequest $purchaseRequest, User $user): bool
+    {
+        $reviewerEmployeeId = $user->employee?->id;
+        $requesterManagerId = $purchaseRequest->requester?->employee?->supervising_manager_id;
+
+        return $reviewerEmployeeId && $requesterManagerId && $requesterManagerId === $reviewerEmployeeId;
+    }
+
     private function canManagePr(PurchaseRequest $purchaseRequest, User $user): bool
     {
         if ($user->hasRole('admin')) {
@@ -190,7 +205,7 @@ class PurchaseRequestController extends Controller
             return in_array($purchaseRequest->status, ['draft', 'queried']);
         }
 
-        if ($user->hasPermission('pr.approve') && $purchaseRequest->department === $user->department) {
+        if ($user->hasPermission('pr.approve') && $this->isDirectManagerOf($purchaseRequest, $user)) {
             return in_array($purchaseRequest->status, ['pending', 'queried']);
         }
 
@@ -332,11 +347,8 @@ class PurchaseRequestController extends Controller
             ]);
         });
 
-        $deptManagers = User::whereHas('role.permissions', fn ($q) => $q->where('name', 'pr.approve'))
-            ->get()
-            ->filter(fn (User $u) => $u->department === $purchaseRequest->department);
-
-        foreach ($deptManagers as $manager) {
+        $manager = $purchaseRequest->requester?->employee?->supervisingManager?->user;
+        if ($manager && $manager->hasPermission('pr.approve')) {
             $manager->notify(new PurchaseRequestNotification($purchaseRequest, 'submitted'));
         }
 
@@ -347,7 +359,7 @@ class PurchaseRequestController extends Controller
     {
         $user = $request->user();
         $canReview = $user->hasRole('admin') || $user->hasRole('md') || $user->hasRole('general')
-            || ($user->hasPermission('pr.approve') && $purchaseRequest->department === $user->department);
+            || ($user->hasPermission('pr.approve') && $this->isDirectManagerOf($purchaseRequest, $user));
 
         if (! $canReview) {
             return back()->withErrors(['error' => 'You do not have permission to review this purchase request']);

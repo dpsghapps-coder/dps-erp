@@ -377,6 +377,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/hrm/dashboard', [HrmController::class, 'dashboard'])->name('hrm.dashboard');
         Route::get('/hrm/employees', [HrmController::class, 'employees'])->name('hrm.employees');
         Route::get('/hrm/employees/{employee}', [HrmController::class, 'employeeShow'])->name('hrm.employeeShow');
+        Route::get('/hrm/org-chart', [HrmController::class, 'orgChart'])->name('hrm.orgChart');
         Route::get('/hrm/attendance', [HrmController::class, 'attendance'])->name('hrm.attendance');
         Route::post('/hrm/attendance/check-in', [HrmController::class, 'checkIn'])->name('hrm.checkIn');
         Route::post('/hrm/attendance/check-out', [HrmController::class, 'checkOut'])->name('hrm.checkOut');

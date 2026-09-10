@@ -42,7 +42,8 @@ import {
     BookOpen,
     Receipt,
     HelpCircle,
-    Flag
+    Flag,
+    Network
 } from 'lucide-react';
 import ChatSidebar from '@/Components/Chat/ChatSidebar';
 
@@ -118,6 +119,7 @@ const financeSubItems: CrmSubItem[] = [
 const hrmSubItems: CrmSubItem[] = [
     { name: 'Dashboard', href: '/hrm/dashboard', icon: LayoutDashboard },
     { name: 'Employees', href: '/hrm/employees', icon: UsersIcon },
+    { name: 'Org Chart', href: '/hrm/org-chart', icon: Network },
     { name: 'Attendance', href: '/hrm/attendance', icon: Clock },
     { name: 'Leaves', href: '/hrm/leaves', icon: CalendarDays },
     { name: 'Settings', href: '/hrm/settings', icon: Settings },
