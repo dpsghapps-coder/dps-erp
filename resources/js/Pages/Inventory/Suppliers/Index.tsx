@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
+import { GlassCard, PageHeader, EmptyState, Pagination, PhoneInput } from '@/Components/ui';
 import GPSMapPicker from '@/Components/GPSMapPicker';
 import InventoryTabs from '@/Components/InventoryTabs';
 import { Head, usePage, useForm, router } from '@inertiajs/react';
@@ -247,15 +247,13 @@ export default function SuppliersIndex() {
                                                         placeholder="Contact person"
                                                         className="glass-input w-full text-sm"
                                                     />
-                                                    <input
-                                                        type="text"
+                                                    <PhoneInput
                                                         value={branch.mobile || ''}
-                                                        onChange={(e) => {
+                                                        onChange={(value) => {
                                                             const updated = [...branches];
-                                                            updated[i] = { ...updated[i], mobile: e.target.value };
+                                                            updated[i] = { ...updated[i], mobile: value };
                                                             setBranches(updated);
                                                         }}
-                                                        placeholder="Mobile number"
                                                         className="glass-input w-full text-sm"
                                                     />
                                                 </div>

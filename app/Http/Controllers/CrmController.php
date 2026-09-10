@@ -128,6 +128,8 @@ class CrmController extends Controller
 
     public function edit(Client $client)
     {
+        $client->load(['contacts' => fn ($q) => $q->orderBy('id')]);
+
         return inertia('CRM/Edit', ['client' => $client, ...$this->lookupLists()]);
     }
 

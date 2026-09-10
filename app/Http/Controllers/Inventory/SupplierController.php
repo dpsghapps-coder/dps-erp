@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
 use App\Models\Supplier;
+use App\Rules\PhoneNumber;
 use Illuminate\Http\Request;
 
 class SupplierController extends Controller
@@ -41,7 +42,7 @@ class SupplierController extends Controller
             'branches' => 'nullable|array',
             'branches.*.name' => 'required|string|max:255',
             'branches.*.contact_name' => 'nullable|string|max:255',
-            'branches.*.mobile' => 'nullable|string|max:20',
+            'branches.*.mobile' => ['nullable', 'string', 'max:20', new PhoneNumber()],
             'branches.*.email' => 'nullable|email',
             'branches.*.address' => 'nullable|string',
             'branches.*.location' => 'nullable|string|max:50',
@@ -77,7 +78,7 @@ class SupplierController extends Controller
             'branches' => 'nullable|array',
             'branches.*.name' => 'required|string|max:255',
             'branches.*.contact_name' => 'nullable|string|max:255',
-            'branches.*.mobile' => 'nullable|string|max:20',
+            'branches.*.mobile' => ['nullable', 'string', 'max:20', new PhoneNumber()],
             'branches.*.email' => 'nullable|email',
             'branches.*.address' => 'nullable|string',
             'branches.*.location' => 'nullable|string|max:50',

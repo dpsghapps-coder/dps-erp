@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Swal from 'sweetalert2';
 
 interface PhoneInputProps {
     value: string;
@@ -7,8 +8,47 @@ interface PhoneInputProps {
     className?: string;
 }
 
+function normalizeGhanaPhone(raw: string): string {
+    let cleaned = raw.replace(/[\s-]/g, '');
+    if (cleaned.startsWith('+233')) {
+        cleaned = '0' + cleaned.slice(4);
+    } else if (cleaned.startsWith('233')) {
+        cleaned = '0' + cleaned.slice(3);
+    }
+    return cleaned;
+}
+
+function warnInvalidGhanaNumber() {
+    Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'warning',
+        title: 'Phone number should be 10 digits starting with 0 (e.g. 0244123456)',
+        showConfirmButton: false,
+        timer: 4000,
+        timerProgressBar: true,
+    });
+}
+
 export function PhoneInput({ value, onChange, error, className }: PhoneInputProps) {
     const [international, setInternational] = useState(() => value.trim().startsWith('+'));
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        if (international) return;
+        e.preventDefault();
+        onChange(normalizeGhanaPhone(e.clipboardData.getData('text')));
+    };
+
+    const handleBlur = () => {
+        if (international || !value) return;
+        const normalized = normalizeGhanaPhone(value);
+        if (normalized !== value) {
+            onChange(normalized);
+        }
+        if (!/^0[0-9]{9}$/.test(normalized)) {
+            warnInvalidGhanaNumber();
+        }
+    };
 
     return (
         <div>
@@ -16,6 +56,8 @@ export function PhoneInput({ value, onChange, error, className }: PhoneInputProp
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
+                onPaste={handlePaste}
+                onBlur={handleBlur}
                 maxLength={international ? 20 : 10}
                 placeholder={international ? '+XX XXX XXX XXXX' : '0XXXXXXXXX'}
                 className={className ?? 'glass-input w-full'}

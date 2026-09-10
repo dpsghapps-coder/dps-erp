@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Campaign;
 use App\Models\Client;
 use App\Models\Deal;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class CrmReportController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $stats = [
             'total_clients' => Client::count(),
@@ -33,6 +35,16 @@ class CrmReportController extends Controller
 
         $pipelineValue = (float) Deal::whereIn('stage', Deal::OPEN_STAGES)->sum('estimated_value');
         $wonValue = (float) Deal::where('stage', 'converted')->sum('estimated_value');
+
+        $overdueFollowUps = Deal::whereIn('stage', Deal::OPEN_STAGES)
+            ->whereNotNull('next_follow_up_at')
+            ->where('next_follow_up_at', '<', now())
+            ->count();
+
+        $upcomingFollowUps = Deal::whereIn('stage', Deal::OPEN_STAGES)
+            ->whereNotNull('next_follow_up_at')
+            ->whereBetween('next_follow_up_at', [now(), now()->addDays(7)])
+            ->count();
 
         $lostReasons = Deal::where('stage', 'lost')
             ->whereNotNull('lost_reason')
@@ -73,6 +85,25 @@ class CrmReportController extends Controller
             ->limit(10)
             ->get(['id', 'company_name', 'status', 'created_at']);
 
+        $marketing = null;
+        if ($request->user()->hasPermission('marketing.view')) {
+            $marketing = [
+                'total' => Campaign::count(),
+                'active' => Campaign::where('status', 'active')->count(),
+                'scheduled' => Campaign::where('status', 'scheduled')->count(),
+                'completed' => Campaign::where('status', 'completed')->count(),
+                'totalBudget' => (float) Campaign::sum('budget'),
+                'totalSpent' => (float) Campaign::sum('actual_cost'),
+                'byType' => Campaign::selectRaw('type, count(*) as count')
+                    ->groupBy('type')
+                    ->pluck('count', 'type')
+                    ->toArray(),
+                'recentCampaigns' => Campaign::orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get(['id', 'number', 'title', 'type', 'status', 'start_date', 'budget']),
+            ];
+        }
+
         return inertia('CRM/Reports', [
             'stats' => $stats,
             'conversionRate' => $conversionRate,
@@ -83,6 +114,9 @@ class CrmReportController extends Controller
             'pipelineFunnel' => $pipelineFunnel,
             'pipelineValue' => $pipelineValue,
             'wonValue' => $wonValue,
+            'overdueFollowUps' => $overdueFollowUps,
+            'upcomingFollowUps' => $upcomingFollowUps,
+            'marketing' => $marketing,
             'lostReasons' => $lostReasons,
             'monthlyClients' => $monthlyClients,
             'sources' => $sources,

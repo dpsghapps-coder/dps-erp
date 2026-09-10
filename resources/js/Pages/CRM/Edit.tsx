@@ -1,6 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusChips, SearchableSelect, PhoneInput } from '@/Components/ui';
 import GPSMapPicker from '@/Components/GPSMapPicker';
+import ClientContacts from '@/Components/CRM/ClientContacts';
 import { COUNTRIES } from '@/Utils/countries';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, MapPin, X } from 'lucide-react';
@@ -219,6 +220,17 @@ export default function ClientEdit() {
                                 )}
                             </div>
                         </div>
+                    </GlassCard>
+
+                    {/* Contacts */}
+                    <GlassCard className="lg:col-span-2">
+                        <ClientContacts
+                            clientId={client.id}
+                            contacts={client?.contacts || []}
+                            regions={regions}
+                            cities={cities}
+                            neighbourhoods={neighbourhoods}
+                        />
                     </GlassCard>
 
                     {/* Notes */}
