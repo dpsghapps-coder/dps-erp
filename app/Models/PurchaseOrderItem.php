@@ -30,6 +30,8 @@ class PurchaseOrderItem extends Model
         'accepted_qty' => 'decimal:2',
     ];
 
+    protected $appends = ['display_name'];
+
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
@@ -38,5 +40,10 @@ class PurchaseOrderItem extends Model
     public function product(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function getDisplayNameAttribute(): string
+    {
+        return $this->description ?: ($this->product?->item_name ?? 'Item');
     }
 }

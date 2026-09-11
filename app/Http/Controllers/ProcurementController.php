@@ -6,7 +6,9 @@ use App\Models\Good;
 use App\Models\InventoryProduct;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
+use App\Models\Setting;
 use App\Models\Supplier;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
 class ProcurementController extends Controller
@@ -110,9 +112,81 @@ class ProcurementController extends Controller
 
     public function show(PurchaseOrder $po)
     {
-        $po->load(['supplier', 'items.product', 'createdBy']);
+        $po->load(['supplier.branches', 'items.product', 'createdBy', 'purchaseRequest']);
 
-        return inertia('Procurement/Show', ['purchase_order' => $po]);
+        return inertia('Procurement/Show', [
+            'purchase_order' => $po,
+            'currencySymbol' => $this->currencySymbol(),
+        ]);
+    }
+
+    public function downloadPdf(PurchaseOrder $po)
+    {
+        $po->load(['supplier.branches', 'items.product']);
+
+        $pdf = Pdf::loadView('pdf.purchase_order', [
+            'po' => $po,
+            'currencySymbol' => $this->currencySymbol(),
+        ]);
+
+        return $pdf->download("PO-{$po->po_number}.pdf");
+    }
+
+    public function downloadWhatsapp(PurchaseOrder $po)
+    {
+        $po->load(['supplier.branches', 'items.product']);
+        $symbol = $this->currencySymbol();
+
+        $lines = [];
+        $lines[] = "*PURCHASE ORDER*";
+        $lines[] = "PO No: *{$po->po_number}*";
+        $lines[] = 'Date: '.$po->created_at->format('d M Y');
+        if ($po->expected_date) {
+            $lines[] = 'Expected Delivery: '.$po->expected_date->format('d M Y');
+        }
+        $lines[] = '';
+        $lines[] = "*Supplier:* {$po->supplier->company_name}";
+        $branch = $po->supplier->branches->first();
+        if ($branch?->contact_name) {
+            $lines[] = "Attn: {$branch->contact_name}";
+        }
+        if ($branch?->mobile) {
+            $lines[] = "Phone: {$branch->mobile}";
+        }
+        $lines[] = '';
+        $lines[] = '*Items:*';
+        foreach ($po->items as $i => $item) {
+            $qty = rtrim(rtrim(number_format((float) $item->qty, 2), '0'), '.');
+            $lines[] = ($i + 1).". {$item->display_name} — {$qty} x {$symbol} ".number_format((float) $item->unit_cost, 2)." = {$symbol} ".number_format((float) $item->line_total, 2);
+        }
+        $lines[] = '';
+        $lines[] = "*Total: {$symbol} ".number_format((float) $po->total_amount, 2).'*';
+        if ($po->notes) {
+            $lines[] = '';
+            $lines[] = "Notes: {$po->notes}";
+        }
+        $lines[] = '';
+        $lines[] = 'DP Solutions Ghana Limited';
+
+        $content = implode("\n", $lines);
+
+        return response($content)
+            ->header('Content-Type', 'text/plain; charset=UTF-8')
+            ->header('Content-Disposition', "attachment; filename=\"PO-{$po->po_number}-whatsapp.txt\"");
+    }
+
+    private function currencySymbol(): string
+    {
+        // dompdf's default fonts don't cover the Cedi/Naira glyphs, so those fall
+        // back to the plain currency code rather than rendering as "?".
+        $code = Setting::get('currency', 'GHS');
+
+        return match ($code) {
+            'USD' => '$',
+            'EUR' => '€',
+            'GBP' => '£',
+            default => $code,
+        };
     }
 
     public function edit(PurchaseOrder $po)

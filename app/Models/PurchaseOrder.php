@@ -6,6 +6,7 @@ use App\Models\Concerns\GeneratesDailyCode;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PurchaseOrder extends Model
 {
@@ -41,6 +42,11 @@ class PurchaseOrder extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function purchaseRequest(): HasOne
+    {
+        return $this->hasOne(PurchaseRequest::class, 'purchase_order_id');
     }
 
     public static function generatePoNumber(): string

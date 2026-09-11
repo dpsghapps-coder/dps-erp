@@ -365,6 +365,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('permission:procurement.view')->group(function () {
         Route::get('/procurement/{po}', [ProcurementController::class, 'show'])->name('procurement.show');
+        Route::get('/procurement/{po}/pdf', [ProcurementController::class, 'downloadPdf'])->name('procurement.pdf');
+        Route::get('/procurement/{po}/whatsapp', [ProcurementController::class, 'downloadWhatsapp'])->name('procurement.whatsapp');
     });
 
     Route::middleware('permission:procurement.edit')->group(function () {
