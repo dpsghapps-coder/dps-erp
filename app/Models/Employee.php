@@ -87,6 +87,16 @@ class Employee extends Model
         return $this->belongsTo(Employee::class, 'supervising_manager_id');
     }
 
+    public function directReports(): HasMany
+    {
+        return $this->hasMany(Employee::class, 'supervising_manager_id');
+    }
+
+    public function isDirectManagerOf(Employee $employee): bool
+    {
+        return $employee->supervising_manager_id === $this->id;
+    }
+
     public function employmentType(): BelongsTo
     {
         return $this->belongsTo(EmploymentType::class);

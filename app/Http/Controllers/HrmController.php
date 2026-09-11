@@ -343,11 +343,22 @@ class HrmController extends Controller
         return response()->json(['success' => true, 'log' => $log]);
     }
 
+    /**
+     * Viewing/acting on someone else's leave requires holding the permission
+     * AND actually being classified as a manager-tier staff level -- the
+     * permission alone isn't enough, since is_manager is the deliberate
+     * gate on seeing other people's leave records.
+     */
+    private function isPeopleManager(?Employee $employee): bool
+    {
+        return (bool) $employee?->staffLevel?->is_manager;
+    }
+
     public function leaves(Request $request)
     {
         $currentEmployee = Employee::where('user_id', Auth::id())->first();
         $canViewAll = Auth::user()->hasPermission('hrm.manage_leaves') || Auth::user()->hasRole('md');
-        $canViewTeam = Auth::user()->hasPermission('hrm.view_team_leaves');
+        $canViewTeam = Auth::user()->hasPermission('hrm.view_team_leaves') && $this->isPeopleManager($currentEmployee);
 
         if ($canViewAll) {
             $visibleEmployeeIds = null;
@@ -485,7 +496,7 @@ class HrmController extends Controller
         }
 
         $currentEmployee = Employee::where('user_id', Auth::id())->first();
-        $canViewTeam = Auth::user()->hasPermission('hrm.view_team_leaves');
+        $canViewTeam = Auth::user()->hasPermission('hrm.view_team_leaves') && $this->isPeopleManager($currentEmployee);
 
         if ($canViewTeam
             && $currentEmployee

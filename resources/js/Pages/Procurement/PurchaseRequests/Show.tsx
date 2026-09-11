@@ -477,9 +477,6 @@ export default function PurchaseRequestShow() {
                                     <button onClick={() => setShowReviewModal(true)} className="glass-button w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700">
                                         <Check className="w-4 h-4" /> Approve
                                     </button>
-                                    <button onClick={() => setShowQueryModal(true)} className="glass-button-secondary w-full flex items-center justify-center gap-2">
-                                        <MessageSquare className="w-4 h-4" /> Query
-                                    </button>
                                     <button onClick={() => setShowRejectModal(true)} className="glass-button w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700">
                                         <X className="w-4 h-4" /> Reject
                                     </button>
@@ -590,7 +587,7 @@ export default function PurchaseRequestShow() {
                         <div className="flex gap-3">
                             <button onClick={() => setShowQueryModal(false)} className="flex-1 glass-button-secondary py-2.5">Cancel</button>
                             <button
-                                onClick={() => canFinanceReview ? handleFinanceReview('query') : handleDeptReview('query')}
+                                onClick={() => handleFinanceReview('query')}
                                 className="flex-1 bg-orange-600 text-white py-2.5 rounded-lg font-medium hover:bg-orange-700"
                             >
                                 Send Query

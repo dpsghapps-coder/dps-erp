@@ -416,14 +416,17 @@ class PurchaseRequestController extends Controller
     {
         $user = $request->user();
         $canReview = $user->hasRole('admin') || $user->hasRole('md') || $user->hasRole('general')
-            || ($user->hasPermission('pr.approve') && $this->isInManagementChainOf($purchaseRequest, $user));
+            || ($user->hasPermission('pr.approve') && (
+                $this->isInManagementChainOf($purchaseRequest, $user)
+                || $purchaseRequest->requester_id === $user->id
+            ));
 
         if (! $canReview) {
             return back()->withErrors(['error' => 'You do not have permission to review this purchase request']);
         }
 
         $validated = $request->validate([
-            'action' => 'required|in:approve,reject,query',
+            'action' => 'required|in:approve,reject',
             'comment' => 'nullable|string',
         ]);
 
@@ -434,7 +437,6 @@ class PurchaseRequestController extends Controller
         $newStatus = match ($validated['action']) {
             'approve' => 'dept_approved',
             'reject' => 'rejected',
-            'query' => 'queried',
         };
 
         DB::transaction(function () use ($purchaseRequest, $newStatus, $validated) {
