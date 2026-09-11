@@ -78,9 +78,9 @@ const inventorySubItems: CrmSubItem[] = [
     { name: 'Dashboard', href: '/inventory', icon: LayoutDashboard },
     { name: 'Suppliers', href: '/inventory/suppliers', icon: Truck },
     { name: 'Materials', href: '/inventory/materials', icon: Package },
+    { name: 'Procurement', href: '/procurement', icon: ShoppingBag },
     { name: 'Stock', href: '/inventory/stock', icon: Boxes },
     { name: 'Requisition', href: '/inventory/requisitions', icon: ClipboardList },
-    { name: 'Procurement', href: '/procurement', icon: ShoppingBag },
 ];
 
 const productsSubItemsFull: CrmSubItem[] = [
@@ -122,12 +122,12 @@ const hrmSubItems: CrmSubItem[] = [
     { name: 'Org Chart', href: '/hrm/org-chart', icon: Network },
     { name: 'Attendance', href: '/hrm/attendance', icon: Clock },
     { name: 'Leaves', href: '/hrm/leaves', icon: CalendarDays },
-    { name: 'Settings', href: '/hrm/settings', icon: Settings },
     { name: 'Holidays', href: '/hrm/holidays', icon: Calendar },
     { name: 'Payroll', href: '/hrm/payroll', icon: DollarSignIcon },
     { name: 'Performance', href: '/hrm/performance', icon: TrendingUp },
     { name: 'Noticeboard', href: '/hrm/noticeboard', icon: BellIcon },
     { name: 'Issue Reports', href: '/hrm/issue-reports', icon: Flag },
+    { name: 'Settings', href: '/hrm/settings', icon: Settings },
 ];
 
 const decisionHubSubItems: CrmSubItem[] = [

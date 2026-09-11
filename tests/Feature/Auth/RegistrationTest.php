@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -11,6 +12,9 @@ class RegistrationTest extends TestCase
 
     public function test_registration_screen_can_be_rendered(): void
     {
+        // The app redirects to the first-run setup wizard until a user exists.
+        User::factory()->create();
+
         $response = $this->get('/register');
 
         $response->assertStatus(200);
@@ -18,6 +22,9 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register(): void
     {
+        // The app redirects to the first-run setup wizard until a user exists.
+        User::factory()->create();
+
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',

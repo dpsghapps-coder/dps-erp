@@ -5,9 +5,9 @@ const tabs = [
     { name: 'Overview', href: '/inventory', icon: LayoutDashboard, key: 'overview' },
     { name: 'Suppliers', href: '/inventory/suppliers', icon: Truck, key: 'suppliers' },
     { name: 'Materials', href: '/inventory/materials', icon: Package, key: 'materials' },
+    { name: 'Procurement', href: '/procurement', icon: ShoppingBag, key: 'procurement', permission: 'procurement' },
     { name: 'Stock', href: '/inventory/stock', icon: Boxes, key: 'stock' },
     { name: 'Requisition', href: '/inventory/requisitions', icon: ClipboardList, key: 'requisition' },
-    { name: 'Procurement', href: '/procurement', icon: ShoppingBag, key: 'procurement', permission: 'procurement' },
 ];
 
 export default function InventoryTabs({ activeTab }: { activeTab: string }) {

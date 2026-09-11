@@ -12,6 +12,9 @@ class AuthenticationTest extends TestCase
 
     public function test_login_screen_can_be_rendered(): void
     {
+        // The app redirects to the first-run setup wizard until a user exists.
+        User::factory()->create();
+
         $response = $this->get('/login');
 
         $response->assertStatus(200);

@@ -157,6 +157,14 @@ export default function PurchaseRequestShow() {
         });
     };
 
+    const handleApproveAndCreatePo = () => {
+        router.post(`/procurement/purchase-requests/${pr.id}/finance-review`, {
+            action: 'approve',
+        }, {
+            onSuccess: () => router.visit(`/procurement/purchase-requests/${pr.id}/create-po`),
+        });
+    };
+
     const handleSubmit = () => {
         router.post(`/procurement/purchase-requests/${pr.id}/submit`);
     };
@@ -492,12 +500,12 @@ export default function PurchaseRequestShow() {
                             {/* Finance actions */}
                             {pr.status === 'dept_approved' && canFinanceReview && (
                                 <>
-                                    <Link
-                                        href={`/procurement/purchase-requests/${pr.id}/create-po`}
+                                    <button
+                                        onClick={handleApproveAndCreatePo}
                                         className="glass-button w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700"
                                     >
                                         <Check className="w-4 h-4" /> Approve & Create PO
-                                    </Link>
+                                    </button>
                                     <button onClick={() => setShowQueryModal(true)} className="glass-button-secondary w-full flex items-center justify-center gap-2">
                                         <MessageSquare className="w-4 h-4" /> Query
                                     </button>
