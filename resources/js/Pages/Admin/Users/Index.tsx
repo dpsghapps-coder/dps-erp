@@ -144,7 +144,7 @@ export default function UsersIndex() {
                                             {user.role ? (
                                                 <span className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-400">
                                                     <Shield className="w-3 h-3" />
-                                                    {user.role.name}
+                                                    {user.role.display_name || user.role.name}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-500">No Role</span>

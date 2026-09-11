@@ -141,7 +141,7 @@ export default function UserCreate() {
                                 >
                                     <option value="">Select a role</option>
                                     {(roles || []).map((role: any) => (
-                                        <option key={role.id} value={role.id}>{role.name}</option>
+                                        <option key={role.id} value={role.id}>{role.display_name || role.name}</option>
                                     ))}
                                 </select>
                                 {errors.role_id && <p className="text-red-400 text-sm mt-1">{errors.role_id}</p>}

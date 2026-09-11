@@ -84,7 +84,9 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/executive-dashboard', [DashboardController::class, 'executiveDashboard'])->name('executive-dashboard');
+    Route::middleware('permission:dashboard.view_executive')->group(function () {
+        Route::get('/executive-dashboard', [DashboardController::class, 'executiveDashboard'])->name('executive-dashboard');
+    });
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
 
     // Help Center

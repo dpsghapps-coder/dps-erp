@@ -148,7 +148,7 @@ export default function Edit() {
                         </div>
                         {user.role && (
                             <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${roleBadgeColor(user.role.name)}`}>
-                                {user.role.name}
+                                {user.role.display_name || user.role.name}
                             </span>
                         )}
                     </div>
@@ -235,7 +235,7 @@ export default function Edit() {
                                 <Shield className="w-4 h-4 text-slate-400" />
                                 <span className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">Role</span>
                             </div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize">{user.role?.name || 'Not assigned'}</p>
+                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize">{user.role?.display_name || user.role?.name || 'Not assigned'}</p>
                         </div>
                         <div className="p-4 bg-slate-50 dark:bg-white/[0.03] rounded-lg border border-slate-100 dark:border-white/[0.06]">
                             <div className="flex items-center gap-2 mb-1">

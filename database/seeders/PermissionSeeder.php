@@ -111,6 +111,9 @@ class PermissionSeeder extends Seeder
             ['name' => 'marketing.edit', 'module' => 'marketing', 'description' => 'Edit campaigns'],
             ['name' => 'marketing.delete', 'module' => 'marketing', 'description' => 'Delete campaigns'],
 
+            // Dashboard
+            ['name' => 'dashboard.view_executive', 'module' => 'dashboard', 'description' => 'View the Executive Dashboard (company-wide stats and revenue)'],
+
             // Admin
             ['name' => 'admin.view_dashboard', 'module' => 'admin', 'description' => 'View admin dashboard'],
             ['name' => 'admin.manage_users', 'module' => 'admin', 'description' => 'Manage users'],

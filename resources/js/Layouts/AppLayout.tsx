@@ -350,10 +350,66 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         <Bell className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                         <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                     </button>
-                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center ml-1">
-                        <span className="text-sm font-medium text-white">
-                            {user?.name?.charAt(0).toUpperCase() || 'A'}
-                        </span>
+                    <div className="relative user-menu-container ml-1">
+                        <button
+                            onClick={() => setUserMenuOpen(!userMenuOpen)}
+                            className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center"
+                        >
+                            <span className="text-sm font-medium text-white">
+                                {user?.name?.charAt(0).toUpperCase() || 'A'}
+                            </span>
+                        </button>
+
+                        {userMenuOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#1a1e2a] rounded-xl border border-slate-200 dark:border-white/[0.06] shadow-xl overflow-hidden z-50">
+                                <div className="p-4 border-b border-slate-100 dark:border-white/[0.06]">
+                                    <div className="flex items-center gap-3">
+                                        {user?.employee?.avatar ? (
+                                            <img src={`/storage/${user.employee.avatar}`} alt={user.name} className="w-10 h-10 rounded-full object-cover" />
+                                        ) : (
+                                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                <span className="text-sm font-medium text-white">{user?.name?.charAt(0).toUpperCase() || 'A'}</span>
+                                            </div>
+                                        )}
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{user?.name || 'Admin'}</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.email || ''}</p>
+                                        </div>
+                                    </div>
+                                    {user?.role && (
+                                        <div className="mt-2">
+                                            <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-medium capitalize ${
+                                                user.role.name === 'admin' ? 'bg-red-100 text-red-700' :
+                                                user.role.name === 'manager' ? 'bg-amber-100 text-amber-700' :
+                                                'bg-slate-100 text-slate-700'
+                                            }`}>
+                                                {user.role.display_name || user.role.name}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="p-2">
+                                    <Link
+                                        href="/profile"
+                                        onClick={() => setUserMenuOpen(false)}
+                                        className="flex items-center gap-3 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/[0.04] rounded-lg transition-colors"
+                                    >
+                                        <UserIcon className="w-4 h-4" />
+                                        My Profile
+                                    </Link>
+                                    <Link
+                                        href={route('logout')}
+                                        method="post"
+                                        as="button"
+                                        onClick={() => setUserMenuOpen(false)}
+                                        className="w-full flex items-center gap-3 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        Sign Out
+                                    </Link>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </header>
@@ -485,6 +541,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </div>
                         <nav className="flex-1 overflow-y-auto scrollbar-thin p-4 pb-24 space-y-1">
                             {/* Executive Dashboard */}
+                            {hasModulePermission('dashboard') && (
                             <Link
                                 href="/executive-dashboard"
                                 className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
@@ -497,6 +554,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 <BarChart3 className="w-5 h-5" />
                                 <span className="font-semibold text-xs uppercase">Executive Dashboard</span>
                             </Link>
+                            )}
 
                             {hasModulePermission('crm') && (
                             <>
@@ -553,7 +611,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 Dashboard
                             </Link>
 
-                            {hasModulePermission('inventory') && (
+                            {(hasModulePermission('inventory') || hasModulePermission('procurement')) && (
                             <div className="mb-2">
                                 <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
                                     isInventoryPage
@@ -983,6 +1041,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                 {/* Navigation */}
                 <nav className="flex-1 overflow-y-auto scrollbar-thin py-4">
                     {/* EXECUTIVE DASHBOARD */}
+                    {hasModulePermission('dashboard') && (
                     <div className="px-3 mb-2">
                         <Link
                             href="/executive-dashboard"
@@ -996,6 +1055,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             {sidebarOpen && <span className="font-semibold text-xs uppercase">Executive Dashboard</span>}
                         </Link>
                     </div>
+                    )}
 
                     <div className="px-3 mb-2 mt-4">
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Interaction</span>}
@@ -1130,7 +1190,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     </div>}
 
                     {/* OPERATIONS Section - Orders & Inventory */}
-                    {(hasModulePermission('orders') || hasModulePermission('inventory')) && (
+                    {(hasModulePermission('orders') || hasModulePermission('inventory') || hasModulePermission('procurement')) && (
                     <div className="px-3 mt-4 mb-2">
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Operations</span>}
                     </div>
@@ -1176,7 +1236,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </Link>}
 
                         {/* Inventory Dropdown */}
-                        {hasModulePermission('inventory') && <div className="space-y-1">
+                        {(hasModulePermission('inventory') || hasModulePermission('procurement')) && <div className="space-y-1">
                             {sidebarOpen ? (
                                 <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
                                     isInventoryPage
@@ -1436,7 +1496,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         {sidebarOpen && (
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{user?.name || 'Admin'}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.role?.name ? `@${user.role.name}` : ''}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{user?.role ? (user.role.display_name || user.role.name) : ''}</p>
                             </div>
                         )}
                     </Link>
@@ -1574,7 +1634,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                                 user.role.name === 'manager' ? 'bg-amber-100 text-amber-700' :
                                                 'bg-slate-100 text-slate-700'
                                             }`}>
-                                                {user.role.name}
+                                                {user.role.display_name || user.role.name}
                                             </span>
                                         </div>
                                     )}
@@ -1657,7 +1717,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     <span className="text-[10px] font-medium truncate max-w-full">CRM</span>
                 </button>
                 )}
-                {hasModulePermission('inventory') && (
+                {(hasModulePermission('inventory') || hasModulePermission('procurement')) && (
                 <button
                     onClick={() => setInventorySlideUpOpen(true)}
                     className={`flex-1 min-w-0 flex flex-col items-center gap-1 py-2 px-1 rounded-xl transition-all ${
