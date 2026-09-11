@@ -7,9 +7,11 @@ use App\Models\InventoryProduct;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseRequest;
 use App\Models\Setting;
+use App\Models\Stock;
 use App\Models\Supplier;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProcurementController extends Controller
 {
@@ -120,6 +122,63 @@ class ProcurementController extends Controller
         ]);
     }
 
+    /**
+     * Pull a standalone PO's items straight into Stock, instead of someone
+     * re-keying the same quantities and costs by hand once goods arrive.
+     * PR-linked POs keep using PurchaseRequestController::closePo(), which
+     * goes through the fuller inspect-then-close workflow -- this covers
+     * the standalone flow, which has no such workflow at all.
+     */
+    public function pullToStock(Request $request, PurchaseOrder $po)
+    {
+        if (! $request->user()->hasPermission('procurement.close')) {
+            return back()->withErrors(['error' => 'You do not have permission to pull stock for this purchase order']);
+        }
+
+        if ($po->purchaseRequest) {
+            return back()->withErrors(['error' => 'This PO is linked to a Purchase Request -- use its Inspect/Close PO flow instead']);
+        }
+
+        if ($po->stock_pulled_at) {
+            return back()->withErrors(['error' => 'Stock has already been pulled for this purchase order']);
+        }
+
+        if ($po->status === 'draft') {
+            return back()->withErrors(['error' => 'PO must be ordered before stock can be pulled']);
+        }
+
+        $po->load('items');
+        $skippedGoods = 0;
+
+        DB::transaction(function () use ($po, &$skippedGoods) {
+            foreach ($po->items as $item) {
+                if (! $item->product_id) {
+                    continue;
+                }
+
+                // Stock only tracks InventoryProduct materials -- a "Good" item
+                // has no matching row in inventory_products, so pulling it in
+                // would violate stocks.product_id's foreign key.
+                if ($item->product_type && $item->product_type !== InventoryProduct::class) {
+                    $skippedGoods++;
+
+                    continue;
+                }
+
+                Stock::fromPurchaseOrderItem($item, $po)->save();
+            }
+
+            $po->update(['status' => 'closed', 'stock_pulled_at' => now()]);
+        });
+
+        $message = 'Stock pulled from purchase order';
+        if ($skippedGoods > 0) {
+            $message .= " ({$skippedGoods} good item(s) skipped -- Stock only tracks materials)";
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function downloadPdf(PurchaseOrder $po)
     {
         $po->load(['supplier.branches', 'items.product']);
@@ -168,11 +227,8 @@ class ProcurementController extends Controller
         $lines[] = '';
         $lines[] = 'DP Solutions Ghana Limited';
 
-        $content = implode("\n", $lines);
-
-        return response($content)
-            ->header('Content-Type', 'text/plain; charset=UTF-8')
-            ->header('Content-Disposition', "attachment; filename=\"PO-{$po->po_number}-whatsapp.txt\"");
+        return response(implode("\n", $lines))
+            ->header('Content-Type', 'text/plain; charset=UTF-8');
     }
 
     private function currencySymbol(): string

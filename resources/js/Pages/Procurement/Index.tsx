@@ -2,7 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, StatusBadge } from '@/Components/ui';
 import ProcurementTabs from '@/Components/ProcurementTabs';
 import { Head, usePage, Link } from '@inertiajs/react';
-import { FileText, ShoppingCart, Truck, AlertTriangle, Clock, CheckCircle, Pause, Eye, ArrowRight, Package } from 'lucide-react';
+import { FileText, ShoppingCart, Truck, AlertTriangle, Clock, CheckCircle, Pause, Eye, ArrowRight, Package, Plus } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 
 export default function ProcurementIndex() {
@@ -30,10 +30,18 @@ export default function ProcurementIndex() {
         <AppLayout>
             <Head title="Procurement" />
 
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">Procurement</h1>
                     <p className="text-sm text-slate-500 mt-1">Overview of procurement operations</p>
+                </div>
+                <div className="flex gap-3">
+                    <Link href="/procurement/purchase-requests/create" className="glass-button-secondary flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Add PR
+                    </Link>
+                    <Link href="/procurement/create" className="glass-button flex items-center gap-2">
+                        <Plus className="w-4 h-4" /> Add PO
+                    </Link>
                 </div>
             </div>
 

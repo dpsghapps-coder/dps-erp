@@ -1,18 +1,36 @@
 import { useRef, useState } from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import html2canvas from 'html2canvas';
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { useCurrency } from '@/Utils/currency';
-import { ArrowLeft, FileText, Image as ImageIcon, MessageCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Image as ImageIcon, MessageCircle, Copy, Check, X, PackageCheck } from 'lucide-react';
 
 export default function ProcurementShow() {
-    const { purchase_order: po } = usePage().props as any;
+    const { purchase_order: po, auth } = usePage().props as any;
     const formatCurrency = useCurrency();
     const printableRef = useRef<HTMLDivElement>(null);
     const [capturing, setCapturing] = useState(false);
+    const [showWhatsappModal, setShowWhatsappModal] = useState(false);
+    const [whatsappText, setWhatsappText] = useState('');
+    const [loadingWhatsapp, setLoadingWhatsapp] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const [pullingStock, setPullingStock] = useState(false);
 
     const branch = po.supplier?.branches?.[0];
+    const permissions: string[] = auth?.permissions || [];
+    const canPullStock = permissions.includes('procurement.close')
+        && !po.purchase_request
+        && !po.stock_pulled_at
+        && po.status !== 'draft';
+
+    const handlePullToStock = () => {
+        if (!confirm('Pull this PO\'s items into Stock? This will mark the PO as closed.')) return;
+        setPullingStock(true);
+        router.post(`/procurement/${po.id}/pull-to-stock`, {}, {
+            onFinish: () => setPullingStock(false),
+        });
+    };
 
     const handleDownloadImage = async () => {
         if (!printableRef.current) return;
@@ -26,6 +44,24 @@ export default function ProcurementShow() {
         } finally {
             setCapturing(false);
         }
+    };
+
+    const handleOpenWhatsappModal = async () => {
+        setShowWhatsappModal(true);
+        setCopied(false);
+        setLoadingWhatsapp(true);
+        try {
+            const response = await fetch(`/procurement/${po.id}/whatsapp`);
+            setWhatsappText(await response.text());
+        } finally {
+            setLoadingWhatsapp(false);
+        }
+    };
+
+    const handleCopyWhatsapp = async () => {
+        await navigator.clipboard.writeText(whatsappText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
     };
 
     return (
@@ -49,9 +85,19 @@ export default function ProcurementShow() {
                 <button onClick={handleDownloadImage} disabled={capturing} className="glass-button-secondary flex items-center gap-2">
                     <ImageIcon className="w-4 h-4" /> {capturing ? 'Capturing...' : 'Download Image'}
                 </button>
-                <a href={`/procurement/${po.id}/whatsapp`} className="glass-button-secondary flex items-center gap-2">
+                <button onClick={handleOpenWhatsappModal} className="glass-button-secondary flex items-center gap-2">
                     <MessageCircle className="w-4 h-4" /> WhatsApp Text
-                </a>
+                </button>
+                {canPullStock && (
+                    <button onClick={handlePullToStock} disabled={pullingStock} className="glass-button flex items-center gap-2 bg-green-600 hover:bg-green-700">
+                        <PackageCheck className="w-4 h-4" /> {pullingStock ? 'Pulling...' : 'Pull to Stock'}
+                    </button>
+                )}
+                {po.stock_pulled_at && (
+                    <span className="glass-button-secondary flex items-center gap-2 cursor-default opacity-75">
+                        <PackageCheck className="w-4 h-4" /> Stock Pulled
+                    </span>
+                )}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -143,6 +189,38 @@ export default function ProcurementShow() {
                     </GlassCard>
                 </div>
             </div>
+
+            {showWhatsappModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="glass-card w-full max-w-lg p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold">WhatsApp Message</h3>
+                            <button onClick={() => setShowWhatsappModal(false)} className="text-slate-500 hover:text-slate-700">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <textarea
+                            readOnly
+                            value={loadingWhatsapp ? 'Loading...' : whatsappText}
+                            className="glass-input w-full h-64 font-mono text-xs"
+                            onFocus={(e) => e.target.select()}
+                        />
+                        <div className="flex justify-end gap-3 mt-4">
+                            <button onClick={() => setShowWhatsappModal(false)} className="flex-1 glass-button-secondary py-2.5">
+                                Close
+                            </button>
+                            <button
+                                onClick={handleCopyWhatsapp}
+                                disabled={loadingWhatsapp}
+                                className="flex-1 glass-button flex items-center justify-center gap-2 py-2.5"
+                            >
+                                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                                {copied ? 'Copied!' : 'Copy'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

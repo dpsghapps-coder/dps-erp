@@ -398,72 +398,76 @@ export default function StockIndex() {
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                         <h2 className="text-lg font-semibold mb-4">
                             {editingStock ? 'Edit Purchase' : 'Add Purchase'}
                         </h2>
                         <form onSubmit={handleSubmit}>
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Category *</label>
-                                    <select
-                                        value={selectedCategory}
-                                        onChange={(e) => {
-                                            setSelectedCategory(e.target.value);
-                                            setData('product_id', '');
-                                        }}
-                                        className="glass-input w-full"
-                                        required
-                                    >
-                                        <option value="">Select category</option>
-                                        {(categories || []).map((cat: string) => (
-                                            <option key={cat} value={cat}>{cat}</option>
-                                        ))}
-                                    </select>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Category *</label>
+                                        <select
+                                            value={selectedCategory}
+                                            onChange={(e) => {
+                                                setSelectedCategory(e.target.value);
+                                                setData('product_id', '');
+                                            }}
+                                            className="glass-input w-full"
+                                            required
+                                        >
+                                            <option value="">Select category</option>
+                                            {(categories || []).map((cat: string) => (
+                                                <option key={cat} value={cat}>{cat}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Material Name *</label>
+                                        <select
+                                            value={data.product_id}
+                                            onChange={(e) => setData('product_id', e.target.value)}
+                                            className="glass-input w-full"
+                                            required
+                                            disabled={!selectedCategory}
+                                        >
+                                            <option value="">{selectedCategory ? 'Select material' : 'Select a category first'}</option>
+                                            {filteredProducts.map((p: any) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.item_name} ({p.material_id})
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Material Name *</label>
-                                    <select
-                                        value={data.product_id}
-                                        onChange={(e) => setData('product_id', e.target.value)}
-                                        className="glass-input w-full"
-                                        required
-                                        disabled={!selectedCategory}
-                                    >
-                                        <option value="">{selectedCategory ? 'Select material' : 'Select a category first'}</option>
-                                        {filteredProducts.map((p: any) => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.item_name} ({p.material_id})
-                                            </option>
-                                        ))}
-                                    </select>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Supplier</label>
+                                        <select
+                                            value={data.supplier_id}
+                                            onChange={(e) => setData('supplier_id', e.target.value)}
+                                            className="glass-input w-full"
+                                        >
+                                            <option value="">Select supplier</option>
+                                            {(suppliers || []).map((s: any) => (
+                                                <option key={s.id} value={s.id}>
+                                                    {s.company_name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Date Purchased *</label>
+                                        <input
+                                            type="date"
+                                            value={data.date_purchased}
+                                            onChange={(e) => setData('date_purchased', e.target.value)}
+                                            className="glass-input w-full"
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Supplier</label>
-                                    <select
-                                        value={data.supplier_id}
-                                        onChange={(e) => setData('supplier_id', e.target.value)}
-                                        className="glass-input w-full"
-                                    >
-                                        <option value="">Select supplier</option>
-                                        {(suppliers || []).map((s: any) => (
-                                            <option key={s.id} value={s.id}>
-                                                {s.company_name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Date Purchased *</label>
-                                    <input
-                                        type="date"
-                                        value={data.date_purchased}
-                                        onChange={(e) => setData('date_purchased', e.target.value)}
-                                        className="glass-input w-full"
-                                        required
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Units Purchased *</label>
                                         <input
@@ -490,25 +494,37 @@ export default function StockIndex() {
                                         />
                                         {errors.qty_per_unit && <p className="text-red-400 text-sm mt-1">{errors.qty_per_unit}</p>}
                                     </div>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Total Quantity Received</label>
-                                    <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
-                                        {qtyPurchased} {materialUom}
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Total Quantity Received</label>
+                                        <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
+                                            {qtyPurchased} {materialUom}
+                                        </div>
                                     </div>
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Material Cost ($) *</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        value={data.material_cost}
-                                        onChange={(e) => setData('material_cost', e.target.value)}
-                                        className="glass-input w-full"
-                                        required
-                                    />
-                                    {errors.material_cost && <p className="text-red-400 text-sm mt-1">{errors.material_cost}</p>}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Material Cost ($) *</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            value={data.material_cost}
+                                            onChange={(e) => setData('material_cost', e.target.value)}
+                                            className="glass-input w-full"
+                                            required
+                                        />
+                                        {errors.material_cost && <p className="text-red-400 text-sm mt-1">{errors.material_cost}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Purchased By</label>
+                                        <input
+                                            type="text"
+                                            value={data.purchased_by}
+                                            onChange={(e) => setData('purchased_by', e.target.value)}
+                                            className="glass-input w-full"
+                                            placeholder="Who made the purchase?"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>
@@ -540,7 +556,7 @@ export default function StockIndex() {
                                                         placeholder="Amount"
                                                         value={item.amount}
                                                         onChange={(e) => updateCostItem(index, 'amount', e.target.value)}
-                                                        className="glass-input w-28"
+                                                        className="glass-input w-32"
                                                         required
                                                     />
                                                     <button type="button" onClick={() => removeCostItem(index)} className="p-2 text-red-400 hover:bg-slate-100 rounded">
@@ -552,7 +568,7 @@ export default function StockIndex() {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Total Cost</label>
                                         <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
@@ -573,16 +589,6 @@ export default function StockIndex() {
                                         onChange={(e) => setData('notes', e.target.value)}
                                         className="glass-input w-full h-20"
                                         placeholder="Optional note..."
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Purchased By</label>
-                                    <input
-                                        type="text"
-                                        value={data.purchased_by}
-                                        onChange={(e) => setData('purchased_by', e.target.value)}
-                                        className="glass-input w-full"
-                                        placeholder="Who made the purchase?"
                                     />
                                 </div>
                             </div>

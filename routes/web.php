@@ -361,6 +361,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('permission:procurement.close')->group(function () use ($prCtrl) {
         Route::post('/procurement/purchase-requests/{purchaseRequest}/close-po', [$prCtrl, 'closePo'])->name('procurement.purchase-requests.close-po');
+        Route::post('/procurement/{po}/pull-to-stock', [ProcurementController::class, 'pullToStock'])->name('procurement.pull-to-stock');
     });
 
     Route::middleware('permission:procurement.view')->group(function () {

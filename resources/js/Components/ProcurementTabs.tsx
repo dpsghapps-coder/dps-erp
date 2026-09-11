@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ShoppingBag, Package, FileText, BarChart3 } from 'lucide-react';
+import { ShoppingBag, Package, FileText, BarChart3, ArrowLeft } from 'lucide-react';
 
 const tabs = [
     { name: 'Overview', href: '/procurement', icon: BarChart3, key: 'overview' },
@@ -10,7 +10,11 @@ const tabs = [
 
 export default function ProcurementTabs({ activeTab }: { activeTab: string }) {
     return (
-        <div className="flex flex-wrap items-center gap-2 mb-6">
+        <div className="mb-6">
+            <Link href="/inventory" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 mb-3">
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to Inventory Dashboard
+            </Link>
+            <div className="flex flex-wrap items-center gap-2">
             {tabs.map((tab) => (
                 <Link
                     key={tab.key}
@@ -25,6 +29,7 @@ export default function ProcurementTabs({ activeTab }: { activeTab: string }) {
                     {tab.name}
                 </Link>
             ))}
+            </div>
         </div>
     );
 }

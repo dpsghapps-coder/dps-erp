@@ -22,11 +22,13 @@ class PurchaseOrder extends Model
         'receipt_path',
         'invoice_path',
         'created_by',
+        'stock_pulled_at',
     ];
 
     protected $casts = [
         'expected_date' => 'date',
         'total_amount' => 'decimal:2',
+        'stock_pulled_at' => 'datetime',
     ];
 
     public function supplier(): BelongsTo

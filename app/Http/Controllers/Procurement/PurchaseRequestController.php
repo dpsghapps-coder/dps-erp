@@ -702,24 +702,15 @@ class PurchaseRequestController extends Controller
         }
 
         DB::transaction(function () use ($po) {
-            foreach ($po->items as $item) {
-                if ($item->product_id && in_array($item->inspection_status, ['accepted', 'partial']) && $item->accepted_qty > 0) {
-                    Stock::create([
-                        'product_id' => $item->product_id,
-                        'good_id' => null,
-                        'supplier_id' => $po->supplier_id,
-                        'qty_purchased' => $item->accepted_qty,
-                        'price' => $item->unit_cost,
-                        'total_cost' => $item->accepted_qty * $item->unit_cost,
-                        'date_purchased' => now()->toDateString(),
-                        'notes' => "Auto-created from PO {$po->po_number}",
-                        'added_by' => auth()->user()->name,
-                        'purchased_by' => auth()->user()->name,
-                    ]);
+            if (! $po->stock_pulled_at) {
+                foreach ($po->items as $item) {
+                    if ($item->product_id && in_array($item->inspection_status, ['accepted', 'partial']) && $item->accepted_qty > 0) {
+                        Stock::fromPurchaseOrderItem($item, $po, (float) $item->accepted_qty)->save();
+                    }
                 }
             }
 
-            $po->update(['status' => 'closed']);
+            $po->update(['status' => 'closed', 'stock_pulled_at' => $po->stock_pulled_at ?? now()]);
         });
 
         return back()->with('success', 'Purchase order closed and stock updated');

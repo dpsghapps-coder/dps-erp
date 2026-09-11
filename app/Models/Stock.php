@@ -64,6 +64,35 @@ class Stock extends Model
         return $this->belongsTo(Supplier::class);
     }
 
+    /**
+     * Build (but don't save) a Stock record from a received PurchaseOrderItem,
+     * so a PO's items can be pulled straight into stock instead of re-keying
+     * the same quantities and costs by hand. $qty overrides the item's own
+     * qty (e.g. an inspected/accepted quantity that differs from what was
+     * ordered); defaults to the item's full qty when omitted.
+     */
+    public static function fromPurchaseOrderItem(PurchaseOrderItem $item, PurchaseOrder $po, ?float $qty = null): self
+    {
+        $qty = $qty ?? (float) $item->qty;
+        $materialCost = $qty * (float) $item->unit_cost;
+        $userName = auth()->user()?->name ?? auth()->user()?->email;
+
+        return new self([
+            'product_id' => $item->product_id,
+            'supplier_id' => $po->supplier_id,
+            'units_purchased' => 1,
+            'qty_per_unit' => $qty,
+            'qty_purchased' => $qty,
+            'material_cost' => $materialCost,
+            'total_cost' => $materialCost,
+            'price' => $qty > 0 ? round($materialCost / $qty, 2) : 0,
+            'date_purchased' => now()->toDateString(),
+            'notes' => "Pulled from PO {$po->po_number}",
+            'added_by' => $userName,
+            'purchased_by' => $userName,
+        ]);
+    }
+
     public function costItems(): HasMany
     {
         return $this->hasMany(StockCostItem::class);
