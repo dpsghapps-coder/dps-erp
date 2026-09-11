@@ -556,7 +556,7 @@ class PurchaseRequestController extends Controller
 
         $validated = $request->validate([
             'supplier_id' => 'required|exists:suppliers,id',
-            'expected_date' => 'nullable|date|after:today',
+            'expected_date' => 'nullable|date|after_or_equal:today',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.qty' => 'required|numeric|min:0.01',

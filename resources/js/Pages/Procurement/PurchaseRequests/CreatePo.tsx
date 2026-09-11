@@ -81,6 +81,7 @@ export default function CreatePoFromPr({ purchaseRequest, suppliers }: Props) {
                                         value={data.expected_date}
                                         onChange={(e) => setData('expected_date', e.target.value)}
                                     />
+                                    {errors.expected_date && <p className="text-rose-500 text-xs mt-1.5">{errors.expected_date}</p>}
                                 </div>
                             </div>
                         </GlassCard>
@@ -170,6 +171,11 @@ export default function CreatePoFromPr({ purchaseRequest, suppliers }: Props) {
                                         </span>
                                     </div>
                                 </div>
+                                {Object.entries(errors)
+                                    .filter(([key]) => key !== 'supplier_id' && key !== 'expected_date')
+                                    .map(([key, message]) => (
+                                        <p key={key} className="text-rose-500 text-xs">{message as string}</p>
+                                    ))}
                                 <button
                                     type="submit"
                                     disabled={processing}
