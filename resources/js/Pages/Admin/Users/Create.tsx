@@ -1,6 +1,6 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { useState, useRef } from 'react';
 
@@ -42,7 +42,7 @@ export default function UserCreate() {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        router.post('/admin/users', data, { forceFormData: true });
+        post('/admin/users', { forceFormData: true });
     };
 
     return (

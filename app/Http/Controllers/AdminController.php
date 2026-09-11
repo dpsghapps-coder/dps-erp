@@ -56,8 +56,10 @@ class AdminController extends Controller
 
     public function userStore(Request $request)
     {
+        $employeeIdInput = $request->input('employee_id') ?: null;
+
         $validated = $request->validate([
-            'email' => ['required', 'email', 'unique:users', new EmailUniqueInTable('employees')],
+            'email' => ['required', 'email', 'unique:users', new EmailUniqueInTable('employees', $employeeIdInput)],
             'password' => 'required|string|min:8',
             'role_id' => 'nullable|exists:roles,id',
             'is_active' => 'boolean',

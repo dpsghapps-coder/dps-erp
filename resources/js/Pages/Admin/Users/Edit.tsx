@@ -1,12 +1,12 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { useState, useRef } from 'react';
 
 export default function UserEdit() {
     const { user, roles, employees } = usePage().props as any;
-    const { data, setData, put, processing, errors } = useForm({
+    const { data, setData, post, transform, processing, errors } = useForm({
         email: user?.email || '',
         password: '',
         role_id: user?.role_id || '',
@@ -36,8 +36,9 @@ export default function UserEdit() {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         // PHP does not parse multipart bodies on PUT requests, so spoof via POST + _method
-        // (Inertia's router.put doesn't do this automatically when forcing FormData).
-        router.post(`/admin/users/${user?.id}`, { ...data, _method: 'put' }, { forceFormData: true });
+        // (Inertia's put() doesn't do this automatically when forcing FormData).
+        transform((data) => ({ ...data, _method: 'put' }));
+        post(`/admin/users/${user?.id}`, { forceFormData: true });
     };
 
     return (
