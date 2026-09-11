@@ -1,73 +1,83 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
-import { Head, usePage } from '@inertiajs/react';
-import { TrendingUp, Star } from 'lucide-react';
+import { GlassCard, PageHeader, EmptyState, Pagination, StatusBadge } from '@/Components/ui';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { TrendingUp, Calendar, ClipboardCheck } from 'lucide-react';
 import ProfileNav from '@/Components/ProfileNav';
 
-function Stars({ rating }: { rating: number }) {
+function ReviewRow({ review, subtitle }: { review: any; subtitle?: string }) {
     return (
-        <div className="flex items-center gap-0.5">
-            {[1, 2, 3, 4, 5].map((n) => (
-                <Star key={n} className={`w-4 h-4 ${n <= rating ? 'fill-amber-400 text-amber-400' : 'text-slate-300 dark:text-slate-600'}`} />
-            ))}
-        </div>
+        <Link href={`/hrm/performance/${review.id}`}>
+            <GlassCard variant="interactive">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">
+                            {subtitle || `${review.employee?.first_name || ''} ${review.employee?.last_name || ''}`.trim()}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+                            <Calendar className="w-3.5 h-3.5" />
+                            {new Date(review.review_date).toLocaleDateString()}
+                            {review.period && <span>· {review.period}</span>}
+                        </div>
+                    </div>
+                    <StatusBadge status={review.status} />
+                </div>
+            </GlassCard>
+        </Link>
     );
 }
 
 export default function Performance() {
-    const { hasEmployeeRecord, reviews } = usePage().props as any;
+    const { hasEmployeeRecord, reviews, awaitingSupervisorInput, awaitingManagerInput } = usePage().props as any;
+
+    const pendingSupervisor = awaitingSupervisorInput || [];
+    const pendingManager = awaitingManagerInput || [];
 
     return (
         <AppLayout>
             <Head title="Performance" />
 
             <div className="max-w-4xl mx-auto">
-                <PageHeader title="Performance" subtitle="Your performance review history" />
+                <PageHeader title="Performance" subtitle="Your performance reviews" />
                 <ProfileNav />
 
                 {!hasEmployeeRecord ? (
                     <GlassCard>
                         <EmptyState icon={TrendingUp} title="No employee record linked" description="Your user account isn't linked to an employee record yet. Contact HR to get this set up." />
                     </GlassCard>
-                ) : reviews?.data?.length > 0 ? (
-                    <div className="space-y-4">
-                        {reviews.data.map((review: any) => (
-                            <GlassCard key={review.id}>
-                                <div className="flex items-start justify-between mb-3">
-                                    <div>
-                                        <p className="font-semibold text-slate-900 dark:text-slate-100">
-                                            {new Date(review.review_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
-                                        </p>
-                                        {review.reviewer_name && <p className="text-xs text-slate-400">Reviewed by {review.reviewer_name}</p>}
-                                    </div>
-                                    <Stars rating={review.rating} />
-                                </div>
-                                {review.goals && (
-                                    <div className="mb-2">
-                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">Goals</p>
-                                        <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{review.goals}</p>
-                                    </div>
-                                )}
-                                {review.achievements && (
-                                    <div className="mb-2">
-                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">Achievements</p>
-                                        <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{review.achievements}</p>
-                                    </div>
-                                )}
-                                {review.comments && (
-                                    <div>
-                                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase mb-1">Comments</p>
-                                        <p className="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{review.comments}</p>
-                                    </div>
-                                )}
-                            </GlassCard>
-                        ))}
-                        <Pagination meta={reviews} />
-                    </div>
                 ) : (
-                    <GlassCard>
-                        <EmptyState icon={TrendingUp} title="No performance reviews yet" description="Reviews from your manager will show up here" />
-                    </GlassCard>
+                    <div className="space-y-8">
+                        {(pendingSupervisor.length > 0 || pendingManager.length > 0) && (
+                            <div>
+                                <h3 className="text-sm font-semibold text-slate-500 uppercase mb-3 flex items-center gap-2">
+                                    <ClipboardCheck className="w-4 h-4" /> Awaiting Your Input
+                                </h3>
+                                <div className="space-y-3">
+                                    {pendingSupervisor.map((review: any) => (
+                                        <ReviewRow key={`sup-${review.id}`} review={review} subtitle={`${review.employee?.first_name} ${review.employee?.last_name} — Supervisor review`} />
+                                    ))}
+                                    {pendingManager.map((review: any) => (
+                                        <ReviewRow key={`mgr-${review.id}`} review={review} subtitle={`${review.employee?.first_name} ${review.employee?.last_name} — Manager review`} />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        <div>
+                            <h3 className="text-sm font-semibold text-slate-500 uppercase mb-3">My Reviews</h3>
+                            {reviews?.data?.length > 0 ? (
+                                <div className="space-y-3">
+                                    {reviews.data.map((review: any) => (
+                                        <ReviewRow key={review.id} review={review} subtitle={review.period || new Date(review.review_date).toLocaleDateString()} />
+                                    ))}
+                                    <Pagination meta={reviews} />
+                                </div>
+                            ) : (
+                                <GlassCard>
+                                    <EmptyState icon={TrendingUp} title="No performance reviews yet" description="Reviews initiated by HR will show up here for you to complete." />
+                                </GlassCard>
+                            )}
+                        </div>
+                    </div>
                 )}
             </div>
         </AppLayout>

@@ -16,7 +16,8 @@ class HrmNotification extends Notification implements ShouldQueue
         public string $action,
         public ?string $employeeName = null,
         public ?int $employeeId = null,
-        public ?string $message = null
+        public ?string $message = null,
+        public ?string $url = null
     ) {}
 
     public function via(object $notifiable): array
@@ -47,7 +48,7 @@ class HrmNotification extends Notification implements ShouldQueue
             'employee_id' => $this->employeeId,
             'employee_name' => $this->employeeName,
             'message' => $this->message ?? $this->getDefaultMessage(),
-            'url' => $this->employeeId ? '/hrm/employees/'.$this->employeeId : '/hrm',
+            'url' => $this->url ?? ($this->employeeId ? '/hrm/employees/'.$this->employeeId : '/hrm'),
         ];
     }
 
@@ -58,6 +59,11 @@ class HrmNotification extends Notification implements ShouldQueue
             'leave_approved' => 'Leave request for '.($this->employeeName ?? 'employee').' has been approved.',
             'leave_rejected' => 'Leave request for '.($this->employeeName ?? 'employee').' has been rejected.',
             'onboarding' => ($this->employeeName ?? 'New employee').' has been onboarded.',
+            'performance_initiated' => 'A performance review has been started for you.',
+            'performance_self_submitted' => ($this->employeeName ?? 'An employee').'\'s self-assessment is ready for your review.',
+            'performance_manager_review' => ($this->employeeName ?? 'An employee').'\'s performance review is ready for your input.',
+            'performance_hr_review' => ($this->employeeName ?? 'An employee').'\'s performance review is ready for HR comments.',
+            'performance_completed' => 'Your performance review has been completed.',
             default => 'HRM has been updated.',
         };
     }

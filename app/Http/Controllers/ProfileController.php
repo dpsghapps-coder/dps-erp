@@ -216,9 +216,19 @@ class ProfileController extends Controller
             ? Performance::where('employee_id', $employee->id)->orderBy('review_date', 'desc')->paginate(15)
             : null;
 
+        $awaitingSupervisorInput = $employee
+            ? Performance::with('employee')->where('supervisor_employee_id', $employee->id)->where('status', 'supervisor_review')->orderBy('review_date')->get()
+            : collect();
+
+        $awaitingManagerInput = $employee
+            ? Performance::with('employee')->where('manager_employee_id', $employee->id)->where('status', 'manager_review')->orderBy('review_date')->get()
+            : collect();
+
         return Inertia::render('Profile/Performance', [
             'hasEmployeeRecord' => (bool) $employee,
             'reviews' => $reviews,
+            'awaitingSupervisorInput' => $awaitingSupervisorInput,
+            'awaitingManagerInput' => $awaitingManagerInput,
         ]);
     }
 

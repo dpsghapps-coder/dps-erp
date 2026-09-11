@@ -688,33 +688,11 @@ class HrmController extends Controller
         return inertia('HRM/Performance', [
             'reviews' => $reviews,
             'employees' => $employees,
+            'canInitiate' => $isManager,
             'filters' => [
                 'employee_id' => $employeeId,
             ],
         ]);
-    }
-
-    public function storePerformance(Request $request)
-    {
-        if (! $this->isHrmManager() && ! Auth::user()->hasPermission('hrm.manage_performance')) {
-            abort(403, 'You are not authorized to create performance reviews.');
-        }
-
-        $validated = $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'review_date' => 'required|date',
-            'rating' => 'required|integer|min:1|max:5',
-            'goals' => 'nullable|string',
-            'achievements' => 'nullable|string',
-            'comments' => 'nullable|string',
-            'reviewer_name' => 'nullable|string',
-        ]);
-
-        $validated['status'] = 'completed';
-
-        Performance::create($validated);
-
-        return back()->with('success', 'Performance review added successfully');
     }
 
     public function noticeboard(Request $request)

@@ -52,8 +52,9 @@ export default function EmployeeShow() {
     const isActive = !employee.date_terminated;
 
     const latestPayslip = payrolls[0];
-    const avgRating = performances.length > 0
-        ? (performances.reduce((sum: number, p: any) => sum + (p.rating || 0), 0) / performances.length).toFixed(1)
+    const allRatings = performances.flatMap((p: any) => [p.self_rating, p.supervisor_rating].filter((r: any) => r != null));
+    const avgRating = allRatings.length > 0
+        ? (allRatings.reduce((sum: number, r: number) => sum + r, 0) / allRatings.length).toFixed(1)
         : null;
     const presentDaysThisMonth = attendanceLogs.filter((a: any) => a.check_in).length;
 
@@ -344,33 +345,34 @@ export default function EmployeeShow() {
                 <div className="space-y-4">
                     {performances.length > 0 ? (
                         performances.map((review: any) => (
-                            <GlassCard key={review.id}>
-                                <div className="flex items-start justify-between mb-3 flex-wrap gap-2">
-                                    <div>
-                                        <p className="text-sm text-slate-400">{formatDate(review.review_date)} · {review.reviewer_name || 'Unknown reviewer'}</p>
-                                        {review.status && <StatusBadge status={review.status} className="mt-1" />}
+                            <Link key={review.id} href={`/hrm/performance/${review.id}`}>
+                                <GlassCard variant="interactive">
+                                    <div className="flex items-start justify-between mb-3 flex-wrap gap-2">
+                                        <div>
+                                            <p className="text-sm text-slate-400">{formatDate(review.review_date)}{review.period ? ` · ${review.period}` : ''}</p>
+                                        </div>
+                                        {review.status && <StatusBadge status={review.status} />}
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        {Array.from({ length: 5 }).map((_, i) => (
-                                            <Star
-                                                key={i}
-                                                className={`w-4 h-4 ${i < (review.rating || 0) ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-slate-700'}`}
-                                            />
-                                        ))}
-                                        <span className="ml-1 text-sm font-medium">{review.rating}/5</span>
+                                    <div className="flex flex-wrap gap-4">
+                                        {review.self_rating != null && (
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-xs text-slate-400">Self:</span>
+                                                {Array.from({ length: 5 }).map((_, i) => (
+                                                    <Star key={i} className={`w-3.5 h-3.5 ${i < review.self_rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-slate-700'}`} />
+                                                ))}
+                                            </div>
+                                        )}
+                                        {review.supervisor_rating != null && (
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-xs text-slate-400">Supervisor:</span>
+                                                {Array.from({ length: 5 }).map((_, i) => (
+                                                    <Star key={i} className={`w-3.5 h-3.5 ${i < review.supervisor_rating ? 'text-amber-400 fill-amber-400' : 'text-slate-300 dark:text-slate-700'}`} />
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                                <div className="grid md:grid-cols-2 gap-4">
-                                    <DetailRow label="Goals">{review.goals}</DetailRow>
-                                    <DetailRow label="Achievements">{review.achievements}</DetailRow>
-                                </div>
-                                {review.comments && (
-                                    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-white/10">
-                                        <p className="text-xs text-slate-500 mb-1">Comments</p>
-                                        <p className="text-sm italic text-slate-600 dark:text-slate-300">{review.comments}</p>
-                                    </div>
-                                )}
-                            </GlassCard>
+                                </GlassCard>
+                            </Link>
                         ))
                     ) : (
                         <GlassCard>

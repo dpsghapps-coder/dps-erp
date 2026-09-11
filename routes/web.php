@@ -20,6 +20,7 @@ use App\Http\Controllers\Finance\ReportController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HRM\EmployeeInviteController;
+use App\Http\Controllers\HRM\PerformanceReviewController;
 use App\Http\Controllers\HRM\SettingController;
 use App\Http\Controllers\HrmController;
 use App\Http\Controllers\Inventory\InventoryController;
@@ -390,7 +391,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/hrm/payroll', [HrmController::class, 'payroll'])->name('hrm.payroll');
         Route::get('/hrm/payroll/{payroll}/pdf', [HrmController::class, 'payslipPdf'])->name('hrm.payroll.pdf');
         Route::get('/hrm/performance', [HrmController::class, 'performance'])->name('hrm.performance');
-        Route::post('/hrm/performance', [HrmController::class, 'storePerformance'])->name('hrm.performance.store');
+        Route::post('/hrm/performance', [PerformanceReviewController::class, 'initiate'])->name('hrm.performance.store');
         Route::get('/hrm/noticeboard', [HrmController::class, 'noticeboard'])->name('hrm.noticeboard');
         Route::post('/hrm/noticeboard', [HrmController::class, 'storeNotice'])->name('hrm.noticeboard.store');
         Route::get('/hrm/create', [HrmController::class, 'create'])->name('hrm.create');
@@ -699,6 +700,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/leave', [ProfileController::class, 'leave'])->name('profile.leave');
     Route::post('/profile/leave', [ProfileController::class, 'storeLeave'])->name('profile.leave.store');
     Route::get('/profile/performance', [ProfileController::class, 'performance'])->name('profile.performance');
+
+    // Performance review show/actions are relationship-gated in the controller
+    // (self, direct supervisor, direct manager, or HR) rather than permission-gated,
+    // so a supervisor with no HRM permissions can still act on their own report's review.
+    Route::get('/hrm/performance/{performance}', [PerformanceReviewController::class, 'show'])->name('hrm.performance.show');
+    Route::post('/hrm/performance/{performance}/self-assessment', [PerformanceReviewController::class, 'submitSelfAssessment'])->name('hrm.performance.self-assessment');
+    Route::post('/hrm/performance/{performance}/supervisor-review', [PerformanceReviewController::class, 'submitSupervisorReview'])->name('hrm.performance.supervisor-review');
+    Route::post('/hrm/performance/{performance}/manager-review', [PerformanceReviewController::class, 'submitManagerReview'])->name('hrm.performance.manager-review');
+    Route::post('/hrm/performance/{performance}/hr-review', [PerformanceReviewController::class, 'submitHrReview'])->name('hrm.performance.hr-review');
     Route::get('/profile/report-issue', [OfficeIssueReportController::class, 'create'])->name('profile.report-issue');
     Route::post('/profile/report-issue', [OfficeIssueReportController::class, 'store'])->name('profile.report-issue.store');
     Route::get('/profile/technical-report', [TechnicalReportController::class, 'create'])->name('profile.technical-report');
