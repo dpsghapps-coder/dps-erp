@@ -4,10 +4,10 @@ import html2canvas from 'html2canvas';
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { useCurrency } from '@/Utils/currency';
-import { ArrowLeft, FileText, Image as ImageIcon, MessageCircle, Copy, Check, X, PackageCheck } from 'lucide-react';
+import { ArrowLeft, FileText, Image as ImageIcon, MessageCircle, Copy, Check, X, PackageCheck, Truck, PlusCircle } from 'lucide-react';
 
 export default function ProcurementShow() {
-    const { purchase_order: po, auth } = usePage().props as any;
+    const { purchase_order: po, auth, canMarkOrdered } = usePage().props as any;
     const formatCurrency = useCurrency();
     const printableRef = useRef<HTMLDivElement>(null);
     const [capturing, setCapturing] = useState(false);
@@ -16,6 +16,7 @@ export default function ProcurementShow() {
     const [loadingWhatsapp, setLoadingWhatsapp] = useState(false);
     const [copied, setCopied] = useState(false);
     const [pullingStock, setPullingStock] = useState(false);
+    const [markingOrdered, setMarkingOrdered] = useState(false);
 
     const branch = po.supplier?.branches?.[0];
     const permissions: string[] = auth?.permissions || [];
@@ -30,6 +31,28 @@ export default function ProcurementShow() {
         router.post(`/procurement/${po.id}/pull-to-stock`, {}, {
             onFinish: () => setPullingStock(false),
         });
+    };
+
+    const handleMarkOrdered = () => {
+        setMarkingOrdered(true);
+        router.post(`/procurement/${po.id}/mark-ordered`, {}, {
+            onFinish: () => setMarkingOrdered(false),
+        });
+    };
+
+    const addToStockHref = (item: any) => {
+        const prefill = {
+            product_id: item.product_id,
+            category: item.product?.item_category || '',
+            supplier_id: po.supplier_id,
+            purchase_order_id: po.id,
+            purchase_order_item_id: item.id,
+            qty: item.qty,
+            unit_cost: item.unit_cost,
+            source: po.po_number,
+        };
+
+        return `/inventory/stock?prefill=${encodeURIComponent(JSON.stringify(prefill))}`;
     };
 
     const handleDownloadImage = async () => {
@@ -79,6 +102,11 @@ export default function ProcurementShow() {
             />
 
             <div className="flex flex-wrap gap-3 mb-6">
+                {canMarkOrdered && po.status === 'draft' && (
+                    <button onClick={handleMarkOrdered} disabled={markingOrdered} className="glass-button flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700">
+                        <Truck className="w-4 h-4" /> {markingOrdered ? 'Marking...' : 'Mark as Ordered'}
+                    </button>
+                )}
                 <a href={`/procurement/${po.id}/pdf`} className="glass-button flex items-center gap-2">
                     <FileText className="w-4 h-4" /> Download PDF
                 </a>
@@ -163,6 +191,34 @@ export default function ProcurementShow() {
                             </div>
                         )}
                     </div>
+
+                    {po.status !== 'draft' && !po.stock_pulled_at && (
+                        <GlassCard>
+                            <h3 className="text-lg font-semibold mb-1 text-slate-900 dark:text-white">Add Items to Stock</h3>
+                            <p className="text-sm text-slate-500 mb-4">
+                                Opens the Stock module with the product, supplier, and cost pre-filled from this PO -- review and adjust before saving.
+                            </p>
+                            <div className="space-y-2">
+                                {(po.items || []).filter((item: any) => item.product_type !== 'App\\Models\\Good').map((item: any) => {
+                                    const alreadyInStock = (item.stocks || []).length > 0;
+                                    return (
+                                        <div key={item.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-slate-50 dark:bg-white/5">
+                                            <span className="text-sm text-slate-700 dark:text-slate-300">{item.display_name}</span>
+                                            {alreadyInStock ? (
+                                                <span className="text-xs text-green-600 flex items-center gap-1.5 py-1.5 px-3">
+                                                    <Check className="w-3.5 h-3.5" /> Already in Stock
+                                                </span>
+                                            ) : (
+                                                <a href={addToStockHref(item)} className="glass-button-secondary text-xs flex items-center gap-1.5 py-1.5 px-3">
+                                                    <PlusCircle className="w-3.5 h-3.5" /> Add to Stock
+                                                </a>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </GlassCard>
+                    )}
                 </div>
 
                 <div className="space-y-6">

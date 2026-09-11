@@ -114,12 +114,37 @@ class ProcurementController extends Controller
 
     public function show(PurchaseOrder $po)
     {
-        $po->load(['supplier.branches', 'items.product', 'createdBy', 'purchaseRequest']);
+        $po->load(['supplier.branches', 'items.product', 'items.stocks', 'createdBy', 'purchaseRequest']);
+        $user = auth()->user();
 
         return inertia('Procurement/Show', [
             'purchase_order' => $po,
             'currencySymbol' => $this->currencySymbol(),
+            'canMarkOrdered' => $user->hasRole('admin') || $user->hasRole('manager'),
         ]);
+    }
+
+    /**
+     * draft -> ordered. Nothing else in the PO lifecycle (receipt upload,
+     * inspect, close, pull-to-stock) can happen until this runs, since they
+     * all require the PO to already be past draft. Role-gated to manager
+     * for now rather than a dedicated permission, per an explicit ask to
+     * keep this simple until the access model is revisited.
+     */
+    public function markOrdered(PurchaseOrder $po)
+    {
+        $user = auth()->user();
+        if (! $user->hasRole('admin') && ! $user->hasRole('manager')) {
+            return back()->withErrors(['error' => 'Only a manager can mark this purchase order as ordered']);
+        }
+
+        if ($po->status !== 'draft') {
+            return back()->withErrors(['error' => 'This purchase order has already been ordered']);
+        }
+
+        $po->update(['status' => 'ordered']);
+
+        return back()->with('success', 'Purchase order marked as ordered');
     }
 
     /**
@@ -162,6 +187,10 @@ class ProcurementController extends Controller
                 if ($item->product_type && $item->product_type !== InventoryProduct::class) {
                     $skippedGoods++;
 
+                    continue;
+                }
+
+                if (Stock::alreadyPulledFor($item)) {
                     continue;
                 }
 

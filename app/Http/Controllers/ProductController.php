@@ -32,13 +32,11 @@ class ProductController extends Controller
         ]);
     }
 
-    private function inStockMaterials()
+    private function activeMaterials()
     {
         return InventoryProduct::where('item_status', 'Active')
             ->orderBy('item_name')
-            ->get()
-            ->filter(fn (InventoryProduct $item) => $item->available_stock > 0)
-            ->values();
+            ->get();
     }
 
     public function create()
@@ -50,7 +48,7 @@ class ProductController extends Controller
 
         return inertia('Products/Create', [
             'categories' => $categories,
-            'inventoryProducts' => $this->inStockMaterials(),
+            'inventoryProducts' => $this->activeMaterials(),
             'services' => $services,
             'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
             'nextSku' => Product::generateSku(),
@@ -106,7 +104,7 @@ class ProductController extends Controller
         return inertia('Products/Edit', [
             'product' => $product,
             'categories' => $categories,
-            'inventoryProducts' => $this->inStockMaterials(),
+            'inventoryProducts' => $this->activeMaterials(),
             'services' => $services,
             'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
         ]);

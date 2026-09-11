@@ -16,7 +16,7 @@ class StockController extends Controller
     {
         $search = $request->get('search', '');
 
-        $stocks = Stock::with(['product', 'supplier', 'costItems'])
+        $stocks = Stock::with(['product', 'supplier', 'costItems', 'purchaseOrder'])
             ->when($search, function ($query) use ($search) {
                 $query->whereHas('product', function ($q) use ($search) {
                     $q->where('item_name', 'like', "%{$search}%")
@@ -123,6 +123,8 @@ class StockController extends Controller
         return $request->validate([
             'product_id' => 'required|exists:inventory_products,id',
             'supplier_id' => 'nullable|exists:suppliers,id',
+            'purchase_order_id' => 'nullable|exists:purchase_orders,id',
+            'purchase_order_item_id' => 'nullable|exists:purchase_order_items,id',
             'units_purchased' => 'required|numeric|min:0.01',
             'qty_per_unit' => 'required|numeric|min:0.01',
             'material_cost' => 'required|numeric|min:0',
@@ -143,6 +145,8 @@ class StockController extends Controller
         return [
             'product_id' => $validated['product_id'],
             'supplier_id' => $validated['supplier_id'] ?? null,
+            'purchase_order_id' => $validated['purchase_order_id'] ?? null,
+            'purchase_order_item_id' => $validated['purchase_order_item_id'] ?? null,
             'units_purchased' => $validated['units_purchased'],
             'qty_per_unit' => $validated['qty_per_unit'],
             'qty_purchased' => $qtyPurchased,

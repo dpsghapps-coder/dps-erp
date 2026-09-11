@@ -32,6 +32,8 @@ class Stock extends Model
         'id',
         'product_id',
         'supplier_id',
+        'purchase_order_id',
+        'purchase_order_item_id',
         'units_purchased',
         'qty_per_unit',
         'qty_purchased',
@@ -64,6 +66,26 @@ class Stock extends Model
         return $this->belongsTo(Supplier::class);
     }
 
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function purchaseOrderItem(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrderItem::class);
+    }
+
+    /**
+     * True when a Stock record already exists for this exact PO line item --
+     * use this to guard against pulling the same item into stock twice,
+     * whether via the bulk pull-to-stock action or the per-item picker.
+     */
+    public static function alreadyPulledFor(PurchaseOrderItem $item): bool
+    {
+        return static::where('purchase_order_item_id', $item->id)->exists();
+    }
+
     /**
      * Build (but don't save) a Stock record from a received PurchaseOrderItem,
      * so a PO's items can be pulled straight into stock instead of re-keying
@@ -80,6 +102,8 @@ class Stock extends Model
         return new self([
             'product_id' => $item->product_id,
             'supplier_id' => $po->supplier_id,
+            'purchase_order_id' => $po->id,
+            'purchase_order_item_id' => $item->id,
             'units_purchased' => 1,
             'qty_per_unit' => $qty,
             'qty_purchased' => $qty,

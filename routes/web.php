@@ -368,6 +368,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/procurement/{po}', [ProcurementController::class, 'show'])->name('procurement.show');
         Route::get('/procurement/{po}/pdf', [ProcurementController::class, 'downloadPdf'])->name('procurement.pdf');
         Route::get('/procurement/{po}/whatsapp', [ProcurementController::class, 'downloadWhatsapp'])->name('procurement.whatsapp');
+        Route::post('/procurement/{po}/mark-ordered', [ProcurementController::class, 'markOrdered'])->name('procurement.mark-ordered');
     });
 
     Route::middleware('permission:procurement.edit')->group(function () {

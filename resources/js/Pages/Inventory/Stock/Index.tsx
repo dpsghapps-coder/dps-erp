@@ -3,7 +3,7 @@ import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import InventoryTabs from '@/Components/InventoryTabs';
 import { Head, usePage, useForm, router } from '@inertiajs/react';
 import { Plus, Search, Package, Calendar, Pencil, Trash2, DollarSign, AlertTriangle, CheckCircle, RefreshCw, X } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCurrency } from '@/Utils/currency';
 import Swal from 'sweetalert2';
 
@@ -22,6 +22,8 @@ export default function StockIndex() {
     const emptyForm = {
         product_id: '',
         supplier_id: '',
+        purchase_order_id: '',
+        purchase_order_item_id: '',
         units_purchased: '1',
         qty_per_unit: '',
         material_cost: '',
@@ -107,6 +109,8 @@ export default function StockIndex() {
         setData({
             product_id: stock.product_id,
             supplier_id: stock.supplier_id || '',
+            purchase_order_id: stock.purchase_order_id || '',
+            purchase_order_item_id: stock.purchase_order_item_id || '',
             units_purchased: String(stock.units_purchased ?? 1),
             qty_per_unit: String(stock.qty_per_unit ?? stock.qty_purchased ?? ''),
             material_cost: String(stock.material_cost ?? ''),
@@ -138,6 +142,42 @@ export default function StockIndex() {
         setData({ ...emptyForm, date_purchased: new Date().toISOString().split('T')[0] });
         setShowModal(true);
     };
+
+    // Arriving from a PO's "Add to Stock" link: pre-fill the Add Purchase
+    // form from the PO item, leaving date/notes/extra costs for the user
+    // to review and complete themselves before saving.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const raw = params.get('prefill');
+        if (!raw) return;
+
+        try {
+            const prefill = JSON.parse(raw);
+            const qty = Number(prefill.qty || 0);
+            const unitCost = Number(prefill.unit_cost || 0);
+
+            setEditingStock(null);
+            setSelectedCategory(prefill.category || '');
+            setData({
+                ...emptyForm,
+                product_id: prefill.product_id || '',
+                supplier_id: prefill.supplier_id || '',
+                purchase_order_id: prefill.purchase_order_id || '',
+                purchase_order_item_id: prefill.purchase_order_item_id || '',
+                units_purchased: '1',
+                qty_per_unit: qty ? String(qty) : '',
+                material_cost: (qty * unitCost).toFixed(2),
+                notes: prefill.source ? `From PO ${prefill.source}` : '',
+                date_purchased: new Date().toISOString().split('T')[0],
+            });
+            setShowModal(true);
+        } catch {
+            // malformed prefill payload -- ignore and open the page normally
+        }
+
+        window.history.replaceState({}, '', '/inventory/stock');
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <AppLayout>
@@ -198,6 +238,7 @@ export default function StockIndex() {
                                     <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Total Cost</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Note</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Supplier</th>
+                                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Source PO</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Purchased By</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Added By</th>
                                     <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Date Added</th>
@@ -227,6 +268,13 @@ export default function StockIndex() {
                                             </td>
                                             <td className="py-3 px-4 text-slate-500 max-w-[200px] truncate">{stock.notes || '-'}</td>
                                             <td className="py-3 px-4 text-slate-700">{stock.supplier?.company_name || '-'}</td>
+                                            <td className="py-3 px-4">
+                                                {stock.purchase_order ? (
+                                                    <a href={`/procurement/${stock.purchase_order.id}`} className="text-indigo-600 hover:underline font-mono text-xs">
+                                                        {stock.purchase_order.po_number}
+                                                    </a>
+                                                ) : '-'}
+                                            </td>
                                             <td className="py-3 px-4 text-slate-700">{stock.purchased_by || '-'}</td>
                                             <td className="py-3 px-4 text-slate-500 text-sm">{stock.added_by || '-'}</td>
                                             <td className="py-3 px-4 text-slate-500 text-sm">
@@ -244,7 +292,7 @@ export default function StockIndex() {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={11} className="py-8">
+                                        <td colSpan={12} className="py-8">
                                             <EmptyState
                                                 icon={Package}
                                                 title="No purchase records"
@@ -285,6 +333,14 @@ export default function StockIndex() {
                                         {stock.price > 0 && <div className="flex justify-between"><span>Price:</span><span>{formatCurrency(Number(stock.price))}</span></div>}
                                         {stock.total_cost > 0 && <div className="flex justify-between"><span>Total:</span><span className="font-semibold">{formatCurrency(Number(stock.total_cost))}</span></div>}
                                         {stock.supplier?.company_name && <div className="flex justify-between"><span>Supplier:</span><span>{stock.supplier.company_name}</span></div>}
+                                        {stock.purchase_order && (
+                                            <div className="flex justify-between">
+                                                <span>Source PO:</span>
+                                                <a href={`/procurement/${stock.purchase_order.id}`} className="text-indigo-600 hover:underline font-mono text-xs">
+                                                    {stock.purchase_order.po_number}
+                                                </a>
+                                            </div>
+                                        )}
                                         {stock.purchased_by && <div className="flex justify-between"><span>Purchased By:</span><span>{stock.purchased_by}</span></div>}
                                         {stock.added_by && <div className="flex justify-between"><span>Added By:</span><span className="text-slate-400">{stock.added_by}</span></div>}
                                     </div>

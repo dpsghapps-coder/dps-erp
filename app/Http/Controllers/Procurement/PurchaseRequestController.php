@@ -702,11 +702,13 @@ class PurchaseRequestController extends Controller
         }
 
         DB::transaction(function () use ($po) {
-            if (! $po->stock_pulled_at) {
-                foreach ($po->items as $item) {
-                    if ($item->product_id && in_array($item->inspection_status, ['accepted', 'partial']) && $item->accepted_qty > 0) {
-                        Stock::fromPurchaseOrderItem($item, $po, (float) $item->accepted_qty)->save();
-                    }
+            foreach ($po->items as $item) {
+                if ($item->product_id
+                    && in_array($item->inspection_status, ['accepted', 'partial'])
+                    && $item->accepted_qty > 0
+                    && ! Stock::alreadyPulledFor($item)
+                ) {
+                    Stock::fromPurchaseOrderItem($item, $po, (float) $item->accepted_qty)->save();
                 }
             }
 
