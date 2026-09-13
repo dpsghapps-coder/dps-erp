@@ -165,6 +165,11 @@ class PurchaseRequestController extends Controller
 
     public function show(PurchaseRequest $purchaseRequest)
     {
+        $user = auth()->user();
+        if (! $this->canViewPr($purchaseRequest, $user)) {
+            abort(403, 'You do not have permission to view this purchase request');
+        }
+
         $purchaseRequest->load([
             'requester',
             'departmentManager',
@@ -250,6 +255,32 @@ class PurchaseRequestController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Mirrors the visibility rule applied in index() -- a requester's PR
+     * list is scoped by role, but without this check the show() route was
+     * reachable by URL/id alone regardless of that scoping.
+     */
+    private function canViewPr(PurchaseRequest $purchaseRequest, User $user): bool
+    {
+        if ($user->hasRole('admin') || $user->hasRole('md') || $user->hasRole('general')) {
+            return true;
+        }
+
+        if ($purchaseRequest->requester_id === $user->id) {
+            return true;
+        }
+
+        if ($user->hasPermission('pr.finance.review')) {
+            return $purchaseRequest->status === 'dept_approved';
+        }
+
+        if ($user->hasPermission('pr.approve')) {
+            return $this->isInManagementChainOf($purchaseRequest, $user);
+        }
+
+        return false;
     }
 
     private function canManagePr(PurchaseRequest $purchaseRequest, User $user): bool

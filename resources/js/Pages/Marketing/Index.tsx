@@ -9,6 +9,7 @@ import { format, parse, startOfWeek, getDay, addDays, startOfDay } from 'date-fn
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import Swal from 'sweetalert2';
 import { useCurrency } from '@/Utils/currency';
+import { AddSalesPromoEventModal } from '@/Components/Marketing/AddSalesPromoEventModal';
 
 const locales = {
     'en-US': {
@@ -34,6 +35,8 @@ const TYPE_COLORS: Record<string, string> = {
     event: '#10b981',
     ad: '#f59e0b',
     print: '#ef4444',
+    sale: '#f43f5e',
+    promotion: '#14b8a6',
     other: '#6b7280',
 };
 
@@ -43,6 +46,8 @@ const TYPE_LABELS: Record<string, string> = {
     event: 'Event',
     ad: 'Advertising',
     print: 'Print',
+    sale: 'Sale',
+    promotion: 'Promotion',
     other: 'Other',
 };
 
@@ -52,6 +57,7 @@ interface CampaignEvent {
     start: Date;
     end: Date;
     type: string;
+    color?: string | null;
     status: string;
     campaign: any;
     allDay?: boolean;
@@ -66,6 +72,13 @@ export default function MarketingIndex() {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedCampaign, setSelectedCampaign] = useState<any>(null);
     const [selectedHoliday, setSelectedHoliday] = useState<any>(null);
+    const [showAddEventModal, setShowAddEventModal] = useState(false);
+
+    const handleAddSalesPromoEvent = (data: any) => {
+        router.post('/marketing', data, {
+            onSuccess: () => setShowAddEventModal(false),
+        });
+    };
 
     const events: CampaignEvent[] = useMemo(() => {
         const campaignEvents = (campaigns || []).map((campaign: any) => ({
@@ -74,6 +87,7 @@ export default function MarketingIndex() {
             start: startOfDay(new Date(campaign.start_date)),
             end: startOfDay(new Date(campaign.end_date)),
             type: campaign.type,
+            color: campaign.color,
             status: campaign.status,
             campaign,
         }));
@@ -109,10 +123,10 @@ export default function MarketingIndex() {
                 },
             };
         }
-        const color = TYPE_COLORS[event.type] || '#6b7280';
+        const color = event.color || TYPE_COLORS[event.type] || '#6b7280';
         return {
             style: {
-                backgroundColor: color,
+                background: color,
                 borderRadius: '6px',
                 opacity: event.status === 'completed' ? 0.6 : 1,
                 color: 'white',
@@ -161,6 +175,9 @@ export default function MarketingIndex() {
                         <Link href="/marketing/documents" className="glass-button-secondary flex items-center gap-2">
                             <FileText className="w-4 h-4" /> Documents
                         </Link>
+                        <button onClick={() => setShowAddEventModal(true)} className="glass-button-secondary flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> Add Sales/Promo Event
+                        </button>
                         <Link href="/marketing/create" className="glass-button flex items-center gap-2">
                             <Plus className="w-4 h-4" /> New Campaign
                         </Link>
@@ -322,6 +339,12 @@ export default function MarketingIndex() {
                     </div>
                 </div>
             )}
+
+            <AddSalesPromoEventModal
+                isOpen={showAddEventModal}
+                onClose={() => setShowAddEventModal(false)}
+                onSubmit={handleAddSalesPromoEvent}
+            />
         </AppLayout>
     );
 }

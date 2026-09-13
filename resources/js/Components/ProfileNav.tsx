@@ -1,11 +1,12 @@
 import { Link } from '@inertiajs/react';
-import { User, Briefcase, CalendarDays, TrendingUp, Flag, Wrench, ShoppingBag } from 'lucide-react';
+import { User, Briefcase, CalendarDays, TrendingUp, Flag, Wrench, ShoppingBag, ListChecks } from 'lucide-react';
 
 const TABS = [
     { name: 'Overview', href: '/profile', icon: User },
     { name: 'Employee Details', href: '/profile/employee', icon: Briefcase },
     { name: 'Leave', href: '/profile/leave', icon: CalendarDays },
     { name: 'Performance', href: '/profile/performance', icon: TrendingUp },
+    { name: 'My Tasks', href: '/profile/tasks', icon: ListChecks },
     { name: 'Purchase Request', href: '/procurement/purchase-requests/create', icon: ShoppingBag },
     { name: 'Report an Issue', href: '/profile/report-issue', icon: Flag },
     { name: 'Technical Report', href: '/profile/technical-report', icon: Wrench },

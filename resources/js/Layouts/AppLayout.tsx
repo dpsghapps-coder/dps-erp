@@ -35,6 +35,7 @@ import {
     UsersIcon,
     Plus,
     ClipboardCheck,
+    ListChecks,
     User as UserIcon,
     Globe,
     Calculator,
@@ -226,7 +227,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const isProcurementPage = currentPath.startsWith('/procurement');
     const isFinancePage = currentPath.startsWith('/finance');
     const isStudioPage = currentPath.startsWith('/studio');
-    const isDecisionHubPage = currentPath.startsWith('/management');
+    const isDecisionHubPage = currentPath.startsWith('/management') && !currentPath.startsWith('/management/tasks');
+    const isTaskManagementPage = currentPath.startsWith('/management/tasks');
     const isMarketingPage = currentPath.startsWith('/marketing');
     // Auto-expand dropdowns on their pages
     useEffect(() => {
@@ -821,7 +823,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </Link>
                             )}
 
-                            {(hasModulePermission('hrm') || hasModulePermission('finance') || hasModulePermission('decision_hub')) && (
+                            {(hasModulePermission('hrm') || hasModulePermission('finance') || hasModulePermission('decision_hub') || hasModulePermission('tasks')) && (
                             <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
                                 <span className="text-xs text-slate-400 uppercase font-medium">Management</span>
                             </div>
@@ -941,6 +943,21 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                 )}
                             </div>
+                            )}
+
+                            {hasModulePermission('tasks') && (
+                            <Link
+                                href="/management/tasks"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    isTaskManagementPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <ListChecks className="w-5 h-5" />
+                                Task Management
+                            </Link>
                             )}
 
                             {hasModulePermission('studio') && (
@@ -1292,7 +1309,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     </div>
 
                     {/* MANAGEMENT Section */}
-                    {(hasModulePermission('hrm') || hasModulePermission('finance') || hasModulePermission('decision_hub')) && <div className="px-3 mt-6 mb-2">
+                    {(hasModulePermission('hrm') || hasModulePermission('finance') || hasModulePermission('decision_hub') || hasModulePermission('tasks')) && <div className="px-3 mt-6 mb-2">
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Management</span>}
                     </div>}
 
@@ -1444,7 +1461,14 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </div>
                         )}
                     </div>}
-                    
+
+                    <div className="space-y-1 px-3 mb-1">
+                        {hasModulePermission('tasks') && <Link href="/management/tasks" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${isTaskManagementPage ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}>
+                            <ListChecks className="w-5 h-5 flex-shrink-0" />
+                            {sidebarOpen && <span>Task Management</span>}
+                        </Link>}
+                    </div>
+
                     {/* BUSINESS Section */}
                     {hasModulePermission('studio') && <div className="px-3 mt-6 mb-2">
                         {sidebarOpen && <span className="text-xs text-slate-400 uppercase font-medium">Business</span>}

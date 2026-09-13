@@ -33,6 +33,7 @@ use App\Http\Controllers\Management\DashboardController as ManagementDashboardCo
 use App\Http\Controllers\Management\DecisionController;
 use App\Http\Controllers\Management\MeetingController;
 use App\Http\Controllers\Management\ReviewController;
+use App\Http\Controllers\Management\TaskController;
 use App\Http\Controllers\Marketing\CampaignController;
 use App\Http\Controllers\Marketing\MarketingDocumentController;
 use App\Http\Controllers\NotificationController;
@@ -588,6 +589,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     });
 
+    // Non-Operational Task Management Routes
+    Route::middleware('permission:tasks.view')->prefix('management/tasks')->name('management.tasks.')->group(function () {
+        Route::get('/', [TaskController::class, 'index'])->name('index');
+
+        // /create must be registered before the {task} wildcard below.
+        Route::middleware('permission:tasks.manage')->group(function () {
+            Route::get('/create', [TaskController::class, 'create'])->name('create');
+            Route::post('/', [TaskController::class, 'store'])->name('store');
+        });
+
+        Route::get('/{task}', [TaskController::class, 'show'])->name('show');
+
+        Route::middleware('permission:tasks.manage')->group(function () {
+            Route::get('/{task}/edit', [TaskController::class, 'edit'])->name('edit');
+            Route::put('/{task}', [TaskController::class, 'update'])->name('update');
+            Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
+            Route::post('/{task}/close', [TaskController::class, 'close'])->name('close');
+            Route::post('/{task}/reopen', [TaskController::class, 'reopen'])->name('reopen');
+        });
+    });
+
     // Admin Routes
     Route::middleware('permission:admin.manage_users,admin.manage_roles,admin.manage_settings')->group(function () {
         Route::get('/admin', [AdminController::class, 'index'])->name('admin.index');
@@ -686,6 +708,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{campaign}/edit', [CampaignController::class, 'edit'])->name('edit');
         Route::put('/{campaign}', [CampaignController::class, 'update'])->name('update');
         Route::delete('/{campaign}', [CampaignController::class, 'destroy'])->name('destroy');
+        Route::post('/{campaign}/attach-campaign', [CampaignController::class, 'attachCampaign'])->name('attach-campaign');
+        Route::delete('/{campaign}/detach-campaign/{child}', [CampaignController::class, 'detachCampaign'])->name('detach-campaign');
     });
 
     // Notification Routes
@@ -706,6 +730,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/leave', [ProfileController::class, 'leave'])->name('profile.leave');
     Route::post('/profile/leave', [ProfileController::class, 'storeLeave'])->name('profile.leave.store');
     Route::get('/profile/performance', [ProfileController::class, 'performance'])->name('profile.performance');
+    Route::get('/profile/tasks', [ProfileController::class, 'tasks'])->name('profile.tasks');
+    Route::post('/profile/tasks/{task}/progress', [ProfileController::class, 'addTaskProgress'])->name('profile.tasks.progress');
 
     // Performance review show/actions are relationship-gated in the controller
     // (self, direct supervisor, direct manager, or HR) rather than permission-gated,

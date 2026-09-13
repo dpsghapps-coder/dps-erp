@@ -3,6 +3,7 @@ import { GlassCard, PageHeader, StatusChips } from '@/Components/ui';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { ArrowLeft, X, Plus, Trash2, FileText } from 'lucide-react';
 import { useState } from 'react';
+import { CampaignColorPicker } from '@/Components/Marketing/CampaignColorPicker';
 
 interface NewDocument {
     file: File | null;
@@ -10,12 +11,15 @@ interface NewDocument {
     description: string;
 }
 
+const ATTACHABLE_PARENT_TYPES = ['sale', 'promotion'];
+
 export default function CampaignCreate() {
-    const { clients, employees, unlinkedDocuments = [] } = usePage().props as any;
+    const { clients, employees, unlinkedDocuments = [], salesPromoEvents = [] } = usePage().props as any;
     const { data, setData, post, processing, errors } = useForm({
         title: '',
         description: '',
         type: 'other',
+        color: '',
         status: 'draft',
         start_date: '',
         end_date: '',
@@ -23,6 +27,8 @@ export default function CampaignCreate() {
         budget: '',
         actual_cost: '',
         assigned_to: '',
+        team_member_ids: [] as number[],
+        parent_campaign_id: '',
         tags: [] as string[],
         notes: '',
         reminders: [] as string[],
@@ -31,6 +37,20 @@ export default function CampaignCreate() {
     });
     const [tagInput, setTagInput] = useState('');
     const [reminderInput, setReminderInput] = useState('');
+    const [teamMemberToAdd, setTeamMemberToAdd] = useState('');
+    const isAttachableParentType = ATTACHABLE_PARENT_TYPES.includes(data.type);
+
+    const addTeamMember = () => {
+        if (!teamMemberToAdd) return;
+        const id = Number(teamMemberToAdd);
+        if (!data.team_member_ids.includes(id)) {
+            setData('team_member_ids', [...data.team_member_ids, id]);
+        }
+        setTeamMemberToAdd('');
+    };
+    const removeTeamMember = (id: number) => {
+        setData('team_member_ids', data.team_member_ids.filter((m) => m !== id));
+    };
 
     const addDocument = () => setData('new_documents', [...data.new_documents, { file: null, name: '', description: '' }]);
     const removeDocument = (index: number) => setData('new_documents', data.new_documents.filter((_, i) => i !== index));
@@ -128,6 +148,8 @@ export default function CampaignCreate() {
                                         <option value="event">Event</option>
                                         <option value="ad">Advertising</option>
                                         <option value="print">Print</option>
+                                        <option value="sale">Sale</option>
+                                        <option value="promotion">Promotion</option>
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
@@ -144,6 +166,11 @@ export default function CampaignCreate() {
                                         ]}
                                     />
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Calendar Color</label>
+                                <CampaignColorPicker value={data.color} onChange={(v) => setData('color', v)} />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -204,6 +231,58 @@ export default function CampaignCreate() {
                                     ))}
                                 </select>
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Team Members</label>
+                                {data.team_member_ids.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mb-2">
+                                        {data.team_member_ids.map((id) => {
+                                            const member = employees.find((e: any) => e.id === id);
+                                            return (
+                                                <span key={id} className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 text-sm">
+                                                    {member?.name || 'Unknown'}
+                                                    <button type="button" onClick={() => removeTeamMember(id)} className="hover:text-indigo-600">
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </span>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                <div className="flex gap-2">
+                                    <select
+                                        value={teamMemberToAdd}
+                                        onChange={(e) => setTeamMemberToAdd(e.target.value)}
+                                        className="glass-input flex-1"
+                                    >
+                                        <option value="">Select a team member...</option>
+                                        {employees
+                                            .filter((emp: any) => !data.team_member_ids.includes(emp.id))
+                                            .map((emp: any) => (
+                                                <option key={emp.id} value={emp.id}>{emp.name}</option>
+                                            ))}
+                                    </select>
+                                    <button type="button" onClick={addTeamMember} disabled={!teamMemberToAdd} className="glass-button-secondary px-3 disabled:opacity-50">
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {!isAttachableParentType && salesPromoEvents.length > 0 && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Part of Sales/Promo Event (Optional)</label>
+                                    <select
+                                        value={data.parent_campaign_id}
+                                        onChange={(e) => setData('parent_campaign_id', e.target.value)}
+                                        className="glass-input w-full"
+                                    >
+                                        <option value="">None</option>
+                                        {salesPromoEvents.map((event: any) => (
+                                            <option key={event.id} value={event.id}>{event.title}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>

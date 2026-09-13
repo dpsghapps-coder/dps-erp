@@ -1,9 +1,12 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Trash2, Calendar, DollarSign, User, Building, Clock, Tag, Bell, FileText, Download } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, Calendar, DollarSign, User, Users, Building, Clock, Tag, Bell, FileText, Download, Link2, X } from 'lucide-react';
 import Swal from 'sweetalert2';
+import { useState } from 'react';
 import { useCurrency } from '@/Utils/currency';
+
+const ATTACHABLE_PARENT_TYPES = ['sale', 'promotion'];
 
 const TYPE_LABELS: Record<string, string> = {
     social: 'Social Media',
@@ -11,6 +14,8 @@ const TYPE_LABELS: Record<string, string> = {
     event: 'Event',
     ad: 'Advertising',
     print: 'Print',
+    sale: 'Sale',
+    promotion: 'Promotion',
     other: 'Other',
 };
 
@@ -23,8 +28,35 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export default function CampaignShow() {
-    const { campaign } = usePage().props as any;
+    const { campaign, attachableCampaigns } = usePage().props as any;
     const formatCurrency = useCurrency();
+    const [selectedChildId, setSelectedChildId] = useState('');
+
+    const isAttachableParent = ATTACHABLE_PARENT_TYPES.includes(campaign.type);
+    const availableToAttach = (attachableCampaigns || []).filter(
+        (c: any) => c.parent_campaign_id !== campaign.id
+    );
+
+    const handleAttach = () => {
+        if (!selectedChildId) return;
+        router.post(`/marketing/${campaign.id}/attach-campaign`, { child_campaign_id: selectedChildId }, {
+            onSuccess: () => setSelectedChildId(''),
+        });
+    };
+
+    const handleDetach = (childId: number) => {
+        Swal.fire({
+            title: 'Detach campaign?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Detach',
+        }).then((res) => {
+            if (res.isConfirmed) {
+                router.delete(`/marketing/${campaign.id}/detach-campaign/${childId}`);
+            }
+        });
+    };
 
     const handleDelete = () => {
         Swal.fire({
@@ -85,7 +117,12 @@ export default function CampaignShow() {
                                 <Tag className="w-5 h-5 text-slate-400 dark:text-slate-300" />
                                 <div>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">Type</p>
-                                    <p className="font-medium">{TYPE_LABELS[campaign.type] || campaign.type}</p>
+                                    <div className="flex items-center gap-2">
+                                        {campaign.color && (
+                                            <span className="w-3 h-3 rounded-full inline-block" style={{ background: campaign.color }} />
+                                        )}
+                                        <p className="font-medium">{TYPE_LABELS[campaign.type] || campaign.type}</p>
+                                    </div>
                                 </div>
                             </div>
                             {campaign.client && (
@@ -108,6 +145,21 @@ export default function CampaignShow() {
                                     </div>
                                 </div>
                             )}
+                            {campaign.team_members && campaign.team_members.length > 0 && (
+                                <div className="flex items-center gap-3 col-span-2">
+                                    <Users className="w-5 h-5 text-slate-400 dark:text-slate-300" />
+                                    <div>
+                                        <p className="text-sm text-slate-500 dark:text-slate-400">Team Members</p>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {campaign.team_members.map((member: any) => (
+                                                <span key={member.id} className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-sm">
+                                                    {member.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         {campaign.description && (
                             <div className="mt-4 pt-4 border-t">
@@ -115,7 +167,69 @@ export default function CampaignShow() {
                                 <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{campaign.description}</p>
                             </div>
                         )}
+                        {campaign.parent_campaign && (
+                            <div className="mt-4 pt-4 border-t flex items-center gap-2">
+                                <Link2 className="w-4 h-4 text-slate-400 dark:text-slate-300" />
+                                <span className="text-sm text-slate-500 dark:text-slate-400">Part of:</span>
+                                <Link href={`/marketing/${campaign.parent_campaign.id}`} className="text-sm font-medium text-indigo-600 hover:underline">
+                                    {campaign.parent_campaign.title}
+                                </Link>
+                            </div>
+                        )}
                     </GlassCard>
+
+                    {/* Attached Campaigns */}
+                    {isAttachableParent && (
+                        <GlassCard>
+                            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                                <Link2 className="w-5 h-5" /> Attached Campaigns
+                            </h2>
+                            {campaign.child_campaigns && campaign.child_campaigns.length > 0 ? (
+                                <div className="space-y-2 mb-4">
+                                    {campaign.child_campaigns.map((child: any) => (
+                                        <div key={child.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-700/50">
+                                            <div className="min-w-0">
+                                                <Link href={`/marketing/${child.id}`} className="text-sm font-medium text-indigo-600 hover:underline truncate block">
+                                                    {child.title}
+                                                </Link>
+                                                <p className="text-xs text-slate-400 truncate">{TYPE_LABELS[child.type] || child.type}</p>
+                                            </div>
+                                            <button
+                                                onClick={() => handleDetach(child.id)}
+                                                className="text-slate-400 hover:text-red-500 flex-shrink-0"
+                                                title="Detach"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-sm text-slate-400 dark:text-slate-300 mb-4">No campaigns attached yet</p>
+                            )}
+                            <div className="flex gap-2">
+                                <select
+                                    value={selectedChildId}
+                                    onChange={(e) => setSelectedChildId(e.target.value)}
+                                    className="glass-input flex-1"
+                                >
+                                    <option value="">Select a campaign to attach...</option>
+                                    {availableToAttach.map((c: any) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.title} ({TYPE_LABELS[c.type] || c.type})
+                                        </option>
+                                    ))}
+                                </select>
+                                <button
+                                    onClick={handleAttach}
+                                    disabled={!selectedChildId}
+                                    className="glass-button-secondary flex items-center gap-2 disabled:opacity-50"
+                                >
+                                    <Link2 className="w-4 h-4" /> Attach
+                                </button>
+                            </div>
+                        </GlassCard>
+                    )}
 
                     {/* Notes */}
                     {campaign.notes && (

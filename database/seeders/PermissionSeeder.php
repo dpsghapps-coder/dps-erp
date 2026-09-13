@@ -114,6 +114,10 @@ class PermissionSeeder extends Seeder
             // Dashboard
             ['name' => 'dashboard.view_executive', 'module' => 'dashboard', 'description' => 'View the Executive Dashboard (company-wide stats and revenue)'],
 
+            // Non-Operational Tasks
+            ['name' => 'tasks.view', 'module' => 'tasks', 'description' => 'View non-operational tasks assigned across the company'],
+            ['name' => 'tasks.manage', 'module' => 'tasks', 'description' => 'Create, edit, assign, and close non-operational tasks'],
+
             // Admin
             ['name' => 'admin.view_dashboard', 'module' => 'admin', 'description' => 'View admin dashboard'],
             ['name' => 'admin.manage_users', 'module' => 'admin', 'description' => 'Manage users'],

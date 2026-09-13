@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Models\Performance;
+use App\Models\Task;
 use App\Models\UserNotificationPreference;
 use App\Rules\EmailUniqueInTable;
 use Carbon\Carbon;
@@ -230,6 +231,52 @@ class ProfileController extends Controller
             'awaitingSupervisorInput' => $awaitingSupervisorInput,
             'awaitingManagerInput' => $awaitingManagerInput,
         ]);
+    }
+
+    public function tasks(Request $request): Response
+    {
+        $user = $request->user();
+
+        $tasks = $user->assignedTasks()
+            ->with(['progressUpdates' => fn ($q) => $q->where('user_id', $user->id)])
+            ->orderByRaw("CASE WHEN tasks.status = 'open' THEN 0 ELSE 1 END")
+            ->orderBy('tasks.deadline')
+            ->get();
+
+        return Inertia::render('Profile/Tasks', [
+            'tasks' => $tasks,
+        ]);
+    }
+
+    public function addTaskProgress(Request $request, Task $task): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (! $task->isAssignedTo($user)) {
+            abort(403, 'You are not assigned to this task');
+        }
+
+        $validated = $request->validate([
+            'note' => 'required|string',
+            'progress' => 'nullable|integer|min:0|max:100',
+            'status' => 'nullable|in:'.implode(',', Task::ASSIGNEE_STATUSES),
+        ]);
+
+        if (! empty($validated['status'])) {
+            $task->assignees()->updateExistingPivot($user->id, [
+                'status' => $validated['status'],
+                'completed_at' => $validated['status'] === 'completed' ? now() : null,
+            ]);
+        }
+
+        $task->progressUpdates()->create([
+            'user_id' => $user->id,
+            'note' => $validated['note'],
+            'progress' => $validated['progress'] ?? null,
+            'status' => $validated['status'] ?? null,
+        ]);
+
+        return back()->with('success', 'Progress added');
     }
 
     public function destroy(Request $request): RedirectResponse
