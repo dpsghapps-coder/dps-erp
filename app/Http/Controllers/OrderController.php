@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\JobStatusHistory;
 use App\Models\Order;
+use App\Models\OrderItemDeliverable;
 use App\Models\Product;
 use App\Models\ProductionJob;
 use App\Models\Service;
@@ -76,7 +77,7 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        $order->load(['client', 'contact', 'items.product', 'createdBy', 'productionJobs.assignedTo', 'productionJobs.statusHistory.changedBy', 'payments.recordedBy', 'statusHistory.changedBy']);
+        $order->load(['client', 'contact', 'items.product', 'items.deliverables', 'createdBy', 'productionJobs.assignedTo', 'productionJobs.statusHistory.changedBy', 'payments.recordedBy', 'statusHistory.changedBy']);
         $order->append(['total_paid', 'payment_balance']);
 
         return inertia('Orders/Show', [
@@ -222,6 +223,52 @@ class OrderController extends Controller
         }
 
         return back()->with('success', 'Payment recorded');
+    }
+
+    public function storeDeliverable(Request $request, Order $order)
+    {
+        $validated = $request->validate([
+            'order_item_id' => 'required|exists:order_items,id',
+            'description' => 'required|string|max:255',
+            'qty_promised' => 'nullable|integer|min:1',
+            'notes' => 'nullable|string',
+        ]);
+
+        $item = $order->items()->findOrFail($validated['order_item_id']);
+
+        $item->deliverables()->create([
+            'description' => $validated['description'],
+            'qty_promised' => $validated['qty_promised'] ?? null,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
+        return back()->with('success', 'Deliverable added');
+    }
+
+    public function updateDeliverable(Request $request, Order $order, OrderItemDeliverable $deliverable)
+    {
+        abort_unless($deliverable->orderItem->order_id === $order->id, 404);
+
+        $validated = $request->validate([
+            'description' => 'required|string|max:255',
+            'qty_promised' => 'nullable|integer|min:1',
+            'qty_delivered' => 'required|integer|min:0',
+            'status' => 'required|in:'.implode(',', OrderItemDeliverable::STATUSES),
+            'notes' => 'nullable|string',
+        ]);
+
+        $deliverable->update($validated);
+
+        return back()->with('success', 'Deliverable updated');
+    }
+
+    public function destroyDeliverable(Order $order, OrderItemDeliverable $deliverable)
+    {
+        abort_unless($deliverable->orderItem->order_id === $order->id, 404);
+
+        $deliverable->delete();
+
+        return back()->with('success', 'Deliverable removed');
     }
 
     private function itemPickerProps(): array

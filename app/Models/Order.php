@@ -228,6 +228,11 @@ class OrderItem extends Model
         return $this->morphTo();
     }
 
+    public function deliverables(): HasMany
+    {
+        return $this->hasMany(OrderItemDeliverable::class);
+    }
+
     protected static function booted()
     {
         static::saving(function ($item) {

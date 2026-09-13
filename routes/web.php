@@ -255,6 +255,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('permission:orders.edit')->group(function () {
         Route::get('/orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
         Route::put('/orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+        Route::post('/orders/{order}/deliverables', [OrderController::class, 'storeDeliverable'])->name('orders.deliverables.store');
+        Route::put('/orders/{order}/deliverables/{deliverable}', [OrderController::class, 'updateDeliverable'])->name('orders.deliverables.update');
+        Route::delete('/orders/{order}/deliverables/{deliverable}', [OrderController::class, 'destroyDeliverable'])->name('orders.deliverables.destroy');
     });
 
     Route::middleware('permission:orders.manage_status')->group(function () {
