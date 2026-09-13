@@ -126,4 +126,9 @@ class User extends Authenticatable
             ->withPivot(['status', 'completed_at'])
             ->withTimestamps();
     }
+
+    public function employeeTrainings(): HasMany
+    {
+        return $this->hasMany(EmployeeTraining::class);
+    }
 }

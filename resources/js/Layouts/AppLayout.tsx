@@ -36,6 +36,7 @@ import {
     Plus,
     ClipboardCheck,
     ListChecks,
+    GraduationCap,
     User as UserIcon,
     Globe,
     Calculator,
@@ -127,6 +128,7 @@ const hrmSubItems: CrmSubItem[] = [
     { name: 'Payroll', href: '/hrm/payroll', icon: DollarSignIcon },
     { name: 'Performance', href: '/hrm/performance', icon: TrendingUp },
     { name: 'Noticeboard', href: '/hrm/noticeboard', icon: BellIcon },
+    { name: 'Training', href: '/hrm/training', icon: GraduationCap },
     { name: 'Issue Reports', href: '/hrm/issue-reports', icon: Flag },
     { name: 'Settings', href: '/hrm/settings', icon: Settings },
 ];

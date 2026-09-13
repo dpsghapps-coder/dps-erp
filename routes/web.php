@@ -22,6 +22,7 @@ use App\Http\Controllers\HelpController;
 use App\Http\Controllers\HRM\EmployeeInviteController;
 use App\Http\Controllers\HRM\PerformanceReviewController;
 use App\Http\Controllers\HRM\SettingController;
+use App\Http\Controllers\HRM\TrainingController;
 use App\Http\Controllers\HrmController;
 use App\Http\Controllers\Inventory\InventoryController;
 use App\Http\Controllers\Inventory\ProductCatalogController;
@@ -439,6 +440,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/hrm/{employee}', [HrmController::class, 'update'])->name('hrm.update');
     });
 
+    // HRM Training Routes
+    Route::middleware('permission:hrm.manage_training')->prefix('hrm/training')->name('hrm.training.')->group(function () {
+        Route::get('/', [TrainingController::class, 'index'])->name('index');
+        Route::get('/create', [TrainingController::class, 'create'])->name('create');
+        Route::post('/', [TrainingController::class, 'store'])->name('store');
+        Route::get('/{trainingModule}', [TrainingController::class, 'show'])->name('show');
+        Route::get('/{trainingModule}/edit', [TrainingController::class, 'edit'])->name('edit');
+        Route::put('/{trainingModule}', [TrainingController::class, 'update'])->name('update');
+        Route::delete('/{trainingModule}', [TrainingController::class, 'destroy'])->name('destroy');
+    });
+
     // Studio Routes
     Route::middleware('permission:studio.view')->group(function () {
         Route::get('/studio', [StudioController::class, 'index'])->name('studio.index');
@@ -732,6 +744,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile/performance', [ProfileController::class, 'performance'])->name('profile.performance');
     Route::get('/profile/tasks', [ProfileController::class, 'tasks'])->name('profile.tasks');
     Route::post('/profile/tasks/{task}/progress', [ProfileController::class, 'addTaskProgress'])->name('profile.tasks.progress');
+    Route::get('/profile/trainings', [ProfileController::class, 'trainings'])->name('profile.trainings');
+    Route::post('/profile/trainings/{trainingModule}/quiz', [ProfileController::class, 'submitTrainingQuiz'])->name('profile.trainings.quiz');
 
     // Performance review show/actions are relationship-gated in the controller
     // (self, direct supervisor, direct manager, or HR) rather than permission-gated,

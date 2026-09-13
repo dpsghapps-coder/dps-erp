@@ -85,6 +85,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'hrm.manage_holidays', 'module' => 'hrm', 'description' => 'Manage holidays'],
             ['name' => 'hrm.manage_performance', 'module' => 'hrm', 'description' => 'Manage performance'],
             ['name' => 'hrm.manage_noticeboard', 'module' => 'hrm', 'description' => 'Manage noticeboard'],
+            ['name' => 'hrm.manage_training', 'module' => 'hrm', 'description' => 'Create and manage staff training modules and quizzes'],
             ['name' => 'hrm.manage_settings', 'module' => 'hrm', 'description' => 'Manage HRM settings'],
 
             // Finance

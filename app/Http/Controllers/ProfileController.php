@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmployeeTraining;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
 use App\Models\Performance;
 use App\Models\Task;
+use App\Models\TrainingModule;
 use App\Models\UserNotificationPreference;
 use App\Rules\EmailUniqueInTable;
 use Carbon\Carbon;
@@ -277,6 +279,68 @@ class ProfileController extends Controller
         ]);
 
         return back()->with('success', 'Progress added');
+    }
+
+    public function trainings(Request $request): Response
+    {
+        $user = $request->user();
+
+        $modules = TrainingModule::where('is_active', true)
+            ->with(['quizQuestions' => fn ($q) => $q->select('id', 'training_module_id', 'question', 'options', 'sort_order')])
+            ->orderBy('sort_order')
+            ->orderBy('title')
+            ->get();
+
+        $records = $user->employeeTrainings()->get()->keyBy('training_module_id');
+
+        $modules = $modules->map(function (TrainingModule $module) use ($records) {
+            $record = $records->get($module->id);
+            $module->my_status = $record->status ?? 'not_started';
+            $module->my_quiz_score = $record->quiz_score ?? null;
+            $module->my_attempts = $record->attempts ?? 0;
+
+            return $module;
+        });
+
+        return Inertia::render('Profile/Trainings', [
+            'modules' => $modules,
+        ]);
+    }
+
+    public function submitTrainingQuiz(Request $request, TrainingModule $trainingModule): RedirectResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'answers' => 'required|array',
+            'answers.*.question_id' => 'required|exists:training_quiz_questions,id',
+            'answers.*.selected_option' => 'required|integer|min:0',
+        ]);
+
+        $questions = $trainingModule->quizQuestions;
+        $answersByQuestion = collect($validated['answers'])->keyBy('question_id');
+
+        $correctCount = $questions->filter(function ($question) use ($answersByQuestion) {
+            $answer = $answersByQuestion->get($question->id);
+
+            return $answer && (int) $answer['selected_option'] === $question->correct_option;
+        })->count();
+
+        $score = $questions->count() > 0 ? (int) round($correctCount / $questions->count() * 100) : 0;
+        $passed = $score >= $trainingModule->passing_score;
+
+        $record = EmployeeTraining::firstOrNew([
+            'training_module_id' => $trainingModule->id,
+            'user_id' => $user->id,
+        ]);
+
+        $record->status = $passed ? 'completed' : 'failed';
+        $record->quiz_score = $score;
+        $record->attempts = ($record->attempts ?? 0) + 1;
+        $record->completed_at = $passed ? now() : null;
+        $record->save();
+
+        return back()->with('success', $passed ? 'Training completed!' : 'Quiz not passed — you can retake it.');
     }
 
     public function destroy(Request $request): RedirectResponse
