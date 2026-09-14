@@ -20,16 +20,20 @@ class TrainingSeeder extends Seeder
 
         $users = User::where('is_active', true)->pluck('id')->all();
 
+        // video_url points to a real, publicly available YouTube video that
+        // generally matches the topic -- placeholder/example content, not
+        // DPS Solutions-specific material. Replace via HRM > Training > Edit
+        // once real training footage exists.
         $modules = [
-            ['title' => 'Fire and Health Safety', 'category' => 'Safety'],
-            ['title' => 'Data Security and File Management', 'category' => 'IT & Security'],
-            ['title' => 'Basic Money Management', 'category' => 'Finance'],
-            ['title' => 'Marketing Fundamentals', 'category' => 'Marketing'],
-            ['title' => 'Customer Service Standards', 'category' => 'Customer Service'],
-            ['title' => 'Quality Assurance and Proofing', 'category' => 'Quality'],
-            ['title' => 'Software and RIP Optimization', 'category' => 'Technical'],
-            ['title' => 'Hardware and Equipment Operation', 'category' => 'Technical'],
-            ['title' => 'Control of Substances Hazardous to Health', 'category' => 'Safety'],
+            ['title' => 'Fire and Health Safety', 'category' => 'Safety', 'video_url' => 'https://www.youtube.com/watch?v=Filzae3w1Zo'],
+            ['title' => 'Data Security and File Management', 'category' => 'IT & Security', 'video_url' => 'https://www.youtube.com/watch?v=JVx9YAaTp9w'],
+            ['title' => 'Basic Money Management', 'category' => 'Finance', 'video_url' => 'https://www.youtube.com/watch?v=mGgB8GoQGc0'],
+            ['title' => 'Marketing Fundamentals', 'category' => 'Marketing', 'video_url' => 'https://www.youtube.com/watch?v=qwnw1qfPU4Y'],
+            ['title' => 'Customer Service Standards', 'category' => 'Customer Service', 'video_url' => 'https://www.youtube.com/watch?v=SsNfAOTZNZY'],
+            ['title' => 'Quality Assurance and Proofing', 'category' => 'Quality', 'video_url' => 'https://www.youtube.com/watch?v=3fK8OZb9Am4'],
+            ['title' => 'Software and RIP Optimization', 'category' => 'Technical', 'video_url' => 'https://www.youtube.com/watch?v=0VbCPB-txD8'],
+            ['title' => 'Hardware and Equipment Operation', 'category' => 'Technical', 'video_url' => 'https://www.youtube.com/watch?v=sEb6cx6TC5M'],
+            ['title' => 'Control of Substances Hazardous to Health', 'category' => 'Safety', 'video_url' => 'https://www.youtube.com/watch?v=QsQSG-8MGEY'],
         ];
 
         foreach ($modules as $index => $moduleData) {
@@ -38,6 +42,7 @@ class TrainingSeeder extends Seeder
                 [
                     'description' => 'Training content coming soon.',
                     'category' => $moduleData['category'],
+                    'video_url' => $moduleData['video_url'],
                     'due_date' => now()->addDays(14 + $index * 3),
                     'passing_score' => 70,
                     'sort_order' => $index,
@@ -45,6 +50,13 @@ class TrainingSeeder extends Seeder
                     'created_by' => $createdBy,
                 ]
             );
+
+            // Backfill video_url on a module that already existed without one
+            // (e.g. seeded before this URL list existed) -- never overwrite a
+            // video_url someone has already set on purpose.
+            if (empty($module->video_url)) {
+                $module->update(['video_url' => $moduleData['video_url']]);
+            }
 
             if ($module->quizQuestions()->count() === 0) {
                 $questions = [
