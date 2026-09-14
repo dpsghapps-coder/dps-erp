@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
         $this->call(InventorySeeder::class);
         $this->call(MaterialPricesSeeder::class);
         $this->call(HrmSeeder::class);
+        $this->call(TrainingSeeder::class);
         $this->call(PurchaseRequestSeeder::class);
         $this->call(DecisionHubSeeder::class);
 
