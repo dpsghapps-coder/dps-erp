@@ -380,6 +380,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/procurement/{po}', [ProcurementController::class, 'update'])->name('procurement.update');
     });
 
+    // HRM Training Routes (must be before the /hrm/{employee} wildcard below)
+    Route::middleware('permission:hrm.manage_training')->prefix('hrm/training')->name('hrm.training.')->group(function () {
+        Route::get('/', [TrainingController::class, 'index'])->name('index');
+        Route::get('/create', [TrainingController::class, 'create'])->name('create');
+        Route::post('/', [TrainingController::class, 'store'])->name('store');
+        Route::get('/{trainingModule}', [TrainingController::class, 'show'])->name('show');
+        Route::get('/{trainingModule}/edit', [TrainingController::class, 'edit'])->name('edit');
+        Route::put('/{trainingModule}', [TrainingController::class, 'update'])->name('update');
+        Route::delete('/{trainingModule}', [TrainingController::class, 'destroy'])->name('destroy');
+    });
+
     // HRM Routes
     Route::middleware('permission:hrm.view')->group(function () {
         Route::get('/hrm', [HrmController::class, 'index'])->name('hrm.index');
@@ -438,17 +449,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/hrm/{employee}', [HrmController::class, 'show'])->name('hrm.show');
         Route::get('/hrm/{employee}/edit', [HrmController::class, 'edit'])->name('hrm.edit');
         Route::put('/hrm/{employee}', [HrmController::class, 'update'])->name('hrm.update');
-    });
-
-    // HRM Training Routes
-    Route::middleware('permission:hrm.manage_training')->prefix('hrm/training')->name('hrm.training.')->group(function () {
-        Route::get('/', [TrainingController::class, 'index'])->name('index');
-        Route::get('/create', [TrainingController::class, 'create'])->name('create');
-        Route::post('/', [TrainingController::class, 'store'])->name('store');
-        Route::get('/{trainingModule}', [TrainingController::class, 'show'])->name('show');
-        Route::get('/{trainingModule}/edit', [TrainingController::class, 'edit'])->name('edit');
-        Route::put('/{trainingModule}', [TrainingController::class, 'update'])->name('update');
-        Route::delete('/{trainingModule}', [TrainingController::class, 'destroy'])->name('destroy');
     });
 
     // Studio Routes
