@@ -161,7 +161,7 @@ class StockController extends Controller
             'qty_purchased' => $qtyPurchased,
             'material_cost' => $validated['material_cost'],
             'total_cost' => $totalCost,
-            'price' => $qtyPurchased > 0 ? round($totalCost / $qtyPurchased, 2) : 0,
+            'price' => $qtyPurchased > 0 ? round($totalCost / $qtyPurchased, 4) : 0,
             'date_purchased' => $validated['date_purchased'],
             'notes' => $validated['notes'] ?? null,
             'purchased_by' => $validated['purchased_by'] ?? null,

@@ -4,7 +4,7 @@ import InventoryTabs from '@/Components/InventoryTabs';
 import { Head, usePage, useForm, router } from '@inertiajs/react';
 import { Plus, Search, Package, Calendar, Pencil, Trash2, DollarSign, AlertTriangle, CheckCircle, RefreshCw, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { useCurrency } from '@/Utils/currency';
+import { useCurrency, useCurrencySymbol } from '@/Utils/currency';
 import Swal from 'sweetalert2';
 
 type SubTab = 'purchases' | 'levels';
@@ -12,6 +12,7 @@ type SubTab = 'purchases' | 'levels';
 export default function StockIndex() {
     const { stocks, products, stockLevels, suppliers, categories, costTypes, discreteUoms, employees } = usePage().props as any;
     const formatCurrency = useCurrency();
+    const currencySymbol = useCurrencySymbol();
     const [search, setSearch] = useState('');
     const [subTab, setSubTab] = useState<SubTab>('purchases');
     const [showModal, setShowModal] = useState(false);
@@ -64,6 +65,9 @@ export default function StockIndex() {
     const extraCostsTotal = data.cost_items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
     const totalCost = (Number(data.units_purchased || 0) * Number(data.material_cost || 0)) + extraCostsTotal;
     const unitPrice = qtyPurchased > 0 ? totalCost / qtyPurchased : 0;
+    // 4dp here (vs. the usual 2dp currency display) so a low per-unit cost
+    // spread across a large quantity received doesn't round away to 0.00.
+    const unitPriceDisplay = `${currencySymbol} ${unitPrice.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`;
 
     const addCostItem = () => setData('cost_items', [...data.cost_items, { label: costTypes?.[0] || '', amount: '' }]);
     const removeCostItem = (index: number) => setData('cost_items', data.cost_items.filter((_, i) => i !== index));
@@ -695,7 +699,7 @@ export default function StockIndex() {
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Price per Unit</label>
                                         <div className="glass-input w-full flex items-center h-10 px-3 bg-slate-50 text-slate-700 font-semibold">
-                                            {formatCurrency(unitPrice)} / {materialUom}
+                                            {unitPriceDisplay} / {materialUom}
                                         </div>
                                     </div>
                                 </div>

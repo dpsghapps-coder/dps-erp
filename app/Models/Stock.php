@@ -52,7 +52,7 @@ class Stock extends Model
         'qty_per_unit' => 'decimal:2',
         'qty_purchased' => 'decimal:2',
         'material_cost' => 'decimal:2',
-        'price' => 'decimal:2',
+        'price' => 'decimal:4',
         'total_cost' => 'decimal:2',
         'date_purchased' => 'date',
     ];
@@ -110,7 +110,7 @@ class Stock extends Model
             'qty_purchased' => $qty,
             'material_cost' => $materialCost,
             'total_cost' => $materialCost,
-            'price' => $qty > 0 ? round($materialCost / $qty, 2) : 0,
+            'price' => $qty > 0 ? round($materialCost / $qty, 4) : 0,
             'date_purchased' => now()->toDateString(),
             'notes' => "Pulled from PO {$po->po_number}",
             'added_by' => $userName,
