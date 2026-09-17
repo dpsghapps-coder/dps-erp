@@ -21,11 +21,13 @@ class Product extends Model
         'type',
         'category_id',
         'unit',
+        'source',
         'is_active',
     ];
 
     protected $casts = [
         'type' => 'string',
+        'source' => 'string',
         'is_active' => 'boolean',
     ];
 

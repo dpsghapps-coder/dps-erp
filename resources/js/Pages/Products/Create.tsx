@@ -15,6 +15,7 @@ export default function ProductCreate() {
         type: 'physical',
         category_id: '',
         unit: (uoms && uoms[0]) || '',
+        source: 'Purchased',
         is_active: true,
         components: [],
         prices: [{ min_qty: 1, max_qty: '', unit_price: 0 }] as { min_qty: number | string; max_qty: number | string; unit_price: number | string }[],
@@ -218,6 +219,20 @@ export default function ProductCreate() {
                                 ))}
                             </select>
                             {errors.unit && <p className="text-red-400 text-sm mt-1">{errors.unit}</p>}
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Source *</label>
+                            <select
+                                value={data.source}
+                                onChange={(e) => setData('source', e.target.value)}
+                                className="glass-input w-full"
+                            >
+                                <option value="Purchased">Purchased</option>
+                                <option value="Manufactured">Manufactured</option>
+                                <option value="Customized">Customized</option>
+                            </select>
+                            {errors.source && <p className="text-red-400 text-sm mt-1">{errors.source}</p>}
                         </div>
 
                         <div>

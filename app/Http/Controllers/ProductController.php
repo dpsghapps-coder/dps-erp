@@ -68,6 +68,7 @@ class ProductController extends Controller
                 'type' => $validated['type'],
                 'category_id' => $validated['category_id'] ?? null,
                 'unit' => $validated['unit'],
+                'source' => $validated['source'],
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 
@@ -123,6 +124,7 @@ class ProductController extends Controller
                 'type' => $validated['type'],
                 'category_id' => $validated['category_id'] ?? null,
                 'unit' => $validated['unit'],
+                'source' => $validated['source'],
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 
@@ -187,6 +189,7 @@ class ProductController extends Controller
             'type' => 'required|in:physical,service,digital',
             'category_id' => 'nullable|exists:product_categories,id',
             'unit' => 'required|string|max:30',
+            'source' => 'required|in:Purchased,Manufactured,Customized',
             'is_active' => 'boolean',
             'components' => 'nullable|array',
             'components.*.component_id' => 'required',

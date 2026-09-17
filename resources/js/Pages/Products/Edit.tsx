@@ -15,6 +15,7 @@ export default function ProductEdit() {
         type: product?.type || 'physical',
         category_id: product?.category_id || '',
         unit: product?.unit || 'pcs',
+        source: product?.source || 'Purchased',
         is_active: product?.is_active ?? true,
         prices: product?.prices?.length > 0
             ? product.prices.map((p: any) => ({ min_qty: p.min_qty, max_qty: p.max_qty || '', unit_price: p.unit_price }))
@@ -230,6 +231,20 @@ export default function ProductEdit() {
                                     <option key={u} value={u}>{u}</option>
                                 ))}
                             </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Source *</label>
+                            <select
+                                value={data.source}
+                                onChange={(e) => setData('source', e.target.value)}
+                                className="glass-input w-full"
+                            >
+                                <option value="Purchased">Purchased</option>
+                                <option value="Manufactured">Manufactured</option>
+                                <option value="Customized">Customized</option>
+                            </select>
+                            {errors.source && <p className="text-red-400 text-sm mt-1">{errors.source}</p>}
                         </div>
 
                         <div>
