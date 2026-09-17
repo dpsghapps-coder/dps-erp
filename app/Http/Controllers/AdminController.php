@@ -410,6 +410,15 @@ class AdminController extends Controller
         return back()->with('success', 'UOM updated');
     }
 
+    public function setAllUomDiscrete(Request $request)
+    {
+        $validated = $request->validate(['discrete' => 'required|boolean']);
+
+        Setting::where('key', 'like', 'uom_%')->update(['is_discrete' => $validated['discrete']]);
+
+        return back()->with('success', $validated['discrete'] ? 'All UOMs marked discrete' : 'All UOMs marked measured');
+    }
+
     public function storeCategory(Request $request)
     {
         $validated = $request->validate(['value' => 'required|string|max:50']);

@@ -269,10 +269,30 @@ export default function Settings() {
                         </h2>
                         <p className="text-sm text-slate-400 mb-4">Manage inventory UOMs. Mark a UOM "Discrete" (e.g. Pieces) when each unit purchased is a single item with no separate amount-per-pack to measure — the Add Purchase form then locks Qty per Unit to 1 for it instead of treating it as a multiplier.</p>
 
-                        <form onSubmit={handleAddUom} className="flex gap-2 mb-6">
+                        <form onSubmit={handleAddUom} className="flex gap-2 mb-4">
                             <input type="text" value={newUom} onChange={(e) => setNewUom(e.target.value)} placeholder="New UOM" className="glass-input flex-1" />
                             <button type="submit" className="glass-button flex items-center gap-2"><Plus className="w-4 h-4" /> Add</button>
                         </form>
+
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-slate-400 uppercase font-medium">Discrete flag</span>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => router.post('/admin/settings/uom/discrete', { discrete: true })}
+                                    className="text-xs text-indigo-400 hover:text-indigo-300"
+                                >
+                                    Select All
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => router.post('/admin/settings/uom/discrete', { discrete: false })}
+                                    className="text-xs text-indigo-400 hover:text-indigo-300"
+                                >
+                                    Deselect All
+                                </button>
+                            </div>
+                        </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                             {(uoms || []).map((uom: any) => (
