@@ -656,6 +656,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/admin/settings/category-attribute', [AdminController::class, 'toggleCategoryAttribute']);
         Route::post('/admin/settings/extra-cost-type', [AdminController::class, 'storeExtraCostType']);
         Route::delete('/admin/settings/extra-cost-type/{setting}', [AdminController::class, 'deleteExtraCostType']);
+        Route::post('/admin/settings/pack-type', [AdminController::class, 'storePackType']);
+        Route::delete('/admin/settings/pack-type/{setting}', [AdminController::class, 'deletePackType']);
     });
 
     // Factory reset — deliberately gated behind its own dedicated permission,

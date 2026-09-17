@@ -1,21 +1,22 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Save, Plus, Trash2, Package, Tag, List, X, Check, Receipt, AlertTriangle, ShieldAlert, Upload, ImageOff } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Package, Tag, List, X, Check, Receipt, AlertTriangle, ShieldAlert, Upload, ImageOff, Box } from 'lucide-react';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 
 export default function Settings() {
     const page = usePage().props as any;
-    const { uoms, categories, attributes, extraCostTypes, currency: savedCurrency, companyLogo } = page;
+    const { uoms, categories, attributes, extraCostTypes, packTypes, currency: savedCurrency, companyLogo } = page;
     const isAdmin = page.auth?.user?.role?.name === 'admin';
     const permissions = (page.auth?.permissions as string[]) || [];
     const canFactoryReset = isAdmin || permissions.includes('*') || permissions.includes('admin.factory_reset');
-    const [activeTab, setActiveTab] = useState<'general' | 'uom' | 'categories' | 'attributes' | 'extraCosts' | 'dangerZone'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'uom' | 'categories' | 'attributes' | 'extraCosts' | 'packTypes' | 'dangerZone'>('general');
     const [newUom, setNewUom] = useState('');
     const [newCategory, setNewCategory] = useState('');
     const [newAttribute, setNewAttribute] = useState('');
     const [newExtraCostType, setNewExtraCostType] = useState('');
+    const [newPackType, setNewPackType] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
     const [togglingAttr, setTogglingAttr] = useState<number | null>(null);
 
@@ -109,6 +110,15 @@ export default function Settings() {
         }
     };
 
+    const handleAddPackType = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (newPackType.trim()) {
+            router.post('/admin/settings/pack-type', { value: newPackType }, {
+                onSuccess: () => setNewPackType(''),
+            });
+        }
+    };
+
     const handleFactoryReset = (e: React.FormEvent) => {
         e.preventDefault();
         Swal.fire({
@@ -174,6 +184,12 @@ export default function Settings() {
                     className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'extraCosts' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                     <Receipt className="w-4 h-4 inline mr-2" />Extra Cost Types
+                </button>
+                <button
+                    onClick={() => setActiveTab('packTypes')}
+                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'packTypes' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                >
+                    <Box className="w-4 h-4 inline mr-2" />Packing Types
                 </button>
                 {canFactoryReset && (
                     <button
@@ -317,6 +333,33 @@ export default function Settings() {
                                 <div key={type.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
                                     <span>{type.value}</span>
                                     <Link href={`/admin/settings/extra-cost-type/${type.id}`} method="delete" as="button" className="text-red-400 hover:text-red-300">
+                                        <Trash2 className="w-4 h-4" />
+                                    </Link>
+                                </div>
+                            ))}
+                        </div>
+                    </GlassCard>
+                </div>
+            )}
+
+            {activeTab === 'packTypes' && (
+                <div className="max-w-3xl">
+                    <GlassCard>
+                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <Box className="w-5 h-5" /> Packing Types
+                        </h2>
+                        <p className="text-sm text-slate-400 mb-4">Manage how purchased materials are packaged (e.g. Roll, Box, Carton). Used on the Add Purchase form.</p>
+
+                        <form onSubmit={handleAddPackType} className="flex gap-2 mb-6">
+                            <input type="text" value={newPackType} onChange={(e) => setNewPackType(e.target.value)} placeholder="New packing type" className="glass-input flex-1" />
+                            <button type="submit" className="glass-button flex items-center gap-2"><Plus className="w-4 h-4" /> Add</button>
+                        </form>
+
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                            {(packTypes || []).map((type: any) => (
+                                <div key={type.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                    <span>{type.value}</span>
+                                    <Link href={`/admin/settings/pack-type/${type.id}`} method="delete" as="button" className="text-red-400 hover:text-red-300">
                                         <Trash2 className="w-4 h-4" />
                                     </Link>
                                 </div>

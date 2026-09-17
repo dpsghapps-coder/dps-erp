@@ -29,7 +29,7 @@ class StockController extends Controller
 
         $products = InventoryProduct::where('item_status', 'Active')
             ->orderBy('item_name')
-            ->get(['id', 'item_name', 'material_id', 'item_category']);
+            ->get(['id', 'item_name', 'material_id', 'item_category', 'uom']);
 
         $stockLevels = InventoryProduct::with(['stocks', 'approvedRequisitions'])
             ->whereHas('stocks')
@@ -66,6 +66,8 @@ class StockController extends Controller
 
         $costTypes = Setting::where('key', 'like', 'extra_cost_%')->pluck('value');
 
+        $packTypes = Setting::where('key', 'like', 'pack_type_%')->orderBy('value')->pluck('value');
+
         $employees = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return inertia('Inventory/Stock/Index', [
@@ -75,6 +77,7 @@ class StockController extends Controller
             'suppliers' => $suppliers,
             'categories' => $categories,
             'costTypes' => $costTypes,
+            'packTypes' => $packTypes,
             'employees' => $employees,
         ]);
     }
@@ -131,6 +134,7 @@ class StockController extends Controller
             'purchase_order_item_id' => 'nullable|exists:purchase_order_items,id',
             'units_purchased' => 'required|numeric|min:0.01',
             'qty_per_unit' => 'required|numeric|min:0.01',
+            'pack_type' => 'nullable|string|max:50',
             'material_cost' => 'required|numeric|min:0',
             'cost_items' => 'nullable|array',
             'cost_items.*.label' => 'required|string|max:100',
@@ -153,6 +157,7 @@ class StockController extends Controller
             'purchase_order_item_id' => $validated['purchase_order_item_id'] ?? null,
             'units_purchased' => $validated['units_purchased'],
             'qty_per_unit' => $validated['qty_per_unit'],
+            'pack_type' => $validated['pack_type'] ?? null,
             'qty_purchased' => $qtyPurchased,
             'material_cost' => $validated['material_cost'],
             'total_cost' => $totalCost,

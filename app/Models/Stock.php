@@ -36,6 +36,7 @@ class Stock extends Model
         'purchase_order_item_id',
         'units_purchased',
         'qty_per_unit',
+        'pack_type',
         'qty_purchased',
         'material_cost',
         'price',

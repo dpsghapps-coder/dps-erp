@@ -10,7 +10,7 @@ import Swal from 'sweetalert2';
 type SubTab = 'purchases' | 'levels';
 
 export default function StockIndex() {
-    const { stocks, products, stockLevels, suppliers, categories, costTypes, employees } = usePage().props as any;
+    const { stocks, products, stockLevels, suppliers, categories, costTypes, packTypes, employees } = usePage().props as any;
     const formatCurrency = useCurrency();
     const [search, setSearch] = useState('');
     const [subTab, setSubTab] = useState<SubTab>('purchases');
@@ -26,6 +26,7 @@ export default function StockIndex() {
         purchase_order_item_id: '',
         units_purchased: '1',
         qty_per_unit: '',
+        pack_type: '',
         material_cost: '',
         cost_items: [] as { label: string; amount: string }[],
         date_purchased: new Date().toISOString().split('T')[0],
@@ -120,6 +121,7 @@ export default function StockIndex() {
             purchase_order_item_id: stock.purchase_order_item_id || '',
             units_purchased: String(stock.units_purchased ?? 1),
             qty_per_unit: String(stock.qty_per_unit ?? stock.qty_purchased ?? ''),
+            pack_type: stock.pack_type || '',
             material_cost: String(stock.material_cost ?? ''),
             cost_items: (stock.cost_items || []).map((item: any) => ({ label: item.label, amount: String(item.amount) })),
             date_purchased: stock.date_purchased ? stock.date_purchased.split('T')[0] : new Date().toISOString().split('T')[0],
@@ -530,7 +532,7 @@ export default function StockIndex() {
                                         />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Units Purchased *</label>
                                         <input
@@ -543,6 +545,20 @@ export default function StockIndex() {
                                             required
                                         />
                                         {errors.units_purchased && <p className="text-red-400 text-sm mt-1">{errors.units_purchased}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Pack Type</label>
+                                        <select
+                                            value={data.pack_type}
+                                            onChange={(e) => setData('pack_type', e.target.value)}
+                                            className="glass-input w-full"
+                                        >
+                                            <option value="">Select pack type</option>
+                                            {(packTypes || []).map((type: string) => (
+                                                <option key={type} value={type}>{type}</option>
+                                            ))}
+                                        </select>
+                                        {errors.pack_type && <p className="text-red-400 text-sm mt-1">{errors.pack_type}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Qty per Unit ({materialUom}) *</label>

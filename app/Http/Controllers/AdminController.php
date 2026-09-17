@@ -244,6 +244,7 @@ class AdminController extends Controller
         $categories = ProductCategory::with('attributes')->orderBy('name')->get();
         $attributes = Setting::where('key', 'like', 'attr_%')->get();
         $extraCostTypes = Setting::where('key', 'like', 'extra_cost_%')->get();
+        $packTypes = Setting::where('key', 'like', 'pack_type_%')->get();
         $departments = Department::orderBy('name')->get();
         $currency = Setting::get('currency', 'GHS');
         $companyLogo = Setting::get('company_logo');
@@ -253,6 +254,7 @@ class AdminController extends Controller
             'categories' => $categories,
             'attributes' => $attributes,
             'extraCostTypes' => $extraCostTypes,
+            'packTypes' => $packTypes,
             'departments' => $departments,
             'currency' => $currency,
             'companyLogo' => $companyLogo ? Storage::url($companyLogo) : null,
@@ -469,6 +471,34 @@ class AdminController extends Controller
         }
 
         return back()->with('success', 'Cost type deleted');
+    }
+
+    public function storePackType(Request $request)
+    {
+        $validated = $request->validate(['value' => 'required|string|max:50']);
+
+        $key = 'pack_type_'.Str::slug($validated['value']);
+
+        if (Setting::where('key', $key)->exists()) {
+            return back()->withErrors(['value' => 'This packing type already exists.']);
+        }
+
+        Setting::create([
+            'key' => $key,
+            'value' => $validated['value'],
+            'type' => 'string',
+        ]);
+
+        return back()->with('success', 'Packing type added successfully');
+    }
+
+    public function deletePackType(Setting $setting)
+    {
+        if (str_starts_with($setting->key, 'pack_type_')) {
+            $setting->delete();
+        }
+
+        return back()->with('success', 'Packing type deleted');
     }
 
     public function toggleCategoryAttribute(Request $request)
