@@ -39,12 +39,14 @@ class ProductCatalogController extends Controller
         $categories = ProductCategory::orderBy('name')->get(['id', 'name']);
         $uoms = Setting::where('key', 'like', 'uom_%')->pluck('value');
         $packTypes = Setting::where('key', 'like', 'pack_type_%')->orderBy('value')->pluck('value');
+        $discreteUoms = Setting::where('key', 'like', 'uom_%')->where('is_discrete', true)->pluck('value');
 
         return inertia('Inventory/ProductCatalog/Index', [
             'products' => $products,
             'categories' => $categories,
             'uoms' => $uoms,
             'packTypes' => $packTypes,
+            'discreteUoms' => $discreteUoms,
         ]);
     }
 
@@ -56,6 +58,7 @@ class ProductCatalogController extends Controller
             'item_category' => 'nullable|string|max:100',
             'uom' => 'required|string|max:50',
             'pack_type' => 'nullable|string|max:50',
+            'default_qty_per_unit' => 'nullable|numeric|min:0.01',
             'item_status' => 'required|in:Active,Disabled',
             'attributes' => 'nullable|json',
             'picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
@@ -99,6 +102,7 @@ class ProductCatalogController extends Controller
             'item_category' => 'nullable|string|max:100',
             'uom' => 'required|string|max:50',
             'pack_type' => 'nullable|string|max:50',
+            'default_qty_per_unit' => 'nullable|numeric|min:0.01',
             'item_status' => 'required|in:Active,Disabled',
             'attributes' => 'nullable|json',
             'picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',

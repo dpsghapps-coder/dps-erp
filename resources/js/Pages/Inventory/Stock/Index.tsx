@@ -504,7 +504,14 @@ export default function StockIndex() {
                                             value={data.product_id}
                                             onChange={(e) => {
                                                 const material = (products || []).find((p: any) => p.id === e.target.value);
-                                                setData((prev) => ({ ...prev, product_id: e.target.value, pack_type: material?.pack_type || '' }));
+                                                setData((prev) => ({
+                                                    ...prev,
+                                                    product_id: e.target.value,
+                                                    pack_type: material?.pack_type || '',
+                                                    // Pre-fill from the material's default, but still a normal
+                                                    // editable value afterward -- not re-applied on every render.
+                                                    qty_per_unit: material?.default_qty_per_unit ? String(material.default_qty_per_unit) : prev.qty_per_unit,
+                                                }));
                                             }}
                                             className="glass-input w-full"
                                             required

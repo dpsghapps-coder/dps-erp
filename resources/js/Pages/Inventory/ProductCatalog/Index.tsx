@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { useState } from 'react';
 
 export default function ProductCatalogIndex() {
-    const { products, categories, uoms, packTypes } = usePage().props as any;
+    const { products, categories, uoms, packTypes, discreteUoms } = usePage().props as any;
     const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -20,9 +20,12 @@ export default function ProductCatalogIndex() {
         item_category: '',
         uom: 'Pieces',
         pack_type: '',
+        default_qty_per_unit: '',
         item_status: 'Active',
         restock_threshold: 0,
     });
+
+    const isDiscreteUom = (uom: string) => (discreteUoms || []).includes(uom);
 
     const filteredProducts = (products?.data || []).filter((p: any) => {
         if (!search) return true;
@@ -40,6 +43,7 @@ export default function ProductCatalogIndex() {
         formData.append('item_category', data.item_category || '');
         formData.append('uom', data.uom);
         formData.append('pack_type', data.pack_type || '');
+        formData.append('default_qty_per_unit', isDiscreteUom(data.uom) ? '' : (data.default_qty_per_unit || ''));
         formData.append('item_status', data.item_status || 'Active');
         formData.append('restock_threshold', String(data.restock_threshold ?? 0));
         if (picture) formData.append('picture', picture);
@@ -64,6 +68,7 @@ export default function ProductCatalogIndex() {
         formData.append('item_category', editingProduct.item_category || '');
         formData.append('uom', editingProduct.uom);
         formData.append('pack_type', editingProduct.pack_type || '');
+        formData.append('default_qty_per_unit', isDiscreteUom(editingProduct.uom) ? '' : (editingProduct.default_qty_per_unit || ''));
         formData.append('item_status', editingProduct.item_status || 'Active');
         formData.append('restock_threshold', String(editingProduct.restock_threshold ?? 0));
         formData.append('_method', 'PUT');
@@ -100,6 +105,7 @@ export default function ProductCatalogIndex() {
             item_category: '',
             uom: 'Pieces',
             pack_type: '',
+            default_qty_per_unit: '',
         });
         setShowModal(true);
     };
@@ -324,6 +330,21 @@ export default function ProductCatalogIndex() {
                                         ))}
                                     </select>
                                 </div>
+                                {!isDiscreteUom(data.uom) && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({data.uom})</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={data.default_qty_per_unit}
+                                            onChange={(e) => setData('default_qty_per_unit', e.target.value)}
+                                            className="glass-input w-full"
+                                            placeholder={`e.g. how many ${data.uom.toLowerCase()} in one ${(data.pack_type || 'unit').toLowerCase()}`}
+                                        />
+                                        <p className="text-xs text-slate-400 mt-1">Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
+                                    </div>
+                                )}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Picture</label>
                                     <input
@@ -435,6 +456,21 @@ export default function ProductCatalogIndex() {
                                         ))}
                                     </select>
                                 </div>
+                                {!isDiscreteUom(editingProduct.uom) && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({editingProduct.uom})</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={editingProduct.default_qty_per_unit ?? ''}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, default_qty_per_unit: e.target.value })}
+                                            className="glass-input w-full"
+                                            placeholder={`e.g. how many ${editingProduct.uom.toLowerCase()} in one ${(editingProduct.pack_type || 'unit').toLowerCase()}`}
+                                        />
+                                        <p className="text-xs text-slate-400 mt-1">Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
+                                    </div>
+                                )}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Picture</label>
                                     <input
