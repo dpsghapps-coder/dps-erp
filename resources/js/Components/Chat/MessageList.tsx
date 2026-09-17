@@ -148,27 +148,43 @@ const MessageBubble = memo(function MessageBubble({ message, isOwn, isGroup, sho
                         {message.attachments.length > 0 && (
                             <div className="mt-2 space-y-1">
                                 {message.attachments.map(attachment => (
-                                    <div
-                                        key={attachment.id}
-                                        className={`flex items-center gap-2 p-2 rounded-lg ${
-                                            isOwn ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
-                                        }`}
-                                    >
-                                        <Paperclip className="w-4 h-4 flex-shrink-0" />
-                                        <span className="text-sm truncate flex-1">
-                                            {attachment.file_name}
-                                        </span>
-                                        <span className="text-xs opacity-75">
-                                            {formatFileSize(attachment.file_size)}
-                                        </span>
+                                    attachment.mime_type.startsWith('image/') ? (
                                         <a
-                                            href={`/storage/${attachment.file_path}`}
-                                            download
-                                            className="p-1 hover:bg-slate-200 dark:hover:bg-white/20 rounded"
+                                            key={attachment.id}
+                                            href={`/chat/attachments/${attachment.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="block"
                                         >
-                                            <Download className="w-4 h-4" />
+                                            <img
+                                                src={`/chat/attachments/${attachment.id}`}
+                                                alt={attachment.file_name}
+                                                className="max-w-full max-h-64 rounded-lg object-contain"
+                                            />
                                         </a>
-                                    </div>
+                                    ) : (
+                                        <div
+                                            key={attachment.id}
+                                            className={`flex items-center gap-2 p-2 rounded-lg ${
+                                                isOwn ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'
+                                            }`}
+                                        >
+                                            <Paperclip className="w-4 h-4 flex-shrink-0" />
+                                            <span className="text-sm truncate flex-1">
+                                                {attachment.file_name}
+                                            </span>
+                                            <span className="text-xs opacity-75">
+                                                {formatFileSize(attachment.file_size)}
+                                            </span>
+                                            <a
+                                                href={`/chat/attachments/${attachment.id}`}
+                                                download
+                                                className="p-1 hover:bg-slate-200 dark:hover:bg-white/20 rounded"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </a>
+                                        </div>
+                                    )
                                 ))}
                             </div>
                         )}

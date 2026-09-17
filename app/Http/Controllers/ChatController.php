@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
+use App\Models\MessageAttachment;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ChatController extends Controller
 {
@@ -104,7 +106,7 @@ class ChatController extends Controller
 
         if (! empty($validated['files'])) {
             foreach ($request->file('files') as $file) {
-                $path = $file->store('chat/attachments', 'private');
+                $path = $file->store('chat/attachments', 'local');
                 $message->attachments()->create([
                     'file_name' => $file->getClientOriginalName(),
                     'file_path' => $path,
@@ -117,6 +119,20 @@ class ChatController extends Controller
         $message->load(['user:id,name,employee_id', 'attachments']);
 
         return response()->json($message);
+    }
+
+    public function downloadAttachment(Request $request, int $attachmentId): StreamedResponse
+    {
+        $user = $request->user();
+        $attachment = MessageAttachment::with('message.conversation')->findOrFail($attachmentId);
+
+        $isParticipant = $attachment->message->conversation->participants()
+            ->where('user_id', $user->id)
+            ->exists();
+
+        abort_unless($isParticipant, 403);
+
+        return Storage::disk('local')->response($attachment->file_path, $attachment->file_name);
     }
 
     public function createConversation(Request $request): JsonResponse
@@ -315,7 +331,7 @@ class ChatController extends Controller
 
         $conversation->messages()->each(function ($message) {
             $message->attachments()->each(function ($attachment) {
-                Storage::disk('private')->delete($attachment->file_path);
+                Storage::disk('local')->delete($attachment->file_path);
             });
             $message->delete();
         });

@@ -694,6 +694,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/chat/conversations/{conversationId}/leave', [ChatController::class, 'leaveConversation']);
         Route::delete('/chat/conversations/{conversationId}', [ChatController::class, 'deleteConversation']);
         Route::get('/chat/unread', [ChatController::class, 'getUnreadCounts']);
+        Route::get('/chat/attachments/{attachmentId}', [ChatController::class, 'downloadAttachment']);
         Route::get('/chat/presence', [ChatController::class, 'getPresence']);
         Route::post('/chat/conversations/{conversationId}/messages/{messageId}/pin', [ChatController::class, 'pinMessage']);
         Route::delete('/chat/conversations/{conversationId}/messages/{messageId}/pin', [ChatController::class, 'unpinMessage']);
