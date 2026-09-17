@@ -521,6 +521,9 @@ export default function StockIndex() {
                                                     // Pre-fill from the material's default; locked below until the
                                                     // "Edit" checkbox is checked, unless there is no default to protect.
                                                     qty_per_unit: material?.default_qty_per_unit ? String(material.default_qty_per_unit) : prev.qty_per_unit,
+                                                    // Pre-fill from the material's reference price; stays a normal
+                                                    // editable value afterward, same as qty_per_unit above.
+                                                    material_cost: material?.price_per_unit ? String(material.price_per_unit) : prev.material_cost,
                                                 }));
                                                 setEditQtyPerUnit(!material?.default_qty_per_unit);
                                             }}

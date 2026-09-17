@@ -29,7 +29,7 @@ class StockController extends Controller
 
         $products = InventoryProduct::where('item_status', 'Active')
             ->orderBy('item_name')
-            ->get(['id', 'item_name', 'material_id', 'item_category', 'uom', 'pack_type', 'default_qty_per_unit']);
+            ->get(['id', 'item_name', 'material_id', 'item_category', 'uom', 'pack_type', 'default_qty_per_unit', 'price_per_unit']);
 
         $stockLevels = InventoryProduct::with(['stocks', 'approvedRequisitions'])
             ->whereHas('stocks')
