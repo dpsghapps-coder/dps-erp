@@ -300,7 +300,7 @@ export default function ProductEdit() {
                                                 onChange={(e) => updateUnitPrice(index, parseFloat(e.target.value) || 0)}
                                                 className="glass-input w-full"
                                                 min="0"
-                                                step="0.01"
+                                                step="0.0001"
                                                 placeholder="Price"
                                             />
                                         </div>

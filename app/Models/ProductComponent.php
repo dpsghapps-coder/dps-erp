@@ -19,7 +19,7 @@ class ProductComponent extends Model
 
     protected $casts = [
         'quantity' => 'float',
-        'unit_price' => 'decimal:2',
+        'unit_price' => 'decimal:4',
     ];
 
     public function product(): BelongsTo
