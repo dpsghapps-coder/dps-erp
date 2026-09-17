@@ -18,6 +18,9 @@ export default function StockIndex() {
     const [editingStock, setEditingStock] = useState<any>(null);
     const [selectedCategory, setSelectedCategory] = useState('');
     const [thresholdModal, setThresholdModal] = useState<{ open: boolean; item: any; value: string; saving: boolean }>({ open: false, item: null, value: '', saving: false });
+    // Once a material's default_qty_per_unit fills the field, it's locked
+    // until this is checked -- prevents accidental overwrites of the default.
+    const [editQtyPerUnit, setEditQtyPerUnit] = useState(true);
 
     const emptyForm = {
         product_id: '',
@@ -139,6 +142,7 @@ export default function StockIndex() {
             notes: stock.notes || '',
             purchased_by: stock.purchased_by || '',
         });
+        setEditQtyPerUnit(true);
         setShowModal(true);
     };
 
@@ -160,6 +164,7 @@ export default function StockIndex() {
         setEditingStock(null);
         setSelectedCategory('');
         setData({ ...emptyForm, date_purchased: new Date().toISOString().split('T')[0] });
+        setEditQtyPerUnit(true);
         setShowModal(true);
     };
 
@@ -190,6 +195,7 @@ export default function StockIndex() {
                 notes: prefill.source ? `From PO ${prefill.source}` : '',
                 date_purchased: new Date().toISOString().split('T')[0],
             });
+            setEditQtyPerUnit(true);
             setShowModal(true);
         } catch {
             // malformed prefill payload -- ignore and open the page normally
@@ -508,10 +514,11 @@ export default function StockIndex() {
                                                     ...prev,
                                                     product_id: e.target.value,
                                                     pack_type: material?.pack_type || '',
-                                                    // Pre-fill from the material's default, but still a normal
-                                                    // editable value afterward -- not re-applied on every render.
+                                                    // Pre-fill from the material's default; locked below until the
+                                                    // "Edit" checkbox is checked, unless there is no default to protect.
                                                     qty_per_unit: material?.default_qty_per_unit ? String(material.default_qty_per_unit) : prev.qty_per_unit,
                                                 }));
+                                                setEditQtyPerUnit(!material?.default_qty_per_unit);
                                             }}
                                             className="glass-input w-full"
                                             required
@@ -570,18 +577,34 @@ export default function StockIndex() {
                                         {errors.units_purchased && <p className="text-red-400 text-sm mt-1">{errors.units_purchased}</p>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Qty per Unit ({materialUom}) *</label>
+                                        <div className="flex items-center justify-between mb-2 gap-2">
+                                            <label className="block text-sm font-medium">Qty per Unit ({materialUom}) *</label>
+                                            {!isDiscreteUom && !!selectedMaterial?.default_qty_per_unit && (
+                                                <label className="flex items-center gap-1.5 text-xs text-slate-500 font-normal cursor-pointer whitespace-nowrap">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={editQtyPerUnit}
+                                                        onChange={(e) => setEditQtyPerUnit(e.target.checked)}
+                                                        className="rounded"
+                                                    />
+                                                    Edit Qty per Unit ({materialUom})
+                                                </label>
+                                            )}
+                                        </div>
                                         <input
                                             type="number"
                                             min="0.01"
                                             step="0.01"
                                             value={data.qty_per_unit}
                                             onChange={(e) => setData('qty_per_unit', e.target.value)}
-                                            className={`glass-input w-full ${isDiscreteUom ? 'opacity-60 cursor-not-allowed' : ''}`}
-                                            disabled={isDiscreteUom}
+                                            className={`glass-input w-full ${(isDiscreteUom || !editQtyPerUnit) ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                            disabled={isDiscreteUom || !editQtyPerUnit}
                                             required
                                         />
                                         {isDiscreteUom && <p className="text-xs text-slate-400 mt-1">{materialUom} is a discrete unit, so this is always 1.</p>}
+                                        {!isDiscreteUom && !!selectedMaterial?.default_qty_per_unit && !editQtyPerUnit && (
+                                            <p className="text-xs text-slate-400 mt-1">Using material default. Check the box to override.</p>
+                                        )}
                                         {errors.qty_per_unit && <p className="text-red-400 text-sm mt-1">{errors.qty_per_unit}</p>}
                                     </div>
                                     <div>
