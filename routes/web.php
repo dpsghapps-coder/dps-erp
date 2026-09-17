@@ -40,6 +40,7 @@ use App\Http\Controllers\Marketing\MarketingDocumentController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfficeIssueReportController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\OnlineUsersController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderReportController;
 use App\Http\Controllers\Procurement\GoodController;
@@ -90,6 +91,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/executive-dashboard', [DashboardController::class, 'executiveDashboard'])->name('executive-dashboard');
     });
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
+
+    Route::get('/users/online', [OnlineUsersController::class, 'index'])->name('users.online');
 
     // Help Center
     Route::get('/help', [HelpController::class, 'index'])->name('help.index');

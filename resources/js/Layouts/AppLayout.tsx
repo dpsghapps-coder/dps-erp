@@ -48,6 +48,7 @@ import {
     Network
 } from 'lucide-react';
 import ChatSidebar from '@/Components/Chat/ChatSidebar';
+import OnlineUsersButton from '@/Components/OnlineUsersButton';
 
 interface NavItem {
     name: string;
@@ -347,6 +348,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     >
                         <LayoutDashboard className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                     </button>
+                    <OnlineUsersButton />
                     <button
                         onClick={() => setChatSidebarOpen(true)}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors relative"
@@ -1614,6 +1616,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     >
                         <span className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500 animate-pulse'}`} />
                     </div>
+                    <OnlineUsersButton />
                     <button
                         onClick={() => setChatSidebarOpen(true)}
                         className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative"

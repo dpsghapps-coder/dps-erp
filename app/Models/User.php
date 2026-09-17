@@ -20,6 +20,7 @@ class User extends Authenticatable
         'role_id',
         'is_active',
         'employee_id',
+        'last_active_at',
     ];
 
     protected $hidden = [
@@ -40,6 +41,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_active_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
         ];
