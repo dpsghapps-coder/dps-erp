@@ -446,9 +446,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/hrm/issue-reports', [OfficeIssueReportController::class, 'index'])->name('hrm.issue-reports');
         Route::post('/hrm/issue-reports/{officeIssueReport}/status', [OfficeIssueReportController::class, 'updateStatus'])->name('hrm.issue-reports.status');
 
-        Route::get('/hrm/{employee}', [HrmController::class, 'show'])->name('hrm.show');
-        Route::get('/hrm/{employee}/edit', [HrmController::class, 'edit'])->name('hrm.edit');
-        Route::put('/hrm/{employee}', [HrmController::class, 'update'])->name('hrm.update');
+        Route::get('/hrm/{employee}', [HrmController::class, 'show'])->name('hrm.show')->where('employee', '[0-9]+');
+        Route::get('/hrm/{employee}/edit', [HrmController::class, 'edit'])->name('hrm.edit')->where('employee', '[0-9]+');
+        Route::put('/hrm/{employee}', [HrmController::class, 'update'])->name('hrm.update')->where('employee', '[0-9]+');
     });
 
     // Studio Routes

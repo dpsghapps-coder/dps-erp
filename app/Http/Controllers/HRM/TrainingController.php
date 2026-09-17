@@ -11,7 +11,8 @@ class TrainingController extends Controller
 {
     public function index()
     {
-        $modules = TrainingModule::with(['employeeTrainings' => fn ($q) => $q->where('status', 'completed')])
+        $modules = TrainingModule::with(['employeeTrainings' => fn ($q) => $q->where('status', 'completed')
+            ->whereHas('user', fn ($q) => $q->where('is_active', true))])
             ->orderBy('sort_order')
             ->orderBy('title')
             ->get();
