@@ -3,7 +3,7 @@
 // when the connection drops, instead of the page going blank.
 //
 // Bump this on meaningful service-worker changes to force old caches out.
-const CACHE_NAME = 'dps-erp-runtime-v1';
+const CACHE_NAME = 'dps-erp-runtime-v2';
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -33,7 +33,14 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    if (request.mode === 'navigate') {
+    // Inertia page visits are same-origin fetch() calls, not browser
+    // navigations (mode stays "cors"/"same-origin"), but they represent a
+    // real page transition whose data must be fresh -- e.g. the redirect
+    // Inertia follows right after a form POST, to re-fetch the list that
+    // POST just changed. Treating them as stale-while-revalidate served
+    // pre-existing cached list data instead of the record just created,
+    // making saves look like they silently failed until a hard reload.
+    if (request.mode === 'navigate' || request.headers.get('X-Inertia')) {
         event.respondWith(networkFirst(request));
         return;
     }
