@@ -39,6 +39,7 @@ class ProductCatalogController extends Controller
         $categories = ProductCategory::with('attributes')->orderBy('name')->get(['id', 'name']);
         $uoms = Setting::where('key', 'like', 'uom_%')->pluck('value');
         $attributes = Setting::where('key', 'like', 'attr_%')->pluck('value');
+        $packTypes = Setting::where('key', 'like', 'pack_type_%')->orderBy('value')->pluck('value');
         $categoryAttributes = ProductCategory::with('attributes')->get()->mapWithKeys(function ($cat) {
             return [$cat->name => $cat->attributes->pluck('value')];
         });
@@ -48,6 +49,7 @@ class ProductCatalogController extends Controller
             'categories' => $categories,
             'uoms' => $uoms,
             'attributes' => $attributes,
+            'packTypes' => $packTypes,
             'categoryAttributes' => $categoryAttributes,
         ]);
     }
@@ -59,6 +61,7 @@ class ProductCatalogController extends Controller
             'item_description' => 'nullable|string',
             'item_category' => 'nullable|string|max:100',
             'uom' => 'required|string|max:50',
+            'pack_type' => 'nullable|string|max:50',
             'item_status' => 'required|in:Active,Disabled',
             'attributes' => 'nullable|json',
             'picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
@@ -101,6 +104,7 @@ class ProductCatalogController extends Controller
             'item_description' => 'nullable|string',
             'item_category' => 'nullable|string|max:100',
             'uom' => 'required|string|max:50',
+            'pack_type' => 'nullable|string|max:50',
             'item_status' => 'required|in:Active,Disabled',
             'attributes' => 'nullable|json',
             'picture' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:2048',

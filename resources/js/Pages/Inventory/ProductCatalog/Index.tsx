@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import { useState } from 'react';
 
 export default function ProductCatalogIndex() {
-    const { products, categories, uoms, categoryAttributes } = usePage().props as any;
+    const { products, categories, uoms, packTypes, categoryAttributes } = usePage().props as any;
     const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -20,6 +20,7 @@ export default function ProductCatalogIndex() {
         item_description: '',
         item_category: '',
         uom: 'Pieces',
+        pack_type: '',
         item_status: 'Active',
         restock_threshold: 0,
     });
@@ -42,6 +43,7 @@ export default function ProductCatalogIndex() {
         formData.append('item_description', data.item_description || '');
         formData.append('item_category', data.item_category || '');
         formData.append('uom', data.uom);
+        formData.append('pack_type', data.pack_type || '');
         formData.append('item_status', data.item_status || 'Active');
         formData.append('restock_threshold', String(data.restock_threshold ?? 0));
         formData.append('attributes', JSON.stringify(attributeValues));
@@ -66,6 +68,7 @@ export default function ProductCatalogIndex() {
         formData.append('item_description', editingProduct.item_description || '');
         formData.append('item_category', editingProduct.item_category || '');
         formData.append('uom', editingProduct.uom);
+        formData.append('pack_type', editingProduct.pack_type || '');
         formData.append('item_status', editingProduct.item_status || 'Active');
         formData.append('restock_threshold', String(editingProduct.restock_threshold ?? 0));
         formData.append('attributes', JSON.stringify(attributeValues));
@@ -102,6 +105,7 @@ export default function ProductCatalogIndex() {
             item_description: '',
             item_category: '',
             uom: 'Pieces',
+            pack_type: '',
         });
         setShowModal(true);
     };
@@ -340,6 +344,19 @@ export default function ProductCatalogIndex() {
                                     </select>
                                 </div>
                                 <div>
+                                    <label className="block text-sm font-medium mb-2">Pack Type</label>
+                                    <select
+                                        value={data.pack_type}
+                                        onChange={(e) => setData('pack_type', e.target.value)}
+                                        className="glass-input w-full"
+                                    >
+                                        <option value="">None</option>
+                                        {(packTypes || []).map((type: string) => (
+                                            <option key={type} value={type}>{type}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
                                     <label className="block text-sm font-medium mb-2">Picture</label>
                                     <input
                                         type="file"
@@ -456,6 +473,19 @@ export default function ProductCatalogIndex() {
                                     >
                                         {(uoms || []).map((u: string) => (
                                             <option key={u} value={u}>{u}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Pack Type</label>
+                                    <select
+                                        value={editingProduct.pack_type || ''}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, pack_type: e.target.value })}
+                                        className="glass-input w-full"
+                                    >
+                                        <option value="">None</option>
+                                        {(packTypes || []).map((type: string) => (
+                                            <option key={type} value={type}>{type}</option>
                                         ))}
                                     </select>
                                 </div>

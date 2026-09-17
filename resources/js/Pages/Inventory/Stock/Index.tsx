@@ -10,7 +10,7 @@ import Swal from 'sweetalert2';
 type SubTab = 'purchases' | 'levels';
 
 export default function StockIndex() {
-    const { stocks, products, stockLevels, suppliers, categories, costTypes, packTypes, employees } = usePage().props as any;
+    const { stocks, products, stockLevels, suppliers, categories, costTypes, employees } = usePage().props as any;
     const formatCurrency = useCurrency();
     const [search, setSearch] = useState('');
     const [subTab, setSubTab] = useState<SubTab>('purchases');
@@ -38,6 +38,7 @@ export default function StockIndex() {
 
     const selectedMaterial = (products || []).find((p: any) => p.id === data.product_id);
     const materialUom = selectedMaterial?.uom || 'Units';
+    const materialPackType = selectedMaterial?.pack_type || '';
 
     // Older records may have a free-text purchaser name that doesn't match
     // any current employee (renamed, deactivated, or predates this dropdown)
@@ -491,7 +492,10 @@ export default function StockIndex() {
                                         <label className="block text-sm font-medium mb-2">Material Name *</label>
                                         <select
                                             value={data.product_id}
-                                            onChange={(e) => setData('product_id', e.target.value)}
+                                            onChange={(e) => {
+                                                const material = (products || []).find((p: any) => p.id === e.target.value);
+                                                setData((prev) => ({ ...prev, product_id: e.target.value, pack_type: material?.pack_type || '' }));
+                                            }}
                                             className="glass-input w-full"
                                             required
                                             disabled={!selectedCategory}
@@ -532,9 +536,11 @@ export default function StockIndex() {
                                         />
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Units Purchased *</label>
+                                        <label className="block text-sm font-medium mb-2">
+                                            Units Purchased{materialPackType ? ` (${materialPackType})` : ''} *
+                                        </label>
                                         <input
                                             type="number"
                                             min="0.01"
@@ -545,20 +551,6 @@ export default function StockIndex() {
                                             required
                                         />
                                         {errors.units_purchased && <p className="text-red-400 text-sm mt-1">{errors.units_purchased}</p>}
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Pack Type</label>
-                                        <select
-                                            value={data.pack_type}
-                                            onChange={(e) => setData('pack_type', e.target.value)}
-                                            className="glass-input w-full"
-                                        >
-                                            <option value="">Select pack type</option>
-                                            {(packTypes || []).map((type: string) => (
-                                                <option key={type} value={type}>{type}</option>
-                                            ))}
-                                        </select>
-                                        {errors.pack_type && <p className="text-red-400 text-sm mt-1">{errors.pack_type}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Qty per Unit ({materialUom}) *</label>

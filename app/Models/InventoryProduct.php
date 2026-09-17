@@ -46,6 +46,7 @@ class InventoryProduct extends Model
         'item_description',
         'item_category',
         'uom',
+        'pack_type',
         'attributes',
         'picture',
         'restock_threshold',

@@ -29,7 +29,7 @@ class StockController extends Controller
 
         $products = InventoryProduct::where('item_status', 'Active')
             ->orderBy('item_name')
-            ->get(['id', 'item_name', 'material_id', 'item_category', 'uom']);
+            ->get(['id', 'item_name', 'material_id', 'item_category', 'uom', 'pack_type']);
 
         $stockLevels = InventoryProduct::with(['stocks', 'approvedRequisitions'])
             ->whereHas('stocks')
@@ -66,8 +66,6 @@ class StockController extends Controller
 
         $costTypes = Setting::where('key', 'like', 'extra_cost_%')->pluck('value');
 
-        $packTypes = Setting::where('key', 'like', 'pack_type_%')->orderBy('value')->pluck('value');
-
         $employees = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return inertia('Inventory/Stock/Index', [
@@ -77,7 +75,6 @@ class StockController extends Controller
             'suppliers' => $suppliers,
             'categories' => $categories,
             'costTypes' => $costTypes,
-            'packTypes' => $packTypes,
             'employees' => $employees,
         ]);
     }
