@@ -51,6 +51,7 @@ class ProductController extends Controller
             'inventoryProducts' => $this->activeMaterials(),
             'services' => $services,
             'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+            'discreteUoms' => Setting::where('key', 'like', 'uom_%')->where('is_discrete', true)->pluck('value'),
             'nextSku' => Product::generateSku(),
         ]);
     }
@@ -107,6 +108,7 @@ class ProductController extends Controller
             'inventoryProducts' => $this->activeMaterials(),
             'services' => $services,
             'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+            'discreteUoms' => Setting::where('key', 'like', 'uom_%')->where('is_discrete', true)->pluck('value'),
         ]);
     }
 

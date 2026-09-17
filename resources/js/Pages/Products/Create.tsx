@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useCurrency } from '@/Utils/currency';
 
 export default function ProductCreate() {
-    const { categories, inventoryProducts, services, uoms, nextSku } = usePage().props;
+    const { categories, inventoryProducts, services, uoms, discreteUoms, nextSku } = usePage().props;
     const formatCurrency = useCurrency();
     const { data, setData, post, transform, processing, errors } = useForm({
         sku: nextSku || '',
@@ -23,6 +23,12 @@ export default function ProductCreate() {
     const [components, setComponents] = useState<any[]>([]);
     const [showMaterialModal, setShowMaterialModal] = useState(false);
     const [showServiceModal, setShowServiceModal] = useState(false);
+    // Set when a selected material's UOM is non-discrete (area/measured) --
+    // the modal then asks for Length x Breadth instead of adding it outright.
+    const [pendingMaterial, setPendingMaterial] = useState<any>(null);
+    const [dims, setDims] = useState({ length: '', breadth: '' });
+
+    const isDiscreteUom = (uom: string) => (discreteUoms || []).includes(uom);
 
     const calculatedBasePrice = components.reduce((sum, c) => sum + (c.unit_price || 0) * (c.quantity || 0), 0);
 
@@ -41,18 +47,36 @@ export default function ProductCreate() {
         setData('prices', newPrices);
     };
 
-    const addMaterial = (material: any) => {
+    const addMaterial = (material: any, quantity: number = 1) => {
         const newComponent = {
             component_id: material.id,
             component_type: 'App\\Models\\InventoryProduct',
             component_name: material.item_name,
             component_sku: material.material_id,
-            unit_price: material.default_price || 0,
-            quantity: 1,
+            // Import the material's own reference price; fall back to the
+            // latest collected supplier price if it has none set.
+            unit_price: material.price_per_unit || material.default_price || 0,
+            quantity,
             type: 'material',
         };
         setComponents([...components, newComponent]);
         setShowMaterialModal(false);
+        setPendingMaterial(null);
+    };
+
+    const selectMaterial = (material: any) => {
+        if (isDiscreteUom(material.uom)) {
+            addMaterial(material, 1);
+        } else {
+            setPendingMaterial(material);
+            setDims({ length: '', breadth: '' });
+        }
+    };
+
+    const confirmMaterialDims = () => {
+        const l = Number(dims.length);
+        const b = Number(dims.breadth);
+        addMaterial(pendingMaterial, l > 0 && b > 0 ? l * b : 1);
     };
 
     const addService = (service: any) => {
@@ -369,29 +393,83 @@ export default function ProductCreate() {
             {showMaterialModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                     <GlassCard className="w-full max-w-2xl max-h-[80vh] overflow-auto">
-                        <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-medium">Select Material</h3>
-                            <button 
-                                onClick={() => setShowMaterialModal(false)}
-                                className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                            >
-                                ✕
-                            </button>
-                        </div>
-                        <div className="space-y-2">
-                            {(inventoryProducts || []).map((material: any) => (
-                                <button
-                                    key={material.id}
-                                    onClick={() => addMaterial(material)}
-                                    className="w-full text-left p-3 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
-                                >
-                                    <div className="font-medium">{material.item_name}</div>
-                                    <div className="text-sm text-slate-400">
-                                        {material.material_id} • {formatCurrency(material.default_price)} • {material.available_stock} {material.uom} in stock
+                        {pendingMaterial ? (
+                            <>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-medium">Dimensions — {pendingMaterial.item_name}</h3>
+                                    <button
+                                        onClick={() => { setPendingMaterial(null); setShowMaterialModal(false); }}
+                                        className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                                <p className="text-sm text-slate-500 mb-4">{pendingMaterial.uom} is measured, not counted -- enter Length and Breadth to calculate the quantity.</p>
+                                <div className="grid grid-cols-2 gap-3 mb-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Length</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={dims.length}
+                                            onChange={(e) => setDims({ ...dims, length: e.target.value })}
+                                            className="glass-input w-full"
+                                        />
                                     </div>
-                                </button>
-                            ))}
-                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Breadth</label>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            value={dims.breadth}
+                                            onChange={(e) => setDims({ ...dims, breadth: e.target.value })}
+                                            className="glass-input w-full"
+                                        />
+                                    </div>
+                                </div>
+                                <p className="text-sm text-slate-500 mb-4">
+                                    Quantity ({pendingMaterial.uom}): <span className="font-semibold text-slate-900 dark:text-white">
+                                        {Number(dims.length) > 0 && Number(dims.breadth) > 0 ? (Number(dims.length) * Number(dims.breadth)).toFixed(2) : '1 (default)'}
+                                    </span>
+                                </p>
+                                <div className="flex justify-end gap-3">
+                                    <button type="button" onClick={() => setPendingMaterial(null)} className="glass-button-secondary">
+                                        Back
+                                    </button>
+                                    <button type="button" onClick={confirmMaterialDims} className="glass-button">
+                                        Add Material
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-medium">Select Material</h3>
+                                    <button
+                                        onClick={() => setShowMaterialModal(false)}
+                                        className="text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
+                                <div className="space-y-2">
+                                    {(inventoryProducts || []).map((material: any) => (
+                                        <button
+                                            key={material.id}
+                                            onClick={() => selectMaterial(material)}
+                                            className="w-full text-left p-3 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                        >
+                                            <div className="font-medium">{material.item_name}</div>
+                                            <div className="text-sm text-slate-400">
+                                                {material.material_id} • {formatCurrency(material.default_price)} • {material.available_stock} {material.uom} in stock
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </>
+                        )}
                     </GlassCard>
                 </div>
             )}

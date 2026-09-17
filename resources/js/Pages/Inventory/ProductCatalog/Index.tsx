@@ -27,32 +27,7 @@ export default function ProductCatalogIndex() {
         restock_threshold: 0,
     });
 
-    // Length/Breadth are just calculator inputs for non-discrete UOMs -- only
-    // their product (the area/measured quantity) is actually saved, as
-    // default_qty_per_unit. Not persisted or pre-filled when editing, since
-    // the material only stores the resulting number, not its two factors.
-    const [createDims, setCreateDims] = useState({ length: '', breadth: '' });
-    const [editDims, setEditDims] = useState({ length: '', breadth: '' });
-
     const isDiscreteUom = (uom: string) => (discreteUoms || []).includes(uom);
-
-    const applyCreateDims = (length: string, breadth: string) => {
-        setCreateDims({ length, breadth });
-        const l = Number(length);
-        const b = Number(breadth);
-        if (l > 0 && b > 0) {
-            setData('default_qty_per_unit', String(l * b));
-        }
-    };
-
-    const applyEditDims = (length: string, breadth: string) => {
-        setEditDims({ length, breadth });
-        const l = Number(length);
-        const b = Number(breadth);
-        if (l > 0 && b > 0 && editingProduct) {
-            setEditingProduct({ ...editingProduct, default_qty_per_unit: String(l * b) });
-        }
-    };
 
     const filteredProducts = (products?.data || []).filter((p: any) => {
         if (!search) return true;
@@ -130,7 +105,6 @@ export default function ProductCatalogIndex() {
     const openCreate = () => {
         reset();
         setPicture(null);
-        setCreateDims({ length: '', breadth: '' });
         setData({
             item_name: '',
             item_description: '',
@@ -147,7 +121,6 @@ export default function ProductCatalogIndex() {
     const openEdit = (product: any) => {
         setEditingProduct(product);
         setPicture(null);
-        setEditDims({ length: '', breadth: '' });
     };
 
     return (
@@ -384,44 +357,18 @@ export default function ProductCatalogIndex() {
                                     </select>
                                 </div>
                                 {!isDiscreteUom(data.uom) && (
-                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Length</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={createDims.length}
-                                                    onChange={(e) => applyCreateDims(e.target.value, createDims.breadth)}
-                                                    className="glass-input w-full"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Breadth</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={createDims.breadth}
-                                                    onChange={(e) => applyCreateDims(createDims.length, e.target.value)}
-                                                    className="glass-input w-full"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({data.uom})</label>
-                                            <input
-                                                type="number"
-                                                min="0.01"
-                                                step="0.01"
-                                                value={data.default_qty_per_unit}
-                                                onChange={(e) => setData('default_qty_per_unit', e.target.value)}
-                                                className="glass-input w-full"
-                                                placeholder={`e.g. how many ${data.uom.toLowerCase()} in one ${(data.pack_type || 'unit').toLowerCase()}`}
-                                            />
-                                            <p className="text-xs text-slate-400 mt-1">Filled in from Length × Breadth, or type it directly. Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({data.uom})</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={data.default_qty_per_unit}
+                                            onChange={(e) => setData('default_qty_per_unit', e.target.value)}
+                                            className="glass-input w-full"
+                                            placeholder={`e.g. how many ${data.uom.toLowerCase()} in one ${(data.pack_type || 'unit').toLowerCase()}`}
+                                        />
+                                        <p className="text-xs text-slate-400 mt-1">Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
                                     </div>
                                 )}
                                 <div>
@@ -560,44 +507,18 @@ export default function ProductCatalogIndex() {
                                     </select>
                                 </div>
                                 {!isDiscreteUom(editingProduct.uom) && (
-                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Length</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={editDims.length}
-                                                    onChange={(e) => applyEditDims(e.target.value, editDims.breadth)}
-                                                    className="glass-input w-full"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium mb-2">Breadth</label>
-                                                <input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={editDims.breadth}
-                                                    onChange={(e) => applyEditDims(editDims.length, e.target.value)}
-                                                    className="glass-input w-full"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({editingProduct.uom})</label>
-                                            <input
-                                                type="number"
-                                                min="0.01"
-                                                step="0.01"
-                                                value={editingProduct.default_qty_per_unit ?? ''}
-                                                onChange={(e) => setEditingProduct({ ...editingProduct, default_qty_per_unit: e.target.value })}
-                                                className="glass-input w-full"
-                                                placeholder={`e.g. how many ${editingProduct.uom.toLowerCase()} in one ${(editingProduct.pack_type || 'unit').toLowerCase()}`}
-                                            />
-                                            <p className="text-xs text-slate-400 mt-1">Filled in from Length × Breadth, or type it directly. Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
-                                        </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({editingProduct.uom})</label>
+                                        <input
+                                            type="number"
+                                            min="0.01"
+                                            step="0.01"
+                                            value={editingProduct.default_qty_per_unit ?? ''}
+                                            onChange={(e) => setEditingProduct({ ...editingProduct, default_qty_per_unit: e.target.value })}
+                                            className="glass-input w-full"
+                                            placeholder={`e.g. how many ${editingProduct.uom.toLowerCase()} in one ${(editingProduct.pack_type || 'unit').toLowerCase()}`}
+                                        />
+                                        <p className="text-xs text-slate-400 mt-1">Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
                                     </div>
                                 )}
                                 <div>
