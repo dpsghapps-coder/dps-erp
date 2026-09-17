@@ -7,12 +7,11 @@ import Swal from 'sweetalert2';
 import { useState } from 'react';
 
 export default function ProductCatalogIndex() {
-    const { products, categories, uoms, packTypes, categoryAttributes } = usePage().props as any;
+    const { products, categories, uoms, packTypes } = usePage().props as any;
     const [search, setSearch] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<any>(null);
 
-    const [attributeValues, setAttributeValues] = useState<Record<string, string>>({});
     const [picture, setPicture] = useState<File | null>(null);
 
     const { data, setData, delete: destroy, processing, reset } = useForm({
@@ -24,9 +23,6 @@ export default function ProductCatalogIndex() {
         item_status: 'Active',
         restock_threshold: 0,
     });
-
-    const selectedCategoryAttrs = categoryAttributes?.[data.item_category] || [];
-    const editSelectedCategoryAttrs = editingProduct ? (categoryAttributes?.[editingProduct.item_category] || []) : [];
 
     const filteredProducts = (products?.data || []).filter((p: any) => {
         if (!search) return true;
@@ -46,7 +42,6 @@ export default function ProductCatalogIndex() {
         formData.append('pack_type', data.pack_type || '');
         formData.append('item_status', data.item_status || 'Active');
         formData.append('restock_threshold', String(data.restock_threshold ?? 0));
-        formData.append('attributes', JSON.stringify(attributeValues));
         if (picture) formData.append('picture', picture);
 
         router.post('/inventory/materials', formData, {
@@ -71,7 +66,6 @@ export default function ProductCatalogIndex() {
         formData.append('pack_type', editingProduct.pack_type || '');
         formData.append('item_status', editingProduct.item_status || 'Active');
         formData.append('restock_threshold', String(editingProduct.restock_threshold ?? 0));
-        formData.append('attributes', JSON.stringify(attributeValues));
         formData.append('_method', 'PUT');
         if (picture) formData.append('picture', picture);
 
@@ -150,7 +144,6 @@ export default function ProductCatalogIndex() {
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Category</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Supplier</th>
                                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Stock Level</th>
-                                <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">Attributes</th>
                                 <th className="text-left py-3 px-4 text-sm font-medium text-slate-500">UOM</th>
                                 <th className="text-right py-3 px-4 text-sm font-medium text-slate-500">Actions</th>
                             </tr>
@@ -178,22 +171,9 @@ export default function ProductCatalogIndex() {
                                                 );
                                             })()}
                                         </td>
-                                        <td className="py-3 px-4">
-                                            {product.attributes && Object.keys(product.attributes).length > 0 ? (
-                                                <div className="flex flex-wrap gap-1 max-w-[200px]">
-                                                    {Object.entries(product.attributes).map(([k, v]) => (
-                                                        <span key={k} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-medium border border-indigo-100">
-                                                            <span className="text-indigo-400">{k}:</span> {String(v)}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <span className="text-xs text-slate-300">-</span>
-                                            )}
-                                        </td>
                                         <td className="py-3 px-4 text-slate-600">{product.uom}</td>
                                         <td className="py-3 px-4 text-right">
-                                            <button onClick={(e) => { e.stopPropagation(); setEditingProduct(product); setAttributeValues(product.attributes || {}); setPicture(null); }} className="text-blue-600 hover:underline mr-3">
+                                            <button onClick={(e) => { e.stopPropagation(); setEditingProduct(product); setPicture(null); }} className="text-blue-600 hover:underline mr-3">
                                                 <Pencil className="w-4 h-4 inline" />
                                             </button>
                                             <button onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} className="text-red-600 hover:underline">
@@ -234,7 +214,7 @@ export default function ProductCatalogIndex() {
                                         <p className="text-xs font-mono text-slate-500">{product.material_id}</p>
                                     </div>
                                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                                        <button onClick={() => { setEditingProduct(product); setAttributeValues(product.attributes || {}); setPicture(null); }} className="text-blue-600">
+                                        <button onClick={() => { setEditingProduct(product); setPicture(null); }} className="text-blue-600">
                                             <Pencil className="w-4 h-4" />
                                         </button>
                                         <button onClick={() => handleDelete(product.id)} className="text-red-600">
@@ -244,15 +224,6 @@ export default function ProductCatalogIndex() {
                                 </div>
                                 <div className="flex flex-col gap-1 text-sm text-slate-600">
                                     <span>{product.item_description || '-'}</span>
-                                    {product.attributes && Object.keys(product.attributes).length > 0 && (
-                                        <div className="flex flex-wrap gap-1">
-                                            {Object.entries(product.attributes).map(([k, v]) => (
-                                                <span key={k} className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-medium border border-indigo-100">
-                                                    <span className="text-indigo-400">{k}:</span> {String(v)}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
                                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                                         {product.item_category && (
                                             <span className="truncate max-w-full">{product.item_category}</span>
@@ -318,10 +289,7 @@ export default function ProductCatalogIndex() {
                                     <label className="block text-sm font-medium mb-2">Category</label>
                                     <select
                                         value={data.item_category}
-                                        onChange={(e) => {
-                                            setData('item_category', e.target.value);
-                                            setAttributeValues({});
-                                        }}
+                                        onChange={(e) => setData('item_category', e.target.value)}
                                         className="glass-input w-full"
                                     >
                                         <option value="">Select category</option>
@@ -376,25 +344,6 @@ export default function ProductCatalogIndex() {
                                     />
                                     <p className="text-xs text-slate-400 mt-1">Low stock alert when qty falls below this value</p>
                                 </div>
-                                {selectedCategoryAttrs.length > 0 && (
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Attributes</label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {selectedCategoryAttrs.map((attr: string) => (
-                                                <div key={attr}>
-                                                    <label className="block text-xs text-slate-500 mb-1">{attr}</label>
-                                                    <input
-                                                        type="text"
-                                                        value={attributeValues[attr] || ''}
-                                                        onChange={(e) => setAttributeValues(prev => ({ ...prev, [attr]: e.target.value }))}
-                                                        className="glass-input w-full"
-                                                        placeholder={`Enter ${attr.toLowerCase()}`}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                             <div className="flex gap-3 mt-6">
                                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 glass-button-secondary">
@@ -451,10 +400,7 @@ export default function ProductCatalogIndex() {
                                     <label className="block text-sm font-medium mb-2">Category</label>
                                     <select
                                         value={editingProduct.item_category || ''}
-                                        onChange={(e) => {
-                                            setEditingProduct({ ...editingProduct, item_category: e.target.value });
-                                            setAttributeValues({});
-                                        }}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, item_category: e.target.value })}
                                         className="glass-input w-full"
                                     >
                                         <option value="">Select category</option>
@@ -509,25 +455,6 @@ export default function ProductCatalogIndex() {
                                     />
                                     <p className="text-xs text-slate-400 mt-1">Low stock alert when qty falls below this value</p>
                                 </div>
-                                {editSelectedCategoryAttrs.length > 0 && (
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Attributes</label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {editSelectedCategoryAttrs.map((attr: string) => (
-                                                <div key={attr}>
-                                                    <label className="block text-xs text-slate-500 mb-1">{attr}</label>
-                                                    <input
-                                                        type="text"
-                                                        value={attributeValues[attr] || ''}
-                                                        onChange={(e) => setAttributeValues(prev => ({ ...prev, [attr]: e.target.value }))}
-                                                        className="glass-input w-full"
-                                                        placeholder={`Enter ${attr.toLowerCase()}`}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                                 <div>
                                     <label className="flex items-center gap-2 cursor-pointer">
                                         <input

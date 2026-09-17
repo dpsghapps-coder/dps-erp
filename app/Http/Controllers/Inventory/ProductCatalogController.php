@@ -36,21 +36,15 @@ class ProductCatalogController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(25);
 
-        $categories = ProductCategory::with('attributes')->orderBy('name')->get(['id', 'name']);
+        $categories = ProductCategory::orderBy('name')->get(['id', 'name']);
         $uoms = Setting::where('key', 'like', 'uom_%')->pluck('value');
-        $attributes = Setting::where('key', 'like', 'attr_%')->pluck('value');
         $packTypes = Setting::where('key', 'like', 'pack_type_%')->orderBy('value')->pluck('value');
-        $categoryAttributes = ProductCategory::with('attributes')->get()->mapWithKeys(function ($cat) {
-            return [$cat->name => $cat->attributes->pluck('value')];
-        });
 
         return inertia('Inventory/ProductCatalog/Index', [
             'products' => $products,
             'categories' => $categories,
             'uoms' => $uoms,
-            'attributes' => $attributes,
             'packTypes' => $packTypes,
-            'categoryAttributes' => $categoryAttributes,
         ]);
     }
 
