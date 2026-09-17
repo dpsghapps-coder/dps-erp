@@ -1,7 +1,8 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
-import { Head, Link, router } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Plus, Save, Trash2, X, Eye, EyeOff } from 'lucide-react';
+import CrmTabs from '@/Components/CrmTabs';
+import { Head, router } from '@inertiajs/react';
+import { Pencil, Plus, Save, Trash2, X, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
 
@@ -139,16 +140,12 @@ export default function CrmSettingsIndex({ sources, industries, regions, cities,
         <AppLayout>
             <Head title="CRM Settings" />
 
-            <div className="mb-6">
-                <Link href="/crm" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-700 transition-colors">
-                    <ArrowLeft className="w-4 h-4" /> Back to Clients
-                </Link>
-            </div>
-
             <PageHeader
                 title="CRM Settings"
                 subtitle="Manage the dropdown lists used on client and contact forms"
             />
+
+            <CrmTabs activeTab="settings" />
 
             <div className="grid md:grid-cols-2 gap-6">
                 <LookupListEditor type="sources" title="Sources" items={sources} />
