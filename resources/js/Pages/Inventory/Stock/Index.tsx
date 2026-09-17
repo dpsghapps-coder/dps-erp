@@ -577,20 +577,7 @@ export default function StockIndex() {
                                         {errors.units_purchased && <p className="text-red-400 text-sm mt-1">{errors.units_purchased}</p>}
                                     </div>
                                     <div>
-                                        <div className="flex items-center justify-between mb-2 gap-2">
-                                            <label className="block text-sm font-medium">Qty per Unit ({materialUom}) *</label>
-                                            {!isDiscreteUom && !!selectedMaterial?.default_qty_per_unit && (
-                                                <label className="flex items-center gap-1.5 text-xs text-slate-500 font-normal cursor-pointer whitespace-nowrap">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={editQtyPerUnit}
-                                                        onChange={(e) => setEditQtyPerUnit(e.target.checked)}
-                                                        className="rounded"
-                                                    />
-                                                    Edit Qty per Unit ({materialUom})
-                                                </label>
-                                            )}
-                                        </div>
+                                        <label className="block text-sm font-medium mb-2">Qty per Unit ({materialUom}) *</label>
                                         <input
                                             type="number"
                                             min="0.01"
@@ -602,8 +589,21 @@ export default function StockIndex() {
                                             required
                                         />
                                         {isDiscreteUom && <p className="text-xs text-slate-400 mt-1">{materialUom} is a discrete unit, so this is always 1.</p>}
-                                        {!isDiscreteUom && !!selectedMaterial?.default_qty_per_unit && !editQtyPerUnit && (
-                                            <p className="text-xs text-slate-400 mt-1">Using material default. Check the box to override.</p>
+                                        {!isDiscreteUom && !!selectedMaterial?.default_qty_per_unit && (
+                                            <div className="mt-1.5">
+                                                <label className="flex items-center gap-1.5 text-xs text-slate-500 font-normal cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={editQtyPerUnit}
+                                                        onChange={(e) => setEditQtyPerUnit(e.target.checked)}
+                                                        className="rounded"
+                                                    />
+                                                    Edit Qty per Unit ({materialUom})
+                                                </label>
+                                                {!editQtyPerUnit && (
+                                                    <p className="text-xs text-slate-400 mt-1">Using material default. Check the box to override.</p>
+                                                )}
+                                            </div>
                                         )}
                                         {errors.qty_per_unit && <p className="text-red-400 text-sm mt-1">{errors.qty_per_unit}</p>}
                                     </div>
