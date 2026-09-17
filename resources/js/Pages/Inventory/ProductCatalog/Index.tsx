@@ -372,17 +372,6 @@ export default function ProductCatalogIndex() {
                                     </div>
                                 )}
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Price per Unit ({data.uom})</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.0001"
-                                        value={data.price_per_unit}
-                                        onChange={(e) => setData('price_per_unit', e.target.value)}
-                                        className="glass-input w-full"
-                                    />
-                                </div>
-                                <div>
                                     <label className="block text-sm font-medium mb-2">Picture</label>
                                     <input
                                         type="file"
@@ -521,17 +510,6 @@ export default function ProductCatalogIndex() {
                                         <p className="text-xs text-slate-400 mt-1">Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
                                     </div>
                                 )}
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">Price per Unit ({editingProduct.uom})</label>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="0.0001"
-                                        value={editingProduct.price_per_unit ?? ''}
-                                        onChange={(e) => setEditingProduct({ ...editingProduct, price_per_unit: e.target.value })}
-                                        className="glass-input w-full"
-                                    />
-                                </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Picture</label>
                                     <input
