@@ -7,6 +7,7 @@ use App\Models\InventoryProduct;
 use App\Models\Setting;
 use App\Models\Stock;
 use App\Models\Supplier;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -65,6 +66,8 @@ class StockController extends Controller
 
         $costTypes = Setting::where('key', 'like', 'extra_cost_%')->pluck('value');
 
+        $employees = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
+
         return inertia('Inventory/Stock/Index', [
             'stocks' => $stocks,
             'products' => $products,
@@ -72,6 +75,7 @@ class StockController extends Controller
             'suppliers' => $suppliers,
             'categories' => $categories,
             'costTypes' => $costTypes,
+            'employees' => $employees,
         ]);
     }
 

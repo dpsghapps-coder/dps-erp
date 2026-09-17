@@ -10,7 +10,7 @@ import Swal from 'sweetalert2';
 type SubTab = 'purchases' | 'levels';
 
 export default function StockIndex() {
-    const { stocks, products, stockLevels, suppliers, categories, costTypes } = usePage().props as any;
+    const { stocks, products, stockLevels, suppliers, categories, costTypes, employees } = usePage().props as any;
     const formatCurrency = useCurrency();
     const [search, setSearch] = useState('');
     const [subTab, setSubTab] = useState<SubTab>('purchases');
@@ -37,6 +37,13 @@ export default function StockIndex() {
 
     const selectedMaterial = (products || []).find((p: any) => p.id === data.product_id);
     const materialUom = selectedMaterial?.uom || 'Units';
+
+    // Older records may have a free-text purchaser name that doesn't match
+    // any current employee (renamed, deactivated, or predates this dropdown)
+    // -- keep it selectable instead of silently blanking the field on edit.
+    const purchasedByOptions = data.purchased_by && !(employees || []).some((e: any) => e.name === data.purchased_by)
+        ? [...(employees || []), { id: 'current', name: data.purchased_by }]
+        : (employees || []);
 
     const qtyPurchased = Number(data.units_purchased || 0) * Number(data.qty_per_unit || 0);
     const extraCostsTotal = data.cost_items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
@@ -573,13 +580,17 @@ export default function StockIndex() {
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium mb-2">Purchased By</label>
-                                        <input
-                                            type="text"
+                                        <select
                                             value={data.purchased_by}
                                             onChange={(e) => setData('purchased_by', e.target.value)}
                                             className="glass-input w-full"
-                                            placeholder="Who made the purchase?"
-                                        />
+                                        >
+                                            <option value="">Select employee</option>
+                                            {purchasedByOptions.map((employee: any) => (
+                                                <option key={employee.id} value={employee.name}>{employee.name}</option>
+                                            ))}
+                                        </select>
+                                        {errors.purchased_by && <p className="text-red-400 text-sm mt-1">{errors.purchased_by}</p>}
                                     </div>
                                 </div>
 
