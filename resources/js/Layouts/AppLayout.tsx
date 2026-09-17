@@ -1891,7 +1891,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     }`}
                 >
                     <Users className="w-5 h-5" />
-                    <span className="text-[10px] font-medium truncate max-w-full">CRM</span>
+                    <span className="text-[10px] font-medium truncate max-w-full">Interaction</span>
                 </button>
                 )}
                 {(hasModulePermission('inventory') || hasModulePermission('procurement')) && (
@@ -1954,11 +1954,11 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                         <Users className="w-5 h-5 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900">CRM</h3>
-                                        <p className="text-xs text-slate-500">Clients & Accounts</p>
+                                        <h3 className="font-semibold text-slate-900">Interaction</h3>
+                                        <p className="text-xs text-slate-500">Dashboard, Clients & Sales</p>
                                     </div>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setCrmSlideUpOpen(false)}
                                     className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                                 >
@@ -1985,6 +1985,24 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                         <span className="font-medium">{item.name}</span>
                                     </Link>
                                 ))}
+                                {hasModulePermission('marketing') && (
+                                    <Link
+                                        href="/marketing"
+                                        onClick={() => setCrmSlideUpOpen(false)}
+                                        className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+                                            isMarketingPage
+                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo/25'
+                                                : 'text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                            isMarketingPage ? 'bg-white/20' : 'bg-slate-100'
+                                        }`}>
+                                            <Globe className="w-5 h-5" />
+                                        </div>
+                                        <span className="font-medium">Marketing</span>
+                                    </Link>
+                                )}
                                 {can('crm.manage_settings') && (
                                     <Link
                                         href="/crm/settings"
