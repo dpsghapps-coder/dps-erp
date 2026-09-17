@@ -19,13 +19,40 @@ export default function ProductCatalogIndex() {
         item_description: '',
         item_category: '',
         uom: 'Pieces',
+        source: 'Purchased',
         pack_type: '',
         default_qty_per_unit: '',
+        price_per_unit: '',
         item_status: 'Active',
         restock_threshold: 0,
     });
 
+    // Length/Breadth are just calculator inputs for non-discrete UOMs -- only
+    // their product (the area/measured quantity) is actually saved, as
+    // default_qty_per_unit. Not persisted or pre-filled when editing, since
+    // the material only stores the resulting number, not its two factors.
+    const [createDims, setCreateDims] = useState({ length: '', breadth: '' });
+    const [editDims, setEditDims] = useState({ length: '', breadth: '' });
+
     const isDiscreteUom = (uom: string) => (discreteUoms || []).includes(uom);
+
+    const applyCreateDims = (length: string, breadth: string) => {
+        setCreateDims({ length, breadth });
+        const l = Number(length);
+        const b = Number(breadth);
+        if (l > 0 && b > 0) {
+            setData('default_qty_per_unit', String(l * b));
+        }
+    };
+
+    const applyEditDims = (length: string, breadth: string) => {
+        setEditDims({ length, breadth });
+        const l = Number(length);
+        const b = Number(breadth);
+        if (l > 0 && b > 0 && editingProduct) {
+            setEditingProduct({ ...editingProduct, default_qty_per_unit: String(l * b) });
+        }
+    };
 
     const filteredProducts = (products?.data || []).filter((p: any) => {
         if (!search) return true;
@@ -42,8 +69,10 @@ export default function ProductCatalogIndex() {
         formData.append('item_description', data.item_description || '');
         formData.append('item_category', data.item_category || '');
         formData.append('uom', data.uom);
+        formData.append('source', data.source || 'Purchased');
         formData.append('pack_type', data.pack_type || '');
         formData.append('default_qty_per_unit', isDiscreteUom(data.uom) ? '' : (data.default_qty_per_unit || ''));
+        formData.append('price_per_unit', data.price_per_unit || '');
         formData.append('item_status', data.item_status || 'Active');
         formData.append('restock_threshold', String(data.restock_threshold ?? 0));
         if (picture) formData.append('picture', picture);
@@ -67,8 +96,10 @@ export default function ProductCatalogIndex() {
         formData.append('item_description', editingProduct.item_description || '');
         formData.append('item_category', editingProduct.item_category || '');
         formData.append('uom', editingProduct.uom);
+        formData.append('source', editingProduct.source || 'Purchased');
         formData.append('pack_type', editingProduct.pack_type || '');
         formData.append('default_qty_per_unit', isDiscreteUom(editingProduct.uom) ? '' : (editingProduct.default_qty_per_unit || ''));
+        formData.append('price_per_unit', editingProduct.price_per_unit || '');
         formData.append('item_status', editingProduct.item_status || 'Active');
         formData.append('restock_threshold', String(editingProduct.restock_threshold ?? 0));
         formData.append('_method', 'PUT');
@@ -99,15 +130,24 @@ export default function ProductCatalogIndex() {
     const openCreate = () => {
         reset();
         setPicture(null);
+        setCreateDims({ length: '', breadth: '' });
         setData({
             item_name: '',
             item_description: '',
             item_category: '',
             uom: 'Pieces',
+            source: 'Purchased',
             pack_type: '',
             default_qty_per_unit: '',
+            price_per_unit: '',
         });
         setShowModal(true);
+    };
+
+    const openEdit = (product: any) => {
+        setEditingProduct(product);
+        setPicture(null);
+        setEditDims({ length: '', breadth: '' });
     };
 
     return (
@@ -179,7 +219,7 @@ export default function ProductCatalogIndex() {
                                         </td>
                                         <td className="py-3 px-4 text-slate-600">{product.uom}</td>
                                         <td className="py-3 px-4 text-right">
-                                            <button onClick={(e) => { e.stopPropagation(); setEditingProduct(product); setPicture(null); }} className="text-blue-600 hover:underline mr-3">
+                                            <button onClick={(e) => { e.stopPropagation(); openEdit(product); }} className="text-blue-600 hover:underline mr-3">
                                                 <Pencil className="w-4 h-4 inline" />
                                             </button>
                                             <button onClick={(e) => { e.stopPropagation(); handleDelete(product.id); }} className="text-red-600 hover:underline">
@@ -220,7 +260,7 @@ export default function ProductCatalogIndex() {
                                         <p className="text-xs font-mono text-slate-500">{product.material_id}</p>
                                     </div>
                                     <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                                        <button onClick={() => { setEditingProduct(product); setPicture(null); }} className="text-blue-600">
+                                        <button onClick={() => openEdit(product)} className="text-blue-600">
                                             <Pencil className="w-4 h-4" />
                                         </button>
                                         <button onClick={() => handleDelete(product.id)} className="text-red-600">
@@ -318,6 +358,19 @@ export default function ProductCatalogIndex() {
                                     </select>
                                 </div>
                                 <div>
+                                    <label className="block text-sm font-medium mb-2">Source *</label>
+                                    <select
+                                        value={data.source}
+                                        onChange={(e) => setData('source', e.target.value)}
+                                        className="glass-input w-full"
+                                        required
+                                    >
+                                        <option value="Purchased">Purchased</option>
+                                        <option value="Manufactured">Manufactured</option>
+                                        <option value="Customized">Customized</option>
+                                    </select>
+                                </div>
+                                <div>
                                     <label className="block text-sm font-medium mb-2">Pack Type</label>
                                     <select
                                         value={data.pack_type}
@@ -331,20 +384,57 @@ export default function ProductCatalogIndex() {
                                     </select>
                                 </div>
                                 {!isDiscreteUom(data.uom) && (
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({data.uom})</label>
-                                        <input
-                                            type="number"
-                                            min="0.01"
-                                            step="0.01"
-                                            value={data.default_qty_per_unit}
-                                            onChange={(e) => setData('default_qty_per_unit', e.target.value)}
-                                            className="glass-input w-full"
-                                            placeholder={`e.g. how many ${data.uom.toLowerCase()} in one ${(data.pack_type || 'unit').toLowerCase()}`}
-                                        />
-                                        <p className="text-xs text-slate-400 mt-1">Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
+                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Length</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={createDims.length}
+                                                    onChange={(e) => applyCreateDims(e.target.value, createDims.breadth)}
+                                                    className="glass-input w-full"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Breadth</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={createDims.breadth}
+                                                    onChange={(e) => applyCreateDims(createDims.length, e.target.value)}
+                                                    className="glass-input w-full"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({data.uom})</label>
+                                            <input
+                                                type="number"
+                                                min="0.01"
+                                                step="0.01"
+                                                value={data.default_qty_per_unit}
+                                                onChange={(e) => setData('default_qty_per_unit', e.target.value)}
+                                                className="glass-input w-full"
+                                                placeholder={`e.g. how many ${data.uom.toLowerCase()} in one ${(data.pack_type || 'unit').toLowerCase()}`}
+                                            />
+                                            <p className="text-xs text-slate-400 mt-1">Filled in from Length × Breadth, or type it directly. Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
+                                        </div>
                                     </div>
                                 )}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Price per Unit ({data.uom})</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.0001"
+                                        value={data.price_per_unit}
+                                        onChange={(e) => setData('price_per_unit', e.target.value)}
+                                        className="glass-input w-full"
+                                    />
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Picture</label>
                                     <input
@@ -444,6 +534,19 @@ export default function ProductCatalogIndex() {
                                     </select>
                                 </div>
                                 <div>
+                                    <label className="block text-sm font-medium mb-2">Source *</label>
+                                    <select
+                                        value={editingProduct.source || 'Purchased'}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, source: e.target.value })}
+                                        className="glass-input w-full"
+                                        required
+                                    >
+                                        <option value="Purchased">Purchased</option>
+                                        <option value="Manufactured">Manufactured</option>
+                                        <option value="Customized">Customized</option>
+                                    </select>
+                                </div>
+                                <div>
                                     <label className="block text-sm font-medium mb-2">Pack Type</label>
                                     <select
                                         value={editingProduct.pack_type || ''}
@@ -457,20 +560,57 @@ export default function ProductCatalogIndex() {
                                     </select>
                                 </div>
                                 {!isDiscreteUom(editingProduct.uom) && (
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({editingProduct.uom})</label>
-                                        <input
-                                            type="number"
-                                            min="0.01"
-                                            step="0.01"
-                                            value={editingProduct.default_qty_per_unit ?? ''}
-                                            onChange={(e) => setEditingProduct({ ...editingProduct, default_qty_per_unit: e.target.value })}
-                                            className="glass-input w-full"
-                                            placeholder={`e.g. how many ${editingProduct.uom.toLowerCase()} in one ${(editingProduct.pack_type || 'unit').toLowerCase()}`}
-                                        />
-                                        <p className="text-xs text-slate-400 mt-1">Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
+                                    <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Length</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={editDims.length}
+                                                    onChange={(e) => applyEditDims(e.target.value, editDims.breadth)}
+                                                    className="glass-input w-full"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium mb-2">Breadth</label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    step="0.01"
+                                                    value={editDims.breadth}
+                                                    onChange={(e) => applyEditDims(editDims.length, e.target.value)}
+                                                    className="glass-input w-full"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium mb-2">Default Quantity per Unit ({editingProduct.uom})</label>
+                                            <input
+                                                type="number"
+                                                min="0.01"
+                                                step="0.01"
+                                                value={editingProduct.default_qty_per_unit ?? ''}
+                                                onChange={(e) => setEditingProduct({ ...editingProduct, default_qty_per_unit: e.target.value })}
+                                                className="glass-input w-full"
+                                                placeholder={`e.g. how many ${editingProduct.uom.toLowerCase()} in one ${(editingProduct.pack_type || 'unit').toLowerCase()}`}
+                                            />
+                                            <p className="text-xs text-slate-400 mt-1">Filled in from Length × Breadth, or type it directly. Pre-fills Qty per Unit on the Add Purchase form; still editable per purchase.</p>
+                                        </div>
                                     </div>
                                 )}
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Price per Unit ({editingProduct.uom})</label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="0.0001"
+                                        value={editingProduct.price_per_unit ?? ''}
+                                        onChange={(e) => setEditingProduct({ ...editingProduct, price_per_unit: e.target.value })}
+                                        className="glass-input w-full"
+                                    />
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium mb-2">Picture</label>
                                     <input

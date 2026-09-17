@@ -46,8 +46,10 @@ class InventoryProduct extends Model
         'item_description',
         'item_category',
         'uom',
+        'source',
         'pack_type',
         'default_qty_per_unit',
+        'price_per_unit',
         'attributes',
         'picture',
         'restock_threshold',
@@ -57,9 +59,11 @@ class InventoryProduct extends Model
 
     protected $casts = [
         'item_status' => 'string',
+        'source' => 'string',
         'date_deactivated' => 'datetime',
         'attributes' => 'array',
         'default_qty_per_unit' => 'decimal:2',
+        'price_per_unit' => 'decimal:4',
     ];
 
     protected $appends = ['available_stock', 'default_price', 'primary_supplier', 'unit_cost'];
