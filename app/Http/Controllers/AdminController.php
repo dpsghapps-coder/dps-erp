@@ -401,6 +401,15 @@ class AdminController extends Controller
         return back()->with('success', 'UOM deleted');
     }
 
+    public function toggleUomDiscrete(Setting $setting)
+    {
+        if (str_starts_with($setting->key, 'uom_')) {
+            $setting->update(['is_discrete' => ! $setting->is_discrete]);
+        }
+
+        return back()->with('success', 'UOM updated');
+    }
+
     public function storeCategory(Request $request)
     {
         $validated = $request->validate(['value' => 'required|string|max:50']);

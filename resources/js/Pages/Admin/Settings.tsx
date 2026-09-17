@@ -267,8 +267,8 @@ export default function Settings() {
                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
                             <Package className="w-5 h-5" /> Units of Measure (UOM)
                         </h2>
-                        <p className="text-sm text-slate-400 mb-4">Manage inventory UOMs.</p>
-                        
+                        <p className="text-sm text-slate-400 mb-4">Manage inventory UOMs. Mark a UOM "Discrete" (e.g. Pieces) when each unit purchased is a single item with no separate amount-per-pack to measure — the Add Purchase form then locks Qty per Unit to 1 for it instead of treating it as a multiplier.</p>
+
                         <form onSubmit={handleAddUom} className="flex gap-2 mb-6">
                             <input type="text" value={newUom} onChange={(e) => setNewUom(e.target.value)} placeholder="New UOM" className="glass-input flex-1" />
                             <button type="submit" className="glass-button flex items-center gap-2"><Plus className="w-4 h-4" /> Add</button>
@@ -277,8 +277,19 @@ export default function Settings() {
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                             {(uoms || []).map((uom: any) => (
                                 <div key={uom.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
-                                    <span>{uom.value}</span>
-                                    <Link href={`/admin/settings/uom/${uom.id}`} method="delete" as="button" className="text-red-400 hover:text-red-300">
+                                    <div className="min-w-0">
+                                        <span className="block truncate">{uom.value}</span>
+                                        <label className="flex items-center gap-1.5 mt-1 text-xs text-slate-400 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={!!uom.is_discrete}
+                                                onChange={() => router.post(`/admin/settings/uom/${uom.id}/toggle-discrete`)}
+                                                className="w-3.5 h-3.5 rounded"
+                                            />
+                                            Discrete
+                                        </label>
+                                    </div>
+                                    <Link href={`/admin/settings/uom/${uom.id}`} method="delete" as="button" className="text-red-400 hover:text-red-300 shrink-0">
                                         <Trash2 className="w-4 h-4" />
                                     </Link>
                                 </div>

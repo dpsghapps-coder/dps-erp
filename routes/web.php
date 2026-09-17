@@ -649,6 +649,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/admin/settings', [AdminController::class, 'settingsUpdate'])->name('admin.settings.update');
         Route::post('/admin/settings/uom', [AdminController::class, 'storeUom']);
         Route::delete('/admin/settings/uom/{setting}', [AdminController::class, 'deleteUom']);
+        Route::post('/admin/settings/uom/{setting}/toggle-discrete', [AdminController::class, 'toggleUomDiscrete']);
         Route::post('/admin/settings/category', [AdminController::class, 'storeCategory']);
         Route::delete('/admin/settings/category/{productCategory}', [AdminController::class, 'deleteCategory']);
         Route::post('/admin/settings/attribute', [AdminController::class, 'storeAttribute']);

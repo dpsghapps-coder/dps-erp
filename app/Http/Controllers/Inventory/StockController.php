@@ -66,6 +66,8 @@ class StockController extends Controller
 
         $costTypes = Setting::where('key', 'like', 'extra_cost_%')->pluck('value');
 
+        $discreteUoms = Setting::where('key', 'like', 'uom_%')->where('is_discrete', true)->pluck('value');
+
         $employees = User::where('is_active', true)->orderBy('name')->get(['id', 'name']);
 
         return inertia('Inventory/Stock/Index', [
@@ -75,6 +77,7 @@ class StockController extends Controller
             'suppliers' => $suppliers,
             'categories' => $categories,
             'costTypes' => $costTypes,
+            'discreteUoms' => $discreteUoms,
             'employees' => $employees,
         ]);
     }
@@ -145,7 +148,7 @@ class StockController extends Controller
     private function stockFields(array $validated): array
     {
         $qtyPurchased = $validated['units_purchased'] * $validated['qty_per_unit'];
-        $totalCost = $validated['material_cost'] + collect($validated['cost_items'] ?? [])->sum('amount');
+        $totalCost = ($validated['units_purchased'] * $validated['material_cost']) + collect($validated['cost_items'] ?? [])->sum('amount');
 
         return [
             'product_id' => $validated['product_id'],

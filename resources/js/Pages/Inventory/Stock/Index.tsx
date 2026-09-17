@@ -10,7 +10,7 @@ import Swal from 'sweetalert2';
 type SubTab = 'purchases' | 'levels';
 
 export default function StockIndex() {
-    const { stocks, products, stockLevels, suppliers, categories, costTypes, employees } = usePage().props as any;
+    const { stocks, products, stockLevels, suppliers, categories, costTypes, discreteUoms, employees } = usePage().props as any;
     const formatCurrency = useCurrency();
     const [search, setSearch] = useState('');
     const [subTab, setSubTab] = useState<SubTab>('purchases');
@@ -39,6 +39,16 @@ export default function StockIndex() {
     const selectedMaterial = (products || []).find((p: any) => p.id === data.product_id);
     const materialUom = selectedMaterial?.uom || 'Units';
     const materialPackType = selectedMaterial?.pack_type || '';
+    const isDiscreteUom = !!selectedMaterial && (discreteUoms || []).includes(materialUom);
+
+    // Discrete UOMs (e.g. Pieces) have no separate amount-per-pack to
+    // measure -- each unit purchased is one item -- so Qty per Unit is
+    // locked to 1 instead of acting as a real multiplier.
+    useEffect(() => {
+        if (isDiscreteUom && data.qty_per_unit !== '1') {
+            setData('qty_per_unit', '1');
+        }
+    }, [isDiscreteUom]);
 
     // Older records may have a free-text purchaser name that doesn't match
     // any current employee (renamed, deactivated, or predates this dropdown)
@@ -49,7 +59,7 @@ export default function StockIndex() {
 
     const qtyPurchased = Number(data.units_purchased || 0) * Number(data.qty_per_unit || 0);
     const extraCostsTotal = data.cost_items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-    const totalCost = Number(data.material_cost || 0) + extraCostsTotal;
+    const totalCost = (Number(data.units_purchased || 0) * Number(data.material_cost || 0)) + extraCostsTotal;
     const unitPrice = qtyPurchased > 0 ? totalCost / qtyPurchased : 0;
 
     const addCostItem = () => setData('cost_items', [...data.cost_items, { label: costTypes?.[0] || '', amount: '' }]);
@@ -560,9 +570,11 @@ export default function StockIndex() {
                                             step="0.01"
                                             value={data.qty_per_unit}
                                             onChange={(e) => setData('qty_per_unit', e.target.value)}
-                                            className="glass-input w-full"
+                                            className={`glass-input w-full ${isDiscreteUom ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                            disabled={isDiscreteUom}
                                             required
                                         />
+                                        {isDiscreteUom && <p className="text-xs text-slate-400 mt-1">{materialUom} is a discrete unit, so this is always 1.</p>}
                                         {errors.qty_per_unit && <p className="text-red-400 text-sm mt-1">{errors.qty_per_unit}</p>}
                                     </div>
                                     <div>
@@ -574,7 +586,7 @@ export default function StockIndex() {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium mb-2">Material Cost ($) *</label>
+                                        <label className="block text-sm font-medium mb-2">Material Cost per Unit ($) *</label>
                                         <input
                                             type="number"
                                             step="0.01"

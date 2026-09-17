@@ -10,11 +10,13 @@ class Setting extends Model
         'key',
         'value',
         'type',
+        'is_discrete',
     ];
 
     protected $casts = [
         'value' => 'string',
         'type' => 'string',
+        'is_discrete' => 'boolean',
     ];
 
     public static function get($key, $default = null)
