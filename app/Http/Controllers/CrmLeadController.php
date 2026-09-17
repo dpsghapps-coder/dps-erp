@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\ClientSource;
 use App\Models\Deal;
 use Illuminate\Http\Request;
 
@@ -69,6 +70,7 @@ class CrmLeadController extends Controller
             'currentFilter' => $filter,
             'currentView' => $view,
             'terminalVisibleHours' => Deal::TERMINAL_VISIBLE_HOURS,
+            'sources' => ClientSource::active()->ordered()->pluck('name'),
         ]);
     }
 }

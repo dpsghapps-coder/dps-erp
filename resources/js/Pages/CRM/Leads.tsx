@@ -45,8 +45,6 @@ const INTERACTION_ICONS: Record<string, string> = {
     note: '📝',
 };
 
-const SOURCES = ['Referral', 'Website', 'Cold Call', 'Social Media', 'Advertisement', 'Event', 'Other'];
-
 const OPEN_STAGE_OPTIONS = [
     { value: 'new_lead', label: 'New Lead' },
     { value: 'contacted', label: 'Contacted' },
@@ -81,7 +79,7 @@ function calculateScore(client: any): number {
 }
 
 export default function LeadsIndex() {
-    const { deals, eligibleForCampaign, stats, currentFilter, currentView, terminalVisibleHours } = usePage().props as any;
+    const { deals, eligibleForCampaign, stats, currentFilter, currentView, terminalVisibleHours, sources = [] } = usePage().props as any;
     const formatCurrency = useCurrency();
     const dealsList = deals?.data || deals || [];
     const [statsCollapsed, setStatsCollapsed] = useState(false);
@@ -104,7 +102,7 @@ export default function LeadsIndex() {
         company_name: '',
         phone: '',
         email: '',
-        source: 'Referral',
+        source: '',
         estimated_value: '',
         next_follow_up_at: '',
     });
@@ -441,7 +439,7 @@ export default function LeadsIndex() {
                                 ))}
                             </div>
                             <div className="flex flex-wrap gap-2">
-                                {['all', ...SOURCES].map(s => (
+                                {['all', ...sources].map((s: string) => (
                                     <button
                                         key={s}
                                         onClick={() => setSourceFilter(s)}
@@ -839,7 +837,8 @@ export default function LeadsIndex() {
                                     onChange={(e) => quickLeadForm.setData('source', e.target.value)}
                                     className="glass-input w-full text-sm"
                                 >
-                                    {SOURCES.map(s => (
+                                    <option value="">Select source</option>
+                                    {sources.map((s: string) => (
                                         <option key={s} value={s}>{s}</option>
                                     ))}
                                 </select>
