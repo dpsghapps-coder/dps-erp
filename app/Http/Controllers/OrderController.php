@@ -241,6 +241,7 @@ class OrderController extends Controller
             'clients' => Client::where('is_greylisted', false)->with('contacts')->get(),
             'products' => Product::where('is_active', true)->with('prices')->orderBy('name')->get(),
             'services' => Service::where('is_active', true)->with('prices')->orderBy('name')->get(),
+            'discreteUoms' => Setting::where('key', 'like', 'uom_%')->where('is_discrete', true)->pluck('value'),
         ];
     }
 

@@ -14,6 +14,10 @@ interface LineItem {
     qty: number;
     unit_price: number;
     discount_pct: number;
+    // Client-only calculator inputs for non-discrete UOMs -- dropped by
+    // backend validation, only their product (qty) is actually saved.
+    length?: string;
+    breadth?: string;
 }
 
 function priceForQuantity(item: any, qty: number): number {
@@ -33,7 +37,7 @@ function findPickable(products: any[], services: any[], type: string, id: string
 
 export default function OrderEdit() {
     const page = usePage().props as any;
-    const { order, clients, products, services } = page;
+    const { order, clients, products, services, discreteUoms } = page;
     const formatCurrency = useCurrency();
     const isAdmin = page.auth?.user?.role?.name === 'admin';
     const permissions = (page.auth?.permissions as string[]) || [];
@@ -63,6 +67,8 @@ export default function OrderEdit() {
         }
     };
 
+    const isDiscreteUom = (uom: string) => (discreteUoms || []).includes(uom);
+
     const updateItem = (index: number, field: keyof LineItem, value: any) => {
         const newItems = [...data.items];
         newItems[index] = { ...newItems[index], [field]: value };
@@ -71,6 +77,10 @@ export default function OrderEdit() {
             const [type, id] = String(value).split('|');
             newItems[index].product_type = type || '';
             newItems[index].product_id = id || '';
+            // Switching products invalidates any dimensions calculated for
+            // the previous one.
+            newItems[index].length = '';
+            newItems[index].breadth = '';
 
             const picked = findPickable(products, services, type, id);
             if (picked) {
@@ -81,6 +91,17 @@ export default function OrderEdit() {
             const picked = findPickable(products, services, newItems[index].product_type, newItems[index].product_id);
             if (picked) {
                 newItems[index].unit_price = priceForQuantity(picked, value);
+            }
+        } else if (field === 'length' || field === 'breadth') {
+            const l = Number(field === 'length' ? value : newItems[index].length);
+            const b = Number(field === 'breadth' ? value : newItems[index].breadth);
+            if (l > 0 && b > 0) {
+                const qty = l * b;
+                newItems[index].qty = qty;
+                const picked = findPickable(products, services, newItems[index].product_type, newItems[index].product_id);
+                if (picked) {
+                    newItems[index].unit_price = priceForQuantity(picked, qty);
+                }
             }
         }
 
@@ -225,14 +246,54 @@ export default function OrderEdit() {
                                                     />
                                                 </td>
                                                 <td className="py-2 px-2">
-                                                    <input
-                                                        type="number"
-                                                        value={item.qty}
-                                                        onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value) || 0)}
-                                                        className="glass-input w-full text-sm text-right"
-                                                        min="0.01"
-                                                        step="0.01"
-                                                    />
+                                                    {(() => {
+                                                        const picked = findPickable(products, services, item.product_type, item.product_id);
+                                                        if (picked && !isDiscreteUom(picked.unit)) {
+                                                            return (
+                                                                <div className="space-y-1">
+                                                                    <div className="flex gap-1">
+                                                                        <input
+                                                                            type="number"
+                                                                            placeholder="L"
+                                                                            value={item.length || ''}
+                                                                            onChange={(e) => updateItem(index, 'length', e.target.value)}
+                                                                            className="glass-input w-full text-xs text-right px-1"
+                                                                            min="0"
+                                                                            step="0.01"
+                                                                        />
+                                                                        <input
+                                                                            type="number"
+                                                                            placeholder="B"
+                                                                            value={item.breadth || ''}
+                                                                            onChange={(e) => updateItem(index, 'breadth', e.target.value)}
+                                                                            className="glass-input w-full text-xs text-right px-1"
+                                                                            min="0"
+                                                                            step="0.01"
+                                                                        />
+                                                                    </div>
+                                                                    <input
+                                                                        type="number"
+                                                                        value={item.qty}
+                                                                        onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value) || 0)}
+                                                                        className="glass-input w-full text-sm text-right"
+                                                                        min="0.01"
+                                                                        step="0.01"
+                                                                        title={`Qty (${picked.unit})`}
+                                                                    />
+                                                                </div>
+                                                            );
+                                                        }
+                                                        return (
+                                                            <input
+                                                                type="number"
+                                                                value={item.qty}
+                                                                onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value) || 0)}
+                                                                className="glass-input w-full text-sm text-right"
+                                                                min="0.01"
+                                                                step="0.01"
+                                                            />
+                                                        );
+                                                    })()}
                                                 </td>
                                                 <td className="py-2 px-2">
                                                     <input
