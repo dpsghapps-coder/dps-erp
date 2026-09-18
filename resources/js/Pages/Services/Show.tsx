@@ -86,26 +86,16 @@ export default function ServiceShow() {
                 <GlassCard className="md:col-span-2">
                     <h3 className="text-lg font-medium mb-4">Cost of Service</h3>
                     <div className="space-y-3">
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Workmanship</span>
-                            <span>{formatCurrency(service.workmanship_cost || 0)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Machine Maintenance</span>
-                            <span>{formatCurrency(service.machine_maintenance_cost || 0)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Process Cost</span>
-                            <span>{formatCurrency(service.process_cost || 0)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Capital Investment Recovery Fee</span>
-                            <span>{formatCurrency(service.capital_recovery_fee || 0)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                            <span className="text-slate-400">Profit</span>
-                            <span>{formatCurrency(service.profit || 0)}</span>
-                        </div>
+                        {(service.cost_items || []).length > 0 ? (
+                            service.cost_items.map((item: any) => (
+                                <div key={item.id} className="flex justify-between">
+                                    <span className="text-slate-400">{item.label}</span>
+                                    <span>{formatCurrency(item.amount || 0)}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-slate-400">No cost components added.</p>
+                        )}
                         <div className="flex justify-between pt-3 border-t border-slate-200 dark:border-white/10 font-medium">
                             <span>Calculated Base Price</span>
                             <span className="text-emerald-400">{formatCurrency(service.calculated_base_price || 0)}</span>

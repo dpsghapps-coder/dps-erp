@@ -14,7 +14,7 @@ class ServiceController extends Controller
 {
     public function index(Request $request)
     {
-        $services = Service::with(['prices', 'category'])
+        $services = Service::with(['prices', 'costItems', 'category'])
             ->withCount('productComponents')
             ->when($request->filled('search'), function ($q) use ($request) {
                 $search = $request->string('search');
@@ -42,6 +42,7 @@ class ServiceController extends Controller
         return inertia('Services/Create', [
             'categories' => ProductCategory::orderBy('name')->get(),
             'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+            'costTypes' => Setting::where('key', 'like', 'service_cost_%')->pluck('value'),
             'nextCode' => Service::generateCode(),
         ]);
     }
@@ -58,8 +59,11 @@ class ServiceController extends Controller
                 'category_id' => $validated['category_id'] ?? null,
                 'unit' => $validated['unit'],
                 'is_active' => $validated['is_active'] ?? true,
-                ...$this->costFields($validated),
             ]);
+
+            foreach ($validated['cost_items'] ?? [] as $item) {
+                $service->costItems()->create($item);
+            }
 
             foreach ($this->pricesWithCalculatedBase($validated, $service) as $price) {
                 $service->prices()->create($price);
@@ -73,19 +77,20 @@ class ServiceController extends Controller
 
     public function show(Service $service)
     {
-        $service->load(['prices', 'category'])->loadCount('productComponents');
+        $service->load(['prices', 'costItems', 'category'])->loadCount('productComponents');
 
         return inertia('Services/Show', ['service' => $service]);
     }
 
     public function edit(Service $service)
     {
-        $service->load('prices');
+        $service->load(['prices', 'costItems']);
 
         return inertia('Services/Edit', [
             'service' => $service,
             'categories' => ProductCategory::orderBy('name')->get(),
             'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+            'costTypes' => Setting::where('key', 'like', 'service_cost_%')->pluck('value'),
         ]);
     }
 
@@ -100,8 +105,13 @@ class ServiceController extends Controller
                 'category_id' => $validated['category_id'] ?? null,
                 'unit' => $validated['unit'],
                 'is_active' => $validated['is_active'] ?? true,
-                ...$this->costFields($validated),
             ]);
+
+            $service->costItems()->delete();
+            foreach ($validated['cost_items'] ?? [] as $item) {
+                $service->costItems()->create($item);
+            }
+            $service->unsetRelation('costItems');
 
             $service->prices()->delete();
             foreach ($this->pricesWithCalculatedBase($validated, $service) as $price) {
@@ -117,13 +127,6 @@ class ServiceController extends Controller
         $service->delete();
 
         return redirect()->route('services.index')->with('success', 'Service deleted successfully');
-    }
-
-    private function costFields(array $validated): array
-    {
-        return collect(Service::COST_FIELDS)
-            ->mapWithKeys(fn ($field) => [$field => $validated[$field] ?? 0])
-            ->all();
     }
 
     private function pricesWithCalculatedBase(array $validated, Service $service): array
@@ -148,11 +151,9 @@ class ServiceController extends Controller
             'category_id' => 'nullable|exists:product_categories,id',
             'unit' => 'required|string|max:30',
             'is_active' => 'boolean',
-            'workmanship_cost' => 'nullable|numeric|min:0',
-            'machine_maintenance_cost' => 'nullable|numeric|min:0',
-            'process_cost' => 'nullable|numeric|min:0',
-            'capital_recovery_fee' => 'nullable|numeric|min:0',
-            'profit' => 'nullable|numeric|min:0',
+            'cost_items' => 'nullable|array',
+            'cost_items.*.label' => 'required|string|max:100',
+            'cost_items.*.amount' => 'required|numeric|min:0',
             'prices' => 'nullable|array',
             'prices.*.min_qty' => 'required|integer|min:1',
             'prices.*.max_qty' => 'nullable|integer|min:1',

@@ -245,6 +245,7 @@ class AdminController extends Controller
         $attributes = Setting::where('key', 'like', 'attr_%')->get();
         $extraCostTypes = Setting::where('key', 'like', 'extra_cost_%')->get();
         $packTypes = Setting::where('key', 'like', 'pack_type_%')->get();
+        $serviceCostTypes = Setting::where('key', 'like', 'service_cost_%')->get();
         $departments = Department::orderBy('name')->get();
         $currency = Setting::get('currency', 'GHS');
         $companyLogo = Setting::get('company_logo');
@@ -255,6 +256,7 @@ class AdminController extends Controller
             'attributes' => $attributes,
             'extraCostTypes' => $extraCostTypes,
             'packTypes' => $packTypes,
+            'serviceCostTypes' => $serviceCostTypes,
             'departments' => $departments,
             'currency' => $currency,
             'companyLogo' => $companyLogo ? Storage::url($companyLogo) : null,
@@ -517,6 +519,34 @@ class AdminController extends Controller
         }
 
         return back()->with('success', 'Packing type deleted');
+    }
+
+    public function storeServiceCostType(Request $request)
+    {
+        $validated = $request->validate(['value' => 'required|string|max:50']);
+
+        $key = 'service_cost_'.Str::slug($validated['value']);
+
+        if (Setting::where('key', $key)->exists()) {
+            return back()->withErrors(['value' => 'This cost type already exists.']);
+        }
+
+        Setting::create([
+            'key' => $key,
+            'value' => $validated['value'],
+            'type' => 'string',
+        ]);
+
+        return back()->with('success', 'Cost type added successfully');
+    }
+
+    public function deleteServiceCostType(Setting $setting)
+    {
+        if (str_starts_with($setting->key, 'service_cost_')) {
+            $setting->delete();
+        }
+
+        return back()->with('success', 'Cost type deleted');
     }
 
     public function toggleCategoryAttribute(Request $request)

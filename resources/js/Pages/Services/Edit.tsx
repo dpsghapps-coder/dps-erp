@@ -1,19 +1,11 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, X } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 
-const COST_FIELDS: { key: 'workmanship_cost' | 'machine_maintenance_cost' | 'process_cost' | 'capital_recovery_fee' | 'profit'; label: string; hint?: string }[] = [
-    { key: 'workmanship_cost', label: 'Workmanship' },
-    { key: 'machine_maintenance_cost', label: 'Machine Maintenance' },
-    { key: 'process_cost', label: 'Process Cost', hint: 'Materials, utilities, cutting, packaging' },
-    { key: 'capital_recovery_fee', label: 'Capital Investment Recovery Fee' },
-    { key: 'profit', label: 'Profit' },
-];
-
 export default function ServiceEdit() {
-    const { service, categories, uoms } = usePage().props as any;
+    const { service, categories, uoms, costTypes } = usePage().props as any;
     const formatCurrency = useCurrency();
 
     const { data, setData, put, transform, processing, errors } = useForm({
@@ -23,17 +15,21 @@ export default function ServiceEdit() {
         category_id: service.category_id || '',
         unit: service.unit || '',
         is_active: service.is_active ?? true,
-        workmanship_cost: service.workmanship_cost || 0,
-        machine_maintenance_cost: service.machine_maintenance_cost || 0,
-        process_cost: service.process_cost || 0,
-        capital_recovery_fee: service.capital_recovery_fee || 0,
-        profit: service.profit || 0,
+        cost_items: (service.cost_items || []).map((item: any) => ({ label: item.label, amount: String(item.amount) })) as { label: string; amount: string }[],
         prices: service.prices?.length > 0
             ? service.prices.map((p: any) => ({ min_qty: p.min_qty, max_qty: p.max_qty || '', unit_price: p.unit_price }))
             : [{ min_qty: 1, max_qty: '', unit_price: 0 }],
     });
 
-    const calculatedBasePrice = COST_FIELDS.reduce((sum, f) => sum + (parseFloat(String(data[f.key])) || 0), 0);
+    const calculatedBasePrice = data.cost_items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+
+    const addCostItem = () => setData('cost_items', [...data.cost_items, { label: costTypes?.[0] || '', amount: '' }]);
+    const removeCostItem = (index: number) => setData('cost_items', data.cost_items.filter((_, i) => i !== index));
+    const updateCostItem = (index: number, field: 'label' | 'amount', value: string) => {
+        const items = [...data.cost_items];
+        items[index] = { ...items[index], [field]: value };
+        setData('cost_items', items);
+    };
 
     const addPriceTier = () => {
         setData('prices', [...data.prices, { min_qty: 0, max_qty: '', unit_price: 0 }]);
@@ -157,26 +153,46 @@ export default function ServiceEdit() {
 
                     {/* Cost of Service Section */}
                     <div className="mt-8 pt-6 border-t border-slate-200 dark:border-white/10">
-                        <h3 className="text-lg font-medium mb-1">Cost of Service</h3>
+                        <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-lg font-medium">Cost of Service</h3>
+                            <button type="button" onClick={addCostItem} className="text-indigo-600 hover:text-indigo-800 text-sm inline-flex items-center gap-1">
+                                <Plus className="w-3.5 h-3.5" /> Add cost
+                            </button>
+                        </div>
                         <p className="text-sm text-slate-500 mb-4">Base price (qty 1+) is calculated automatically from these costs.</p>
 
-                        <div className="grid md:grid-cols-2 gap-4">
-                            {COST_FIELDS.map((f) => (
-                                <div key={f.key}>
-                                    <label className="block text-sm font-medium mb-2">{f.label}</label>
-                                    <input
-                                        type="number"
-                                        value={data[f.key]}
-                                        onChange={(e) => setData(f.key, parseFloat(e.target.value) || 0)}
-                                        className="glass-input w-full"
-                                        min="0"
-                                        step="0.01"
-                                    />
-                                    {f.hint && <p className="text-xs text-slate-500 mt-1">{f.hint}</p>}
-                                    {errors[f.key] && <p className="text-red-400 text-sm mt-1">{errors[f.key]}</p>}
-                                </div>
-                            ))}
-                        </div>
+                        {data.cost_items.length > 0 && (
+                            <div className="space-y-2">
+                                {data.cost_items.map((item, index) => (
+                                    <div key={index} className="flex gap-2 items-center">
+                                        <select
+                                            value={item.label}
+                                            onChange={(e) => updateCostItem(index, 'label', e.target.value)}
+                                            className="glass-input flex-1"
+                                            required
+                                        >
+                                            <option value="">Select type</option>
+                                            {(costTypes || []).map((type: string) => (
+                                                <option key={type} value={type}>{type}</option>
+                                            ))}
+                                        </select>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            min="0"
+                                            placeholder="Amount"
+                                            value={item.amount}
+                                            onChange={(e) => updateCostItem(index, 'amount', e.target.value)}
+                                            className="glass-input w-32"
+                                            required
+                                        />
+                                        <button type="button" onClick={() => removeCostItem(index)} className="p-2 text-red-400 hover:bg-slate-100 dark:hover:bg-white/10 rounded">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
 
                         <div className="mt-4 flex items-center justify-between p-4 bg-emerald-500/10 rounded-lg">
                             <span className="font-medium">Calculated Base Price</span>
