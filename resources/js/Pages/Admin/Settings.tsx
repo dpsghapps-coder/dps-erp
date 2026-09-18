@@ -164,53 +164,53 @@ export default function Settings() {
             />
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-6 border-b border-slate-700 pb-2">
+            <div className="flex gap-2 mb-6 border-b border-slate-700 pb-2 overflow-x-auto whitespace-nowrap">
                 <button
                     onClick={() => setActiveTab('general')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'general' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'general' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                     General
                 </button>
                 <button
                     onClick={() => setActiveTab('uom')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'uom' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'uom' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                     <Package className="w-4 h-4 inline mr-2" />UOM Options
                 </button>
                 <button
                     onClick={() => setActiveTab('categories')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'categories' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'categories' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                     <Tag className="w-4 h-4 inline mr-2" />Categories
                 </button>
                 <button
                     onClick={() => setActiveTab('attributes')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'attributes' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'attributes' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                     <List className="w-4 h-4 inline mr-2" />Attributes
                 </button>
                 <button
                     onClick={() => setActiveTab('extraCosts')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'extraCosts' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'extraCosts' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                     <Receipt className="w-4 h-4 inline mr-2" />Extra Cost Types
                 </button>
                 <button
                     onClick={() => setActiveTab('packTypes')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'packTypes' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'packTypes' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                     <Box className="w-4 h-4 inline mr-2" />Packing Types
                 </button>
                 <button
                     onClick={() => setActiveTab('serviceCosts')}
-                    className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'serviceCosts' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
+                    className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'serviceCosts' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
                 >
                     <Wrench className="w-4 h-4 inline mr-2" />Service Cost Types
                 </button>
                 {canFactoryReset && (
                     <button
                         onClick={() => setActiveTab('dangerZone')}
-                        className={`px-4 py-2 rounded-lg transition-colors ${activeTab === 'dangerZone' ? 'bg-red-600 text-white' : 'text-red-400 hover:text-red-300'}`}
+                        className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'dangerZone' ? 'bg-red-600 text-white' : 'text-red-400 hover:text-red-300'}`}
                     >
                         <ShieldAlert className="w-4 h-4 inline mr-2" />Danger Zone
                     </button>
