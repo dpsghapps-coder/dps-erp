@@ -154,28 +154,30 @@ export default function ProcurementShow() {
                             {branch?.address && <p className="text-xs text-slate-500">{branch.address}</p>}
                         </div>
 
-                        <table className="w-full mb-4">
-                            <thead>
-                                <tr className="border-b-2 border-slate-900 text-left text-[10px] uppercase tracking-wider text-slate-500">
-                                    <th className="py-2 px-1">#</th>
-                                    <th className="py-2 px-1">Item</th>
-                                    <th className="py-2 px-1 text-center">Qty</th>
-                                    <th className="py-2 px-1 text-right">Unit Cost</th>
-                                    <th className="py-2 px-1 text-right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {(po.items || []).map((item: any, i: number) => (
-                                    <tr key={item.id} className="border-b border-slate-100">
-                                        <td className="py-2 px-1 text-slate-400 text-sm">{i + 1}</td>
-                                        <td className="py-2 px-1 text-sm text-slate-900">{item.display_name}</td>
-                                        <td className="py-2 px-1 text-sm text-center text-slate-700">{item.qty}</td>
-                                        <td className="py-2 px-1 text-sm text-right text-slate-700">{formatCurrency(item.unit_cost)}</td>
-                                        <td className="py-2 px-1 text-sm text-right font-medium text-slate-900">{formatCurrency(item.line_total)}</td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full mb-4 min-w-[500px]">
+                                <thead>
+                                    <tr className="border-b-2 border-slate-900 text-left text-[10px] uppercase tracking-wider text-slate-500">
+                                        <th className="py-2 px-1">#</th>
+                                        <th className="py-2 px-1">Item</th>
+                                        <th className="py-2 px-1 text-center">Qty</th>
+                                        <th className="py-2 px-1 text-right">Unit Cost</th>
+                                        <th className="py-2 px-1 text-right">Amount</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {(po.items || []).map((item: any, i: number) => (
+                                        <tr key={item.id} className="border-b border-slate-100">
+                                            <td className="py-2 px-1 text-slate-400 text-sm">{i + 1}</td>
+                                            <td className="py-2 px-1 text-sm text-slate-900">{item.display_name}</td>
+                                            <td className="py-2 px-1 text-sm text-center text-slate-700">{item.qty}</td>
+                                            <td className="py-2 px-1 text-sm text-right text-slate-700">{formatCurrency(item.unit_cost)}</td>
+                                            <td className="py-2 px-1 text-sm text-right font-medium text-slate-900">{formatCurrency(item.line_total)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
                         <div className="flex justify-end">
                             <div className="w-56 pt-3 border-t-2 border-slate-900 flex justify-between text-base font-bold text-slate-900">

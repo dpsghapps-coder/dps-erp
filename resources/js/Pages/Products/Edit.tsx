@@ -418,7 +418,7 @@ export default function ProductEdit() {
 
             {/* Material Modal */}
             {showMaterialModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <GlassCard className="w-full max-w-2xl max-h-[80vh] overflow-auto">
                         {pendingMaterial ? (
                             <>
@@ -503,7 +503,7 @@ export default function ProductEdit() {
 
             {/* Service Modal */}
             {showServiceModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <GlassCard className="w-full max-w-2xl max-h-[80vh] overflow-auto">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-medium">Select Service</h3>
