@@ -541,7 +541,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                         <span className="text-xs font-medium">Add Employee</span>
                                     </Link>
                                     <Link
-                                        href="/production/create"
+                                        href="/production?new=1"
                                         className="flex flex-col items-center gap-2 px-3 py-3 rounded-xl bg-slate-50 dark:bg-white/[0.04] text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
                                         onClick={() => setRightDrawerOpen(false)}
                                     >

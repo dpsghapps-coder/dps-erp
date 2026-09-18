@@ -270,8 +270,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // Production Routes
+    // "New Job" is a modal on /production (KanbanBoard), not a separate page --
+    // there is no Production/Create.tsx, so a GET route here would 500.
     Route::middleware('permission:production.create')->group(function () {
-        Route::get('/production/create', [ProductionController::class, 'create'])->name('production.create');
         Route::post('/production', [ProductionController::class, 'store'])->name('production.store');
     });
 

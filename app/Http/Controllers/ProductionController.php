@@ -34,13 +34,6 @@ class ProductionController extends Controller
         ]);
     }
 
-    public function create()
-    {
-        return inertia('Production/Create', [
-            'orders' => $this->linkableOrders(),
-        ]);
-    }
-
     public function store(Request $request)
     {
         $validated = $request->validate([

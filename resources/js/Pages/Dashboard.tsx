@@ -151,7 +151,7 @@ export default function Dashboard() {
                         <div className="grid grid-cols-2 gap-3">
                             <Link href="/crm/create" className="glass-button-secondary text-center text-sm">New Client</Link>
                             <Link href="/orders/create" className="glass-button-secondary text-center text-sm">New Order</Link>
-                            <Link href="/production/create" className="glass-button-secondary text-center text-sm">New Job</Link>
+                            <Link href="/production?new=1" className="glass-button-secondary text-center text-sm">New Job</Link>
                             <Link href="/studio/create" className="glass-button-secondary text-center text-sm">Book Studio</Link>
                             <Link href="/hrm/create" className="glass-button-secondary text-center text-sm">Add Employee</Link>
                             <Link href="/products/create" className="glass-button-secondary text-center text-sm">Add Product</Link>

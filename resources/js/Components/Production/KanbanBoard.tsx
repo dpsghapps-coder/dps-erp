@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import { DndContext, DragOverlay, PointerSensor, KeyboardSensor, useSensor, useSensors } from '@dnd-kit/core';
 import KanbanColumn from './KanbanColumn';
@@ -54,6 +54,18 @@ export default function KanbanBoard({ jobs, users, orders = [] }: KanbanBoardPro
     const [showNewJobModal, setShowNewJobModal] = useState(false);
     const [newJobDefaultStatus, setNewJobDefaultStatus] = useState('new_jobs');
     const [activeId, setActiveId] = useState<string | number | null>(null);
+
+    // "New Job" quick-actions elsewhere (sidebar, Dashboard) link here with
+    // ?new=1 instead of a separate /production/create page -- creation is
+    // this modal, not a full page.
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('new') === '1') {
+            setShowNewJobModal(true);
+            window.history.replaceState({}, '', '/production');
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
