@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Trash2, X } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 
 export default function ServiceCreate() {
-    const { categories, uoms, costTypes, nextCode } = usePage().props as any;
+    const { categories, uoms, discreteUoms, costTypes, nextCode } = usePage().props as any;
     const formatCurrency = useCurrency();
     const { data, setData, post, transform, processing, errors } = useForm({
         code: nextCode || '',
@@ -13,10 +13,13 @@ export default function ServiceCreate() {
         description: '',
         category_id: '',
         unit: (uoms && uoms[0]) || '',
+        requires_dimensions: false,
         is_active: true,
         cost_items: [] as { label: string; amount: string }[],
         prices: [{ min_qty: 1, max_qty: '', unit_price: 0 }],
     });
+
+    const isDiscreteUom = (uom: string) => (discreteUoms || []).includes(uom);
 
     const calculatedBasePrice = data.cost_items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 
@@ -134,6 +137,22 @@ export default function ServiceCreate() {
                             </select>
                             {errors.unit && <p className="text-red-400 text-sm mt-1">{errors.unit}</p>}
                         </div>
+
+                        {!isDiscreteUom(data.unit) && (
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Order Quantity</label>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.requires_dimensions}
+                                        onChange={(e) => setData('requires_dimensions', e.target.checked)}
+                                        className="w-5 h-5 rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20"
+                                    />
+                                    <span className="text-sm">Requires Length x Breadth on orders</span>
+                                </label>
+                                <p className="text-xs text-slate-500 mt-1">Shows a dimensions calculator instead of a plain Qty box when this is added to an order.</p>
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Status</label>

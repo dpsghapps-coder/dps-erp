@@ -16,6 +16,7 @@ export default function ProductEdit() {
         category_id: product?.category_id || '',
         unit: product?.unit || 'pcs',
         source: product?.source || 'Purchased',
+        requires_dimensions: product?.requires_dimensions ?? false,
         is_active: product?.is_active ?? true,
         prices: product?.prices?.length > 0
             ? product.prices.map((p: any) => ({ min_qty: p.min_qty, max_qty: p.max_qty || '', unit_price: p.unit_price }))
@@ -246,6 +247,22 @@ export default function ProductEdit() {
                             </select>
                             {errors.source && <p className="text-red-400 text-sm mt-1">{errors.source}</p>}
                         </div>
+
+                        {!isDiscreteUom(data.unit) && (
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Order Quantity</label>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.requires_dimensions}
+                                        onChange={(e) => setData('requires_dimensions', e.target.checked)}
+                                        className="w-5 h-5 rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20"
+                                    />
+                                    <span className="text-sm">Requires Length x Breadth on orders</span>
+                                </label>
+                                <p className="text-xs text-slate-500 mt-1">Shows a dimensions calculator instead of a plain Qty box when this is added to an order.</p>
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Status</label>

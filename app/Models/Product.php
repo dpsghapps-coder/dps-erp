@@ -22,12 +22,14 @@ class Product extends Model
         'category_id',
         'unit',
         'source',
+        'requires_dimensions',
         'is_active',
     ];
 
     protected $casts = [
         'type' => 'string',
         'source' => 'string',
+        'requires_dimensions' => 'boolean',
         'is_active' => 'boolean',
     ];
 

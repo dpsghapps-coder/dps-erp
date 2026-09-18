@@ -42,6 +42,7 @@ class ServiceController extends Controller
         return inertia('Services/Create', [
             'categories' => ProductCategory::orderBy('name')->get(),
             'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+            'discreteUoms' => Setting::where('key', 'like', 'uom_%')->where('is_discrete', true)->pluck('value'),
             'costTypes' => Setting::where('key', 'like', 'service_cost_%')->pluck('value'),
             'nextCode' => Service::generateCode(),
         ]);
@@ -58,6 +59,7 @@ class ServiceController extends Controller
                 'description' => $validated['description'] ?? null,
                 'category_id' => $validated['category_id'] ?? null,
                 'unit' => $validated['unit'],
+                'requires_dimensions' => $validated['requires_dimensions'] ?? false,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 
@@ -90,6 +92,7 @@ class ServiceController extends Controller
             'service' => $service,
             'categories' => ProductCategory::orderBy('name')->get(),
             'uoms' => Setting::where('key', 'like', 'uom_%')->pluck('value'),
+            'discreteUoms' => Setting::where('key', 'like', 'uom_%')->where('is_discrete', true)->pluck('value'),
             'costTypes' => Setting::where('key', 'like', 'service_cost_%')->pluck('value'),
         ]);
     }
@@ -104,6 +107,7 @@ class ServiceController extends Controller
                 'description' => $validated['description'] ?? null,
                 'category_id' => $validated['category_id'] ?? null,
                 'unit' => $validated['unit'],
+                'requires_dimensions' => $validated['requires_dimensions'] ?? false,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 
@@ -150,6 +154,7 @@ class ServiceController extends Controller
             'description' => 'nullable|string',
             'category_id' => 'nullable|exists:product_categories,id',
             'unit' => 'required|string|max:30',
+            'requires_dimensions' => 'boolean',
             'is_active' => 'boolean',
             'cost_items' => 'nullable|array',
             'cost_items.*.label' => 'required|string|max:100',

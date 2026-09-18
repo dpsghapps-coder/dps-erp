@@ -20,10 +20,12 @@ class Service extends Model
         'description',
         'category_id',
         'unit',
+        'requires_dimensions',
         'is_active',
     ];
 
     protected $casts = [
+        'requires_dimensions' => 'boolean',
         'is_active' => 'boolean',
     ];
 

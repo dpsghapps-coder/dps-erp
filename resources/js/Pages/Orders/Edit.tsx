@@ -14,8 +14,9 @@ interface LineItem {
     qty: number;
     unit_price: number;
     discount_pct: number;
-    // Client-only calculator inputs for non-discrete UOMs -- dropped by
-    // backend validation, only their product (qty) is actually saved.
+    // Client-only calculator inputs, shown when the picked product/service
+    // has requires_dimensions set -- dropped by backend validation, only
+    // their product (qty) is actually saved.
     length?: string;
     breadth?: string;
 }
@@ -37,7 +38,7 @@ function findPickable(products: any[], services: any[], type: string, id: string
 
 export default function OrderEdit() {
     const page = usePage().props as any;
-    const { order, clients, products, services, discreteUoms } = page;
+    const { order, clients, products, services } = page;
     const formatCurrency = useCurrency();
     const isAdmin = page.auth?.user?.role?.name === 'admin';
     const permissions = (page.auth?.permissions as string[]) || [];
@@ -66,8 +67,6 @@ export default function OrderEdit() {
             setData('items', data.items.filter((_: any, i: number) => i !== index));
         }
     };
-
-    const isDiscreteUom = (uom: string) => (discreteUoms || []).includes(uom);
 
     const updateItem = (index: number, field: keyof LineItem, value: any) => {
         const newItems = [...data.items];
@@ -201,7 +200,7 @@ export default function OrderEdit() {
                                         <tr className="border-b border-slate-200 dark:border-white/10">
                                             <th className="text-left py-2 px-2 text-sm font-medium text-slate-400">Product / Service</th>
                                             <th className="text-left py-2 px-2 text-sm font-medium text-slate-400">Description</th>
-                                            <th className="text-right py-2 px-2 text-sm font-medium text-slate-400 w-20">Qty</th>
+                                            <th className="text-right py-2 px-2 text-sm font-medium text-slate-400 w-36">Qty</th>
                                             <th className="text-right py-2 px-2 text-sm font-medium text-slate-400 w-24">Unit Price</th>
                                             <th className="text-right py-2 px-2 text-sm font-medium text-slate-400 w-20">Disc %</th>
                                             <th className="text-right py-2 px-2 text-sm font-medium text-slate-400 w-24">Total</th>
@@ -245,41 +244,47 @@ export default function OrderEdit() {
                                                         className="glass-input w-full text-sm"
                                                     />
                                                 </td>
-                                                <td className="py-2 px-2">
+                                                <td className="py-2 px-2 align-top">
                                                     {(() => {
                                                         const picked = findPickable(products, services, item.product_type, item.product_id);
-                                                        if (picked && !isDiscreteUom(picked.unit)) {
+                                                        if (picked && picked.requires_dimensions) {
                                                             return (
-                                                                <div className="space-y-1">
-                                                                    <div className="flex gap-1">
+                                                                <div className="space-y-1.5 min-w-[132px]">
+                                                                    <div className="flex gap-1.5">
+                                                                        <div className="flex-1">
+                                                                            <label className="block text-[10px] text-slate-400 mb-0.5">Length</label>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={item.length || ''}
+                                                                                onChange={(e) => updateItem(index, 'length', e.target.value)}
+                                                                                className="glass-input w-full text-sm text-right px-2"
+                                                                                min="0"
+                                                                                step="0.01"
+                                                                            />
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                            <label className="block text-[10px] text-slate-400 mb-0.5">Breadth</label>
+                                                                            <input
+                                                                                type="number"
+                                                                                value={item.breadth || ''}
+                                                                                onChange={(e) => updateItem(index, 'breadth', e.target.value)}
+                                                                                className="glass-input w-full text-sm text-right px-2"
+                                                                                min="0"
+                                                                                step="0.01"
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <label className="block text-[10px] text-slate-400 mb-0.5">Qty ({picked.unit})</label>
                                                                         <input
                                                                             type="number"
-                                                                            placeholder="L"
-                                                                            value={item.length || ''}
-                                                                            onChange={(e) => updateItem(index, 'length', e.target.value)}
-                                                                            className="glass-input w-full text-xs text-right px-1"
-                                                                            min="0"
-                                                                            step="0.01"
-                                                                        />
-                                                                        <input
-                                                                            type="number"
-                                                                            placeholder="B"
-                                                                            value={item.breadth || ''}
-                                                                            onChange={(e) => updateItem(index, 'breadth', e.target.value)}
-                                                                            className="glass-input w-full text-xs text-right px-1"
-                                                                            min="0"
+                                                                            value={item.qty}
+                                                                            onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value) || 0)}
+                                                                            className="glass-input w-full text-sm text-right px-2"
+                                                                            min="0.01"
                                                                             step="0.01"
                                                                         />
                                                                     </div>
-                                                                    <input
-                                                                        type="number"
-                                                                        value={item.qty}
-                                                                        onChange={(e) => updateItem(index, 'qty', parseFloat(e.target.value) || 0)}
-                                                                        className="glass-input w-full text-sm text-right"
-                                                                        min="0.01"
-                                                                        step="0.01"
-                                                                        title={`Qty (${picked.unit})`}
-                                                                    />
                                                                 </div>
                                                             );
                                                         }

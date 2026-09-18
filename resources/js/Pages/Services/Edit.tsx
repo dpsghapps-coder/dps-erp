@@ -5,7 +5,7 @@ import { ArrowLeft, Plus, Trash2, X } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 
 export default function ServiceEdit() {
-    const { service, categories, uoms, costTypes } = usePage().props as any;
+    const { service, categories, uoms, discreteUoms, costTypes } = usePage().props as any;
     const formatCurrency = useCurrency();
 
     const { data, setData, put, transform, processing, errors } = useForm({
@@ -14,12 +14,15 @@ export default function ServiceEdit() {
         description: service.description || '',
         category_id: service.category_id || '',
         unit: service.unit || '',
+        requires_dimensions: service.requires_dimensions ?? false,
         is_active: service.is_active ?? true,
         cost_items: (service.cost_items || []).map((item: any) => ({ label: item.label, amount: String(item.amount) })) as { label: string; amount: string }[],
         prices: service.prices?.length > 0
             ? service.prices.map((p: any) => ({ min_qty: p.min_qty, max_qty: p.max_qty || '', unit_price: p.unit_price }))
             : [{ min_qty: 1, max_qty: '', unit_price: 0 }],
     });
+
+    const isDiscreteUom = (uom: string) => (discreteUoms || []).includes(uom);
 
     const calculatedBasePrice = data.cost_items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
 
@@ -136,6 +139,22 @@ export default function ServiceEdit() {
                                 ))}
                             </select>
                         </div>
+
+                        {!isDiscreteUom(data.unit) && (
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Order Quantity</label>
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={data.requires_dimensions}
+                                        onChange={(e) => setData('requires_dimensions', e.target.checked)}
+                                        className="w-5 h-5 rounded bg-slate-100 dark:bg-white/10 border-slate-300 dark:border-white/20"
+                                    />
+                                    <span className="text-sm">Requires Length x Breadth on orders</span>
+                                </label>
+                                <p className="text-xs text-slate-500 mt-1">Shows a dimensions calculator instead of a plain Qty box when this is added to an order.</p>
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium mb-2">Status</label>

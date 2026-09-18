@@ -69,6 +69,7 @@ class ProductController extends Controller
                 'category_id' => $validated['category_id'] ?? null,
                 'unit' => $validated['unit'],
                 'source' => $validated['source'],
+                'requires_dimensions' => $validated['requires_dimensions'] ?? false,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 
@@ -125,6 +126,7 @@ class ProductController extends Controller
                 'category_id' => $validated['category_id'] ?? null,
                 'unit' => $validated['unit'],
                 'source' => $validated['source'],
+                'requires_dimensions' => $validated['requires_dimensions'] ?? false,
                 'is_active' => $validated['is_active'] ?? true,
             ]);
 
@@ -190,6 +192,7 @@ class ProductController extends Controller
             'category_id' => 'nullable|exists:product_categories,id',
             'unit' => 'required|string|max:30',
             'source' => 'required|in:Purchased,Manufactured,Customized',
+            'requires_dimensions' => 'boolean',
             'is_active' => 'boolean',
             'components' => 'nullable|array',
             'components.*.component_id' => 'required',
