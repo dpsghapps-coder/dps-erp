@@ -39,7 +39,7 @@ export default function OrderCreate() {
     const isAdmin = page.auth?.user?.role?.name === 'admin';
     const permissions = (page.auth?.permissions as string[]) || [];
     const canApplyDiscount = isAdmin || permissions.includes('*') || permissions.includes('orders.apply_discount');
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, post, transform, processing, errors } = useForm({
         client_id: '',
         contact_id: '',
         delivery_date: '',
@@ -107,9 +107,14 @@ export default function OrderCreate() {
     const tax = data.vat_applicable ? (subtotal - discount) * VAT_RATE : 0;
     const grandTotal = subtotal - discount + tax;
 
+    const submitOrder = (status: 'draft' | 'confirmed') => {
+        transform((formData: any) => ({ ...formData, status }));
+        post('/orders');
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post('/orders');
+        submitOrder('draft');
     };
 
     return (
@@ -337,7 +342,15 @@ export default function OrderCreate() {
                             </div>
 
                             <div className="flex flex-col gap-3 mt-6">
-                                <button type="submit" disabled={processing} className="glass-button">
+                                <button
+                                    type="button"
+                                    onClick={() => submitOrder('confirmed')}
+                                    disabled={processing}
+                                    className="glass-button"
+                                >
+                                    {processing ? 'Saving...' : 'Save & Confirm'}
+                                </button>
+                                <button type="submit" disabled={processing} className="glass-button-secondary">
                                     {processing ? 'Saving...' : 'Save as Draft'}
                                 </button>
                             </div>

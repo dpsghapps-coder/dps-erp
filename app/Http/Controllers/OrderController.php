@@ -42,7 +42,12 @@ class OrderController extends Controller
     {
         $validated = $this->validateOrder($request, requireClient: true);
 
-        $order = DB::transaction(function () use ($validated) {
+        // "Save & Confirm" on the create form -- create as draft (so status
+        // history stays consistent with every other order) then immediately
+        // transition, rather than inserting with status=confirmed directly.
+        $confirmOnCreate = $request->input('status') === Order::STATUS_CONFIRMED;
+
+        $order = DB::transaction(function () use ($validated, $confirmOnCreate) {
             $order = Order::create([
                 'client_id' => $validated['client_id'],
                 'contact_id' => $validated['contact_id'] ?? null,
@@ -68,10 +73,16 @@ class OrderController extends Controller
                 'notes' => 'Order created',
             ]);
 
+            if ($confirmOnCreate) {
+                $order->transitionTo(Order::STATUS_CONFIRMED, 'Confirmed on creation');
+            }
+
             return $order;
         });
 
-        return redirect()->route('orders.index')->with('success', 'Order created successfully');
+        $message = $confirmOnCreate ? 'Order created and confirmed successfully' : 'Order created successfully';
+
+        return redirect()->route('orders.index')->with('success', $message);
     }
 
     public function show(Order $order)
