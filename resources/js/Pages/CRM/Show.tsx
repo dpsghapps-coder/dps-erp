@@ -138,7 +138,11 @@ export default function ClientShow() {
     const permissions = (page.auth?.permissions as string[]) || [];
     const canApproveGreylist = permissions.includes('*') || permissions.includes('crm.approve-greylist');
     const formatCurrency = useCurrency();
-    const [activeTab, setActiveTab] = useState<Tab>('Details');
+    const [activeTab, setActiveTab] = useState<Tab>(() => {
+        const requested = new URLSearchParams(window.location.search).get('tab');
+        const match = TABS.find((t) => t.toLowerCase() === requested?.toLowerCase());
+        return match || 'Details';
+    });
     const [interactionTypeFilter, setInteractionTypeFilter] = useState('all');
 
     const deals = client?.deals || [];

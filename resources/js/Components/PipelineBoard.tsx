@@ -75,15 +75,26 @@ function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal
                         <h4 className="font-medium text-sm truncate">{client.company_name}</h4>
                         {client.industry && <p className="text-xs text-slate-400 truncate">{client.industry}</p>}
                     </div>
-                    <Link
-                        href={`/crm/${client.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                        onPointerDown={(e) => e.stopPropagation()}
-                        className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-indigo-400 transition-colors shrink-0"
-                        title="View client details"
-                    >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                    </Link>
+                    <div className="flex items-center gap-1 shrink-0">
+                        <Link
+                            href={`/crm/${client.id}?tab=interactions`}
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-indigo-400 transition-colors"
+                            title="View interactions & notes"
+                        >
+                            <FileText className="w-3.5 h-3.5" />
+                        </Link>
+                        <Link
+                            href={`/crm/${client.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                            onPointerDown={(e) => e.stopPropagation()}
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-indigo-400 transition-colors"
+                            title="View client details"
+                        >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                        </Link>
+                    </div>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1.5 mb-2">

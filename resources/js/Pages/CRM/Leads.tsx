@@ -3,7 +3,7 @@ import { GlassCard, PageHeader, StatusChips, PhoneInput } from '@/Components/ui'
 import PipelineBoard from '@/Components/PipelineBoard';
 import CrmTabs from '@/Components/CrmTabs';
 import { Head, usePage, Link, router, useForm } from '@inertiajs/react';
-import { Plus, Search, Users, TrendingUp, Target, Clock, AlertTriangle, User, MapPin, ChevronDown, ChevronUp, Link2, Check, X, LayoutGrid, List, DollarSign, XCircle, Rocket } from 'lucide-react';
+import { Plus, Search, Users, TrendingUp, Target, Clock, AlertTriangle, User, MapPin, ChevronDown, ChevronUp, Link2, Check, X, LayoutGrid, List, DollarSign, XCircle, Rocket, FileText } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import { useCurrency } from '@/Utils/currency';
 
@@ -571,6 +571,13 @@ export default function LeadsIndex() {
                                                                 <span className="status-badge text-xs status-greylisted shrink-0">Greylisted</span>
                                                             )}
                                                         </div>
+                                                    </Link>
+                                                    <Link
+                                                        href={`/crm/${client.id}?tab=interactions`}
+                                                        className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-indigo-400 transition-colors shrink-0"
+                                                        title="View interactions & notes"
+                                                    >
+                                                        <FileText className="w-4 h-4" />
                                                     </Link>
                                                 </div>
 
