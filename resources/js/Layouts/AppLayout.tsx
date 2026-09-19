@@ -186,7 +186,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const [chatSidebarOpen, setChatSidebarOpen] = useState(false);
     const [crmDropdownOpen, setCrmDropdownOpen] = useState(false);
     const [crmSlideUpOpen, setCrmSlideUpOpen] = useState(false);
-    const [inventoryDropdownOpen, setInventoryDropdownOpen] = useState(false);
     const [inventorySlideUpOpen, setInventorySlideUpOpen] = useState(false);
     const [financeDropdownOpen, setFinanceDropdownOpen] = useState(false);
     const [hrmDropdownOpen, setHrmDropdownOpen] = useState(false);
@@ -267,9 +266,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
         if (isCrmPage) {
             setCrmDropdownOpen(true);
         }
-        if (isInventoryPage) {
-            setInventoryDropdownOpen(true);
-        }
         if (isHrmPage) {
             setHrmDropdownOpen(true);
         }
@@ -288,7 +284,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         if (isDecisionHubPage) {
             setDecisionHubDropdownOpen(true);
         }
-    }, [isCrmPage, isInventoryPage, isHrmPage, isFinancePage, isPricingPage, isOrdersPage, isProductionPage, isDecisionHubPage]);
+    }, [isCrmPage, isHrmPage, isFinancePage, isPricingPage, isOrdersPage, isProductionPage, isDecisionHubPage]);
 
     // Search handler
     const handleSearch = async (query: string) => {
@@ -641,51 +637,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 Dashboard
                             </Link>
 
-                            {(hasModulePermission('inventory') || hasModulePermission('procurement')) && (
-                            <div className="mb-2">
-                                <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                                    isInventoryPage
-                                        ? 'bg-slate-900 text-white'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                }`}>
-                                    <Link
-                                        href="/inventory"
-                                        className="flex items-center gap-3 flex-1"
-                                        onClick={() => setMobileMenuOpen(false)}
-                                    >
-                                        <Package className="w-5 h-5" />
-                                        Inventory
-                                    </Link>
-                                    <button
-                                        onClick={() => setInventoryDropdownOpen(!inventoryDropdownOpen)}
-                                        className="p-1 rounded hover:bg-black/10 transition-colors"
-                                        aria-label="Toggle inventory dropdown"
-                                    >
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${inventoryDropdownOpen ? 'rotate-180' : ''}`} />
-                                    </button>
-                                </div>
-                                {inventoryDropdownOpen && (
-                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
-                                        {inventorySubItems.map((item) => (
-                                            <Link
-                                                key={item.href}
-                                                href={item.href}
-                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                    currentPath === item.href
-                                                        ? 'bg-slate-100 text-slate-900 font-medium'
-                                                        : 'text-slate-500 hover:bg-slate-50'
-                                                }`}
-                                                onClick={() => setMobileMenuOpen(false)}
-                                            >
-                                                <item.icon className="w-4 h-4" />
-                                                {item.name}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            )}
-
                             {hasModulePermission('orders') && (
                             <div className="mb-2">
                                 <button
@@ -776,6 +727,41 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 Procurement
                             </Link>
                             )}
+                            </>
+                            )}
+
+                            {(hasModulePermission('inventory') || hasModulePermission('procurement')) && (
+                            <div className="px-3 mt-2 mb-2">
+                                <button
+                                    onClick={() => toggleSection('inventory')}
+                                    className="w-full flex items-center justify-between text-xs text-slate-400 uppercase font-medium hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                >
+                                    <span>Inventory</span>
+                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${collapsedSections.inventory ? '-rotate-90' : ''}`} />
+                                </button>
+                            </div>
+                            )}
+                            {isSectionExpanded('inventory') && (
+                            <>
+                                {(hasModulePermission('inventory') || hasModulePermission('procurement')) && (
+                                <>
+                                    {inventorySubItems.map((item) => (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                                currentPath === item.href
+                                                    ? 'bg-slate-900 text-white'
+                                                    : 'text-slate-600 hover:bg-slate-100'
+                                            }`}
+                                            onClick={() => setMobileMenuOpen(false)}
+                                        >
+                                            <item.icon className="w-5 h-5" />
+                                            {item.name}
+                                        </Link>
+                                    ))}
+                                </>
+                                )}
                             </>
                             )}
 
@@ -1320,8 +1306,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </>
                     )}
 
-                    {/* OPERATIONS Section - Orders & Inventory */}
-                    {(hasModulePermission('orders') || hasModulePermission('inventory') || hasModulePermission('procurement')) && (
+                    {/* OPERATIONS Section - Orders & Production */}
+                    {(hasModulePermission('orders') || hasModulePermission('production')) && (
                     <div className="px-3 mt-4 mb-2">
                         {sidebarOpen && (
                             <button
@@ -1374,61 +1360,39 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             <BarChart3 className="w-5 h-5 flex-shrink-0" />
                             {sidebarOpen && <span>Reports</span>}
                         </Link>}
+                    </div>
+                    )}
 
-                        {/* Inventory Dropdown */}
-                        {(hasModulePermission('inventory') || hasModulePermission('procurement')) && <div className="space-y-1">
-                            {sidebarOpen ? (
-                                <div className={`flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                                    isInventoryPage
+                    {/* INVENTORY Section */}
+                    {(hasModulePermission('inventory') || hasModulePermission('procurement')) && (
+                    <div className="px-3 mt-4 mb-2">
+                        {sidebarOpen && (
+                            <button
+                                onClick={() => toggleSection('inventory')}
+                                className="w-full flex items-center justify-between text-xs text-slate-400 uppercase font-medium hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                            >
+                                <span>Inventory</span>
+                                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${collapsedSections.inventory ? '-rotate-90' : ''}`} />
+                            </button>
+                        )}
+                    </div>
+                    )}
+                    {isSectionExpanded('inventory') && (
+                    <div className="space-y-1 px-3">
+                        {(hasModulePermission('inventory') || hasModulePermission('procurement')) && inventorySubItems.map((item) => (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                                    currentPath === item.href
                                         ? 'bg-slate-900 text-white'
                                         : 'text-slate-600 hover:bg-slate-100'
-                                }`}>
-                                    <Link
-                                        href="/inventory"
-                                        className="flex items-center gap-3 flex-1"
-                                    >
-                                        <Package className="w-5 h-5" />
-                                        <span>Inventory</span>
-                                    </Link>
-                                    <button
-                                        onClick={() => setInventoryDropdownOpen(!inventoryDropdownOpen)}
-                                        className="p-1 rounded hover:bg-black/10 transition-colors"
-                                        aria-label="Toggle inventory dropdown"
-                                    >
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${inventoryDropdownOpen ? 'rotate-180' : ''}`} />
-                                    </button>
-                                </div>
-                            ) : (
-                                <Link
-                                    href="/inventory"
-                                    className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors ${
-                                        isInventoryPage
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    <Package className="w-5 h-5" />
-                                </Link>
-                            )}
-                            {inventoryDropdownOpen && sidebarOpen && (
-                                <div className="mt-1 space-y-1 ml-4 border-l-2 border-slate-200 pl-2">
-                                    {inventorySubItems.map((item) => (
-                                        <Link
-                                            key={item.href}
-                                            href={item.href}
-                                            className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                currentPath === item.href
-                                                    ? 'bg-slate-100 text-slate-900 font-medium'
-                                                    : 'text-slate-500 hover:bg-slate-50'
-                                            }`}
-                                        >
-                                            <item.icon className="w-4 h-4" />
-                                            {item.name}
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                        </div>}
+                                } ${!sidebarOpen ? 'justify-center' : ''}`}
+                            >
+                                <item.icon className="w-5 h-5 flex-shrink-0" />
+                                {sidebarOpen && <span>{item.name}</span>}
+                            </Link>
+                        ))}
                     </div>
                     )}
 
