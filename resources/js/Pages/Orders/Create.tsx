@@ -20,6 +20,22 @@ interface LineItem {
     // their product (qty) is actually saved.
     length?: string;
     breadth?: string;
+    dimension_unit?: 'ft' | 'in';
+}
+
+// Dimension-based services (LFP prints etc.) are priced per square meter --
+// staff enter Length x Breadth in whichever unit they measured in, so convert
+// to sqm before it becomes the priced qty.
+const SQM_PER_UNIT: Record<'ft' | 'in', number> = {
+    ft: 0.09290304,
+    in: 0.00064516,
+};
+
+function areaInSqm(length: string | number | undefined, breadth: string | number | undefined, unit: 'ft' | 'in' = 'ft'): number {
+    const l = Number(length);
+    const b = Number(breadth);
+    if (!(l > 0) || !(b > 0)) return 0;
+    return l * b * SQM_PER_UNIT[unit];
 }
 
 function priceForQuantity(item: any, qty: number): number {
@@ -90,6 +106,7 @@ export default function OrderCreate() {
             // the previous one.
             newItems[index].length = '';
             newItems[index].breadth = '';
+            newItems[index].dimension_unit = 'ft';
 
             const picked = findPickable(products, services, type, id);
             if (picked) {
@@ -101,11 +118,12 @@ export default function OrderCreate() {
             if (picked) {
                 newItems[index].unit_price = priceForQuantity(picked, value);
             }
-        } else if (field === 'length' || field === 'breadth') {
-            const l = Number(field === 'length' ? value : newItems[index].length);
-            const b = Number(field === 'breadth' ? value : newItems[index].breadth);
-            if (l > 0 && b > 0) {
-                const qty = l * b;
+        } else if (field === 'length' || field === 'breadth' || field === 'dimension_unit') {
+            const length = field === 'length' ? value : newItems[index].length;
+            const breadth = field === 'breadth' ? value : newItems[index].breadth;
+            const unit = field === 'dimension_unit' ? value : (newItems[index].dimension_unit || 'ft');
+            const qty = areaInSqm(length, breadth, unit);
+            if (qty > 0) {
                 newItems[index].qty = qty;
                 const picked = findPickable(products, services, newItems[index].product_type, newItems[index].product_id);
                 if (picked) {
@@ -274,7 +292,7 @@ export default function OrderCreate() {
                                                         const picked = findPickable(products, services, item.product_type, item.product_id);
                                                         if (picked && picked.requires_dimensions) {
                                                             return (
-                                                                <div className="space-y-1.5 min-w-[132px]">
+                                                                <div className="space-y-1.5 min-w-[180px]">
                                                                     <div className="flex gap-1.5">
                                                                         <div className="flex-1">
                                                                             <label className="block text-[10px] text-slate-400 mb-0.5">Length</label>
@@ -297,6 +315,17 @@ export default function OrderCreate() {
                                                                                 min="0"
                                                                                 step="0.01"
                                                                             />
+                                                                        </div>
+                                                                        <div>
+                                                                            <label className="block text-[10px] text-slate-400 mb-0.5">Unit</label>
+                                                                            <select
+                                                                                value={item.dimension_unit || 'ft'}
+                                                                                onChange={(e) => updateItem(index, 'dimension_unit', e.target.value)}
+                                                                                className="glass-input text-sm px-1"
+                                                                            >
+                                                                                <option value="ft">ft</option>
+                                                                                <option value="in">in</option>
+                                                                            </select>
                                                                         </div>
                                                                     </div>
                                                                     <div>
