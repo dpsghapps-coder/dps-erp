@@ -621,21 +621,64 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 )}
                             </>
                             )}
+                            {(hasModulePermission('products') || hasModulePermission('crm') || hasModulePermission('marketing') || hasModulePermission('orders')) && (
                             <div className="px-3 mt-2 mb-2">
                                 <button
-                                    onClick={() => toggleSection('operations')}
+                                    onClick={() => toggleSection('sales')}
                                     className="w-full flex items-center justify-between text-xs text-slate-400 uppercase font-medium hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                 >
-                                    <span>Operations</span>
-                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${collapsedSections.operations ? '-rotate-90' : ''}`} />
+                                    <span>Sales & Marketing</span>
+                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${collapsedSections.sales ? '-rotate-90' : ''}`} />
                                 </button>
                             </div>
-                            {isSectionExpanded('operations') && (
+                            )}
+                            {isSectionExpanded('sales') && (
                             <>
-                            <Link href="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentPath === '/dashboard' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`} onClick={() => setMobileMenuOpen(false)}>
-                                <LayoutDashboard className="w-5 h-5" />
+
+                            {hasModulePermission('products') && (
+                            <Link
+                                href="/sales/overview"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    currentPath === '/sales/overview'
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <BarChart3 className="w-5 h-5" />
                                 Dashboard
                             </Link>
+                            )}
+
+                            {hasModulePermission('crm') && (
+                            <Link
+                                href="/crm/leads"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    currentPath === '/crm/leads'
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <UserPlus className="w-5 h-5" />
+                                Sales Management
+                            </Link>
+                            )}
+
+                            {hasModulePermission('marketing') && (
+                            <Link
+                                href="/marketing"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    isMarketingPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <Globe className="w-5 h-5" />
+                                Marketing
+                            </Link>
+                            )}
 
                             {hasModulePermission('orders') && (
                             <div className="mb-2">
@@ -674,6 +717,77 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 )}
                             </div>
                             )}
+
+                            {hasModulePermission('products') && (
+                            <div className="mb-2">
+                                <button
+                                    onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
+                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                        isPricingPage
+                                            ? 'bg-slate-900 text-white'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Package className="w-5 h-5" />
+                                        Pricing
+                                    </div>
+                                    <ChevronDown className={`w-4 h-4 transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {productsDropdownOpen && (
+                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
+                                        {productsSubItemsFull.map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                                    currentPath === item.href
+                                                        ? 'bg-slate-100 text-slate-900 font-medium'
+                                                        : 'text-slate-500 hover:bg-slate-50'
+                                                }`}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                            >
+                                                <item.icon className="w-4 h-4" />
+                                                {item.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            )}
+
+                            {hasModulePermission('products') && (
+                            <Link
+                                href="/crm/proformas"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    currentPath.startsWith('/crm/proformas')
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <Receipt className="w-5 h-5" />
+                                Proformas
+                            </Link>
+                            )}
+                            </>
+                            )}
+
+                            <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
+                                <button
+                                    onClick={() => toggleSection('operations')}
+                                    className="w-full flex items-center justify-between text-xs text-slate-400 uppercase font-medium hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                >
+                                    <span>Operations</span>
+                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${collapsedSections.operations ? '-rotate-90' : ''}`} />
+                                </button>
+                            </div>
+                            {isSectionExpanded('operations') && (
+                            <>
+                            <Link href="/dashboard" className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${currentPath === '/dashboard' ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`} onClick={() => setMobileMenuOpen(false)}>
+                                <LayoutDashboard className="w-5 h-5" />
+                                Dashboard
+                            </Link>
 
                             {hasModulePermission('production') && (
                             <div className="mb-2">
@@ -762,120 +876,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     ))}
                                 </>
                                 )}
-                            </>
-                            )}
-
-                            {(hasModulePermission('products') || hasModulePermission('crm') || hasModulePermission('marketing')) && (
-                            <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
-                                <button
-                                    onClick={() => toggleSection('sales')}
-                                    className="w-full flex items-center justify-between text-xs text-slate-400 uppercase font-medium hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                                >
-                                    <span>Sales & Marketing</span>
-                                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${collapsedSections.sales ? '-rotate-90' : ''}`} />
-                                </button>
-                            </div>
-                            )}
-                            {isSectionExpanded('sales') && (
-                            <>
-
-                            {hasModulePermission('products') && (
-                            <Link
-                                href="/sales/overview"
-                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
-                                    currentPath === '/sales/overview'
-                                        ? 'bg-slate-900 text-white'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                }`}
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                <BarChart3 className="w-5 h-5" />
-                                Dashboard
-                            </Link>
-                            )}
-
-                            {hasModulePermission('crm') && (
-                            <Link
-                                href="/crm/leads"
-                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
-                                    currentPath === '/crm/leads'
-                                        ? 'bg-slate-900 text-white'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                }`}
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                <UserPlus className="w-5 h-5" />
-                                Sales Management
-                            </Link>
-                            )}
-
-                            {hasModulePermission('marketing') && (
-                            <Link
-                                href="/marketing"
-                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
-                                    isMarketingPage
-                                        ? 'bg-slate-900 text-white'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                }`}
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                <Globe className="w-5 h-5" />
-                                Marketing
-                            </Link>
-                            )}
-
-                            {hasModulePermission('products') && (
-                            <div className="mb-2">
-                                <button
-                                    onClick={() => setProductsDropdownOpen(!productsDropdownOpen)}
-                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
-                                        isPricingPage
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <Package className="w-5 h-5" />
-                                        Pricing
-                                    </div>
-                                    <ChevronDown className={`w-4 h-4 transition-transform ${productsDropdownOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                {productsDropdownOpen && (
-                                    <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
-                                        {productsSubItemsFull.map((item) => (
-                                            <Link
-                                                key={item.href}
-                                                href={item.href}
-                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                                    currentPath === item.href
-                                                        ? 'bg-slate-100 text-slate-900 font-medium'
-                                                        : 'text-slate-500 hover:bg-slate-50'
-                                                }`}
-                                                onClick={() => setMobileMenuOpen(false)}
-                                            >
-                                                <item.icon className="w-4 h-4" />
-                                                {item.name}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            )}
-
-                            {hasModulePermission('products') && (
-                            <Link
-                                href="/crm/proformas"
-                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
-                                    currentPath.startsWith('/crm/proformas')
-                                        ? 'bg-slate-900 text-white'
-                                        : 'text-slate-600 hover:bg-slate-100'
-                                }`}
-                                onClick={() => setMobileMenuOpen(false)}
-                            >
-                                <Receipt className="w-5 h-5" />
-                                Proformas
-                            </Link>
-                            )}
                             </>
                             )}
 
@@ -1191,7 +1191,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     )}
 
                     {/* SALES & MARKETING Section */}
-                    {(hasModulePermission('products') || hasModulePermission('crm') || hasModulePermission('marketing')) && <div className="px-3 mt-4 mb-2">
+                    {(hasModulePermission('products') || hasModulePermission('crm') || hasModulePermission('marketing') || hasModulePermission('orders')) && <div className="px-3 mt-4 mb-2">
                         {sidebarOpen && (
                             <button
                                 onClick={() => toggleSection('sales')}
@@ -1242,6 +1242,53 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     <Globe className="w-5 h-5 flex-shrink-0" />
                                     {sidebarOpen && <span>Marketing</span>}
                                 </Link>
+                            </div>}
+                            {hasModulePermission('orders') && <div className="px-3 space-y-1">
+                                {sidebarOpen ? (
+                                    <button
+                                        onClick={() => setOrdersDropdownOpen(!ordersDropdownOpen)}
+                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                            isOrdersPage
+                                                ? 'bg-slate-900 text-white'
+                                                : 'text-slate-600 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <ShoppingCart className="w-5 h-5 flex-shrink-0" />
+                                            <span>Orders</span>
+                                        </div>
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${ordersDropdownOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                ) : (
+                                    <Link
+                                        href="/orders"
+                                        className={`flex items-center justify-center px-3 py-2 rounded-lg transition-colors ${
+                                            isOrdersPage
+                                                ? 'bg-slate-900 text-white'
+                                                : 'text-slate-600 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                        <ShoppingCart className="w-5 h-5" />
+                                    </Link>
+                                )}
+                                {ordersDropdownOpen && sidebarOpen && (
+                                    <div className="mt-1 space-y-1 ml-4 border-l-2 border-slate-200 pl-2">
+                                        {ordersSubItems.map((item) => (
+                                            <Link
+                                                key={item.href}
+                                                href={item.href}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                                                    currentPath === item.href
+                                                        ? 'bg-slate-100 text-slate-900 font-medium'
+                                                        : 'text-slate-500 hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                <item.icon className="w-4 h-4" />
+                                                {item.name}
+                                            </Link>
+                                        ))}
+                                    </div>
+                                )}
                             </div>}
                             {hasModulePermission('products') && <div className="px-3 space-y-1">
                                 {sidebarOpen ? (
@@ -1306,7 +1353,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         </>
                     )}
 
-                    {/* OPERATIONS Section - Orders & Production */}
+                    {/* OPERATIONS Section - Production & Reports */}
                     {(hasModulePermission('orders') || hasModulePermission('production')) && (
                     <div className="px-3 mt-4 mb-2">
                         {sidebarOpen && (
@@ -1322,19 +1369,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     )}
                     {isSectionExpanded('operations') && (
                     <div className="space-y-1 px-3">
-                        {/* Orders Link */}
-                        {hasModulePermission('orders') && <Link
-                            href="/orders"
-                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                                isOrdersPage
-                                    ? 'bg-slate-900 text-white'
-                                    : 'text-slate-600 hover:bg-slate-100'
-                            }`}
-                        >
-                            <ShoppingCart className="w-5 h-5 flex-shrink-0" />
-                            {sidebarOpen && <span>Orders</span>}
-                        </Link>}
-
                         {/* Production Link */}
                         {hasModulePermission('production') && <Link
                             href="/production"
