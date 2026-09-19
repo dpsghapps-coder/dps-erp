@@ -682,20 +682,29 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
                             {hasModulePermission('orders') && (
                             <div className="mb-2">
-                                <button
-                                    onClick={() => setOrdersDropdownOpen(!ordersDropdownOpen)}
-                                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                <div
+                                    className={`w-full flex items-center justify-between rounded-lg transition-colors ${
                                         isOrdersPage
                                             ? 'bg-slate-900 text-white'
                                             : 'text-slate-600 hover:bg-slate-100'
                                     }`}
                                 >
-                                    <div className="flex items-center gap-3">
+                                    <Link
+                                        href="/orders"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="flex-1 flex items-center gap-3 px-3 py-2"
+                                    >
                                         <ShoppingCart className="w-5 h-5" />
                                         Orders
-                                    </div>
-                                    <ChevronDown className={`w-4 h-4 transition-transform ${ordersDropdownOpen ? 'rotate-180' : ''}`} />
-                                </button>
+                                    </Link>
+                                    <button
+                                        onClick={() => setOrdersDropdownOpen(!ordersDropdownOpen)}
+                                        className="px-3 py-2"
+                                        aria-label="Toggle orders submenu"
+                                    >
+                                        <ChevronDown className={`w-4 h-4 transition-transform ${ordersDropdownOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                </div>
                                 {ordersDropdownOpen && (
                                     <div className="ml-4 mt-1 space-y-1 border-l border-slate-200 pl-3">
                                         {ordersSubItems.map((item) => (
@@ -1245,20 +1254,25 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </div>}
                             {hasModulePermission('orders') && <div className="px-3 space-y-1">
                                 {sidebarOpen ? (
-                                    <button
-                                        onClick={() => setOrdersDropdownOpen(!ordersDropdownOpen)}
-                                        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg transition-colors ${
+                                    <div
+                                        className={`w-full flex items-center justify-between rounded-lg transition-colors ${
                                             isOrdersPage
                                                 ? 'bg-slate-900 text-white'
                                                 : 'text-slate-600 hover:bg-slate-100'
                                         }`}
                                     >
-                                        <div className="flex items-center gap-3">
+                                        <Link href="/orders" className="flex-1 flex items-center gap-3 px-3 py-2">
                                             <ShoppingCart className="w-5 h-5 flex-shrink-0" />
                                             <span>Orders</span>
-                                        </div>
-                                        <ChevronDown className={`w-4 h-4 transition-transform ${ordersDropdownOpen ? 'rotate-180' : ''}`} />
-                                    </button>
+                                        </Link>
+                                        <button
+                                            onClick={() => setOrdersDropdownOpen(!ordersDropdownOpen)}
+                                            className="px-3 py-2"
+                                            aria-label="Toggle orders submenu"
+                                        >
+                                            <ChevronDown className={`w-4 h-4 transition-transform ${ordersDropdownOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+                                    </div>
                                 ) : (
                                     <Link
                                         href="/orders"
