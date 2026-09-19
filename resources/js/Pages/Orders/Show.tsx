@@ -137,6 +137,34 @@ export default function OrderShow() {
         setShowPaymentModal(true);
     };
 
+    const { data: deliverableData, setData: setDeliverableData, post: postDeliverable, processing: processingDeliverable, errors: deliverableErrors, reset: resetDeliverable } = useForm({
+        order_item_id: '',
+        description: '',
+        qty_promised: '',
+    });
+
+    const handleAddDeliverable = (e: React.FormEvent) => {
+        e.preventDefault();
+        postDeliverable(`/orders/${order?.id}/deliverables`, {
+            preserveScroll: true,
+            onSuccess: () => resetDeliverable(),
+        });
+    };
+
+    const markDeliverableDelivered = (deliverable: any) => {
+        router.put(`/orders/${order?.id}/deliverables/${deliverable.id}`, {
+            description: deliverable.description,
+            qty_promised: deliverable.qty_promised,
+            qty_delivered: deliverable.qty_promised ?? deliverable.qty_delivered,
+            status: 'delivered',
+            notes: deliverable.notes,
+        }, { preserveScroll: true });
+    };
+
+    const deleteDeliverable = (deliverable: any) => {
+        router.delete(`/orders/${order?.id}/deliverables/${deliverable.id}`, { preserveScroll: true });
+    };
+
     const handlePaymentSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         postPayment(`/orders/${order?.id}/payments`, {
@@ -288,6 +316,75 @@ export default function OrderShow() {
                                 </tbody>
                             </table>
                         </div>
+                    </GlassCard>
+
+                    {/* Deliverables */}
+                    <GlassCard>
+                        <h2 className="text-lg font-semibold mb-4">Deliverables</h2>
+                        {(order?.items || []).some((item: any) => item.deliverables?.length > 0) ? (
+                            <div className="space-y-2 mb-4">
+                                {(order?.items || [])
+                                    .flatMap((item: any) => (item.deliverables || []).map((d: any) => ({ ...d, itemName: item.product?.name || item.description || `Item #${item.id}` })))
+                                    .map((d: any) => (
+                                        <div key={d.id} className="flex items-center justify-between gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-lg">
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-medium truncate">{d.description}</p>
+                                                <p className="text-xs text-slate-400 truncate">
+                                                    {d.itemName} · {d.qty_delivered}{d.qty_promised ? ` / ${d.qty_promised}` : ''} delivered
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-3 flex-shrink-0">
+                                                <StatusBadge status={d.status} />
+                                                {d.status !== 'delivered' && (
+                                                    <button onClick={() => markDeliverableDelivered(d)} className="text-green-500 hover:text-green-600" title="Mark Delivered">
+                                                        <Check className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                                <button onClick={() => deleteDeliverable(d)} className="text-slate-400 hover:text-red-500" title="Remove">
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-slate-400 mb-4">No deliverables tracked yet</p>
+                        )}
+                        <form onSubmit={handleAddDeliverable} className="flex flex-wrap gap-2 pt-3 border-t border-slate-100 dark:border-white/5">
+                            <select
+                                value={deliverableData.order_item_id}
+                                onChange={(e) => setDeliverableData('order_item_id', e.target.value)}
+                                className="glass-input text-sm flex-1 min-w-[140px]"
+                            >
+                                <option value="">Select item...</option>
+                                {(order?.items || []).map((item: any) => (
+                                    <option key={item.id} value={item.id}>{item.product?.name || item.description || `Item #${item.id}`}</option>
+                                ))}
+                            </select>
+                            <input
+                                type="text"
+                                value={deliverableData.description}
+                                onChange={(e) => setDeliverableData('description', e.target.value)}
+                                placeholder="e.g., 100 edited photos"
+                                className="glass-input text-sm flex-1 min-w-[160px]"
+                            />
+                            <input
+                                type="number"
+                                min={1}
+                                value={deliverableData.qty_promised}
+                                onChange={(e) => setDeliverableData('qty_promised', e.target.value)}
+                                placeholder="Qty"
+                                className="glass-input text-sm w-20"
+                            />
+                            <button
+                                type="submit"
+                                disabled={processingDeliverable || !deliverableData.order_item_id || !deliverableData.description}
+                                className="glass-button-secondary text-sm px-3 disabled:opacity-50 flex items-center gap-1"
+                            >
+                                <Plus className="w-4 h-4" /> Add
+                            </button>
+                        </form>
+                        {deliverableErrors.description && <p className="text-red-400 text-xs mt-1">{deliverableErrors.description}</p>}
                     </GlassCard>
 
                     {/* Production Jobs */}
