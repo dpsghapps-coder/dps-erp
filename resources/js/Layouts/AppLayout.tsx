@@ -76,7 +76,6 @@ const enterpriseNav: NavItem[] = [
 const interactionItems: CrmSubItem[] = [
     { name: 'Dashboard', href: '/crm/reports', icon: BarChart3 },
     { name: 'Clients & Accounts', href: '/crm', icon: Users },
-    { name: 'Sales Management', href: '/crm/leads', icon: UserPlus },
 ];
 
 const inventorySubItems: CrmSubItem[] = [
@@ -624,20 +623,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     ))}
                                 </>
                                 )}
-                                {hasModulePermission('marketing') && (
-                                <Link
-                                    href="/marketing"
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
-                                        isMarketingPage
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    <Globe className="w-5 h-5" />
-                                    Marketing
-                                </Link>
-                                )}
                             </>
                             )}
                             <div className="px-3 mt-2 mb-2">
@@ -794,13 +779,13 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             </>
                             )}
 
-                            {hasModulePermission('products') && (
+                            {(hasModulePermission('products') || hasModulePermission('crm') || hasModulePermission('marketing')) && (
                             <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
                                 <button
                                     onClick={() => toggleSection('sales')}
                                     className="w-full flex items-center justify-between text-xs text-slate-400 uppercase font-medium hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                 >
-                                    <span>Sales</span>
+                                    <span>Sales & Marketing</span>
                                     <ChevronDown className={`w-3.5 h-3.5 transition-transform ${collapsedSections.sales ? '-rotate-90' : ''}`} />
                                 </button>
                             </div>
@@ -820,6 +805,36 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             >
                                 <BarChart3 className="w-5 h-5" />
                                 Dashboard
+                            </Link>
+                            )}
+
+                            {hasModulePermission('crm') && (
+                            <Link
+                                href="/crm/leads"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    currentPath === '/crm/leads'
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <UserPlus className="w-5 h-5" />
+                                Sales Management
+                            </Link>
+                            )}
+
+                            {hasModulePermission('marketing') && (
+                            <Link
+                                href="/marketing"
+                                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
+                                    isMarketingPage
+                                        ? 'bg-slate-900 text-white'
+                                        : 'text-slate-600 hover:bg-slate-100'
+                                }`}
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                <Globe className="w-5 h-5" />
+                                Marketing
                             </Link>
                             )}
 
@@ -1166,7 +1181,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     </div>
                     {isSectionExpanded('interaction') && (
                         <>
-                            {/* Interaction Items - Dashboard, Clients & Accounts, Sales Management */}
+                            {/* Interaction Items - Dashboard, Clients & Accounts */}
                             {hasModulePermission('crm') && (
                                 <>
                                     {interactionItems.map((item) => (
@@ -1186,31 +1201,17 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     ))}
                                 </>
                             )}
-                            {/* Marketing Link - part of INTERACTION */}
-                            {hasModulePermission('marketing') && <div className="px-3 mb-1">
-                                <Link
-                                    href="/marketing"
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                                        isMarketingPage
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    <Globe className="w-5 h-5 flex-shrink-0" />
-                                    {sidebarOpen && <span>Marketing</span>}
-                                </Link>
-                            </div>}
                         </>
                     )}
 
-                    {/* SALES Section */}
-                    {hasModulePermission('products') && <div className="px-3 mt-4 mb-2">
+                    {/* SALES & MARKETING Section */}
+                    {(hasModulePermission('products') || hasModulePermission('crm') || hasModulePermission('marketing')) && <div className="px-3 mt-4 mb-2">
                         {sidebarOpen && (
                             <button
                                 onClick={() => toggleSection('sales')}
                                 className="w-full flex items-center justify-between text-xs text-slate-400 uppercase font-medium hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                             >
-                                <span>Sales</span>
+                                <span>Sales & Marketing</span>
                                 <ChevronDown className={`w-3.5 h-3.5 transition-transform ${collapsedSections.sales ? '-rotate-90' : ''}`} />
                             </button>
                         )}
@@ -1228,6 +1229,32 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 >
                                     <BarChart3 className="w-5 h-5 flex-shrink-0" />
                                     {sidebarOpen && <span>Dashboard</span>}
+                                </Link>
+                            </div>}
+                            {hasModulePermission('crm') && <div className="px-3 mb-1">
+                                <Link
+                                    href="/crm/leads"
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${sidebarOpen ? '' : 'justify-center'} ${
+                                        currentPath === '/crm/leads'
+                                            ? 'bg-slate-900 text-white'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    <UserPlus className="w-5 h-5 flex-shrink-0" />
+                                    {sidebarOpen && <span>Sales Management</span>}
+                                </Link>
+                            </div>}
+                            {hasModulePermission('marketing') && <div className="px-3 mb-1">
+                                <Link
+                                    href="/marketing"
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${sidebarOpen ? '' : 'justify-center'} ${
+                                        isMarketingPage
+                                            ? 'bg-slate-900 text-white'
+                                            : 'text-slate-600 hover:bg-slate-100'
+                                    }`}
+                                >
+                                    <Globe className="w-5 h-5 flex-shrink-0" />
+                                    {sidebarOpen && <span>Marketing</span>}
                                 </Link>
                             </div>}
                             {hasModulePermission('products') && <div className="px-3 space-y-1">
@@ -1932,7 +1959,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                     <div>
                                         <h3 className="font-semibold text-slate-900">Interaction</h3>
-                                        <p className="text-xs text-slate-500">Dashboard, Clients & Sales</p>
+                                        <p className="text-xs text-slate-500">Dashboard, Clients & Accounts</p>
                                     </div>
                                 </div>
                                 <button
@@ -1962,24 +1989,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                         <span className="font-medium">{item.name}</span>
                                     </Link>
                                 ))}
-                                {hasModulePermission('marketing') && (
-                                    <Link
-                                        href="/marketing"
-                                        onClick={() => setCrmSlideUpOpen(false)}
-                                        className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
-                                            isMarketingPage
-                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo/25'
-                                                : 'text-slate-600 hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                            isMarketingPage ? 'bg-white/20' : 'bg-slate-100'
-                                        }`}>
-                                            <Globe className="w-5 h-5" />
-                                        </div>
-                                        <span className="font-medium">Marketing</span>
-                                    </Link>
-                                )}
                             </div>
                             <div className="pb-8"></div>
                         </div>
@@ -2049,11 +2058,11 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                         <Package className="w-5 h-5 text-indigo-600" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-slate-900">Pricing</h3>
-                                        <p className="text-xs text-slate-500">Manage Pricing</p>
+                                        <h3 className="font-semibold text-slate-900">Sales & Marketing</h3>
+                                        <p className="text-xs text-slate-500">Pricing, Leads & Marketing</p>
                                     </div>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setProductsSlideUpOpen(false)}
                                     className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                                 >
@@ -2077,6 +2086,42 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     </div>
                                     <span className="font-medium">Dashboard</span>
                                 </Link>
+                                {hasModulePermission('crm') && (
+                                    <Link
+                                        href="/crm/leads"
+                                        onClick={() => setProductsSlideUpOpen(false)}
+                                        className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+                                            currentPath === '/crm/leads'
+                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo/25'
+                                                : 'text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                            currentPath === '/crm/leads' ? 'bg-white/20' : 'bg-slate-100'
+                                        }`}>
+                                            <UserPlus className="w-5 h-5" />
+                                        </div>
+                                        <span className="font-medium">Sales Management</span>
+                                    </Link>
+                                )}
+                                {hasModulePermission('marketing') && (
+                                    <Link
+                                        href="/marketing"
+                                        onClick={() => setProductsSlideUpOpen(false)}
+                                        className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
+                                            isMarketingPage
+                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo/25'
+                                                : 'text-slate-600 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                                            isMarketingPage ? 'bg-white/20' : 'bg-slate-100'
+                                        }`}>
+                                            <Globe className="w-5 h-5" />
+                                        </div>
+                                        <span className="font-medium">Marketing</span>
+                                    </Link>
+                                )}
                                 {productsSubItemsFull.map((item) => (
                                     <Link
                                         key={item.href}
