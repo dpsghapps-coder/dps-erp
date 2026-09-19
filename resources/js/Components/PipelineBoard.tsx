@@ -210,6 +210,8 @@ export default function PipelineBoard({ deals, terminalVisibleHours }: { deals: 
     const [lostModalDeal, setLostModalDeal] = useState<any>(null);
     const [convertModalDeal, setConvertModalDeal] = useState<any>(null);
     const [convertTier, setConvertTier] = useState('bronze');
+    const [stageNoteModal, setStageNoteModal] = useState<{ deal: any; newStage: string } | null>(null);
+    const [stageNoteText, setStageNoteText] = useState('');
 
     const interactionForm = useForm({
         type: 'call',
@@ -319,9 +321,17 @@ export default function PipelineBoard({ deals, terminalVisibleHours }: { deals: 
                 setConvertModalDeal(draggedDeal);
                 return;
             }
-            applyStageChange(draggedDeal.id, newStage);
+            setStageNoteText('');
+            setStageNoteModal({ deal: draggedDeal, newStage });
         }
     }, [localDeals, applyStageChange]);
+
+    const handleStageNoteSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!stageNoteModal) return;
+        applyStageChange(stageNoteModal.deal.id, stageNoteModal.newStage, { note: stageNoteText });
+        setStageNoteModal(null);
+    };
 
     const handleLostSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -507,6 +517,53 @@ export default function PipelineBoard({ deals, terminalVisibleHours }: { deals: 
                                     className="glass-button text-sm font-medium bg-red-600/80 hover:bg-red-600"
                                 >
                                     Mark Lost
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Stage Change Note Modal */}
+            {stageNoteModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                                    Move to {COLUMNS.find((c) => c.id === stageNoteModal.newStage)?.label || stageNoteModal.newStage}
+                                </h3>
+                                <p className="text-xs text-slate-400">{stageNoteModal.deal.client?.company_name}</p>
+                            </div>
+                            <button onClick={() => setStageNoteModal(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleStageNoteSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Note (optional)</label>
+                                <textarea
+                                    value={stageNoteText}
+                                    onChange={(e) => setStageNoteText(e.target.value)}
+                                    className="glass-input w-full h-24 text-sm"
+                                    placeholder="What changed, or why this move..."
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={() => setStageNoteModal(null)}
+                                    className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 text-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="glass-button text-sm font-medium"
+                                >
+                                    Move Stage
                                 </button>
                             </div>
                         </form>

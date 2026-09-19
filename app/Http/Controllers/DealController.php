@@ -43,6 +43,7 @@ class DealController extends Controller
             'stage' => 'required|in:'.implode(',', Deal::STAGES),
             'lost_reason' => 'nullable|string|max:100',
             'lost_note' => 'nullable|string',
+            'note' => 'nullable|string',
             'next_follow_up_at' => 'nullable|date',
             'status' => 'nullable|in:'.implode(',', Client::TIERS),
         ]);
@@ -106,12 +107,18 @@ class DealController extends Controller
                     'occurred_at' => now(),
                 ]);
             } else {
+                $body = 'Stage changed from '.(Deal::STAGE_LABELS[$previousStage] ?? 'Unset')
+                    .' to '.(Deal::STAGE_LABELS[$newStage] ?? $newStage).'.';
+
+                if (! empty($validated['note'])) {
+                    $body .= "\n\n".$validated['note'];
+                }
+
                 $client->interactions()->create([
                     'user_id' => auth()->id(),
                     'type' => 'note',
                     'subject' => 'Pipeline stage updated',
-                    'body' => 'Stage changed from '.(Deal::STAGE_LABELS[$previousStage] ?? 'Unset')
-                        .' to '.(Deal::STAGE_LABELS[$newStage] ?? $newStage).'.',
+                    'body' => $body,
                     'occurred_at' => now(),
                 ]);
             }
