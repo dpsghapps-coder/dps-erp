@@ -150,7 +150,13 @@ class ProductController extends Controller
 
     public function calculators()
     {
-        return inertia('Products/Calculators');
+        return inertia('Products/Calculators', [
+            'dimensionServices' => Service::with('prices')
+                ->where('requires_dimensions', true)
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'unit']),
+        ]);
     }
 
     private function syncComponents(Product $product, array $components): void
