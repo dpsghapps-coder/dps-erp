@@ -1,12 +1,13 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowLeft, Printer, Box, Package } from 'lucide-react';
+import { ArrowLeft, Printer, Box, Package, Ruler } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useCurrency } from '@/Utils/currency';
 
 const tabs = [
     { id: 'offset', name: 'Offset Printing', icon: Printer },
+    { id: 'largeformat', name: 'Large Format', icon: Ruler },
     { id: 'signage', name: '3D & Signage', icon: Box },
     { id: 'packaging', name: 'Packaging', icon: Package },
 ] as const;
@@ -42,7 +43,7 @@ function priceForQty(service: DimensionService | undefined, qty: number): number
     return applicable ? Number(applicable.unit_price) : 0;
 }
 
-function SignageCalculator({ services }: { services: DimensionService[] }) {
+function LargeFormatCalculator({ services }: { services: DimensionService[] }) {
     const formatCurrency = useCurrency();
     const [serviceId, setServiceId] = useState<number | null>(services[0]?.id ?? null);
     const [unit, setUnit] = useState<'ft' | 'in'>('ft');
@@ -75,7 +76,7 @@ function SignageCalculator({ services }: { services: DimensionService[] }) {
         return (
             <div className="text-center py-16">
                 <Box className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-2">No signage materials configured</h3>
+                <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-2">No large format materials configured</h3>
                 <p className="text-slate-400 dark:text-slate-500 text-sm max-w-md mx-auto">
                     Add a dimension-based Service (e.g. an LFP print material) in Services to use this calculator.
                 </p>
@@ -244,7 +245,17 @@ export default function Calculators() {
                     </div>
                 )}
 
-                {activeTab === 'signage' && <SignageCalculator services={dimensionServices || []} />}
+                {activeTab === 'largeformat' && <LargeFormatCalculator services={dimensionServices || []} />}
+
+                {activeTab === 'signage' && (
+                    <div className="text-center py-16">
+                        <Box className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-2">3D & Signage Calculator</h3>
+                        <p className="text-slate-400 dark:text-slate-500 text-sm max-w-md mx-auto">
+                            Calculate costs for 3D printing, signage production, and display materials. Coming soon.
+                        </p>
+                    </div>
+                )}
 
                 {activeTab === 'packaging' && (
                     <div className="text-center py-16">
