@@ -108,7 +108,7 @@ export default function DecisionShow({ decision, employees }: Props) {
 
             <div className="flex flex-wrap items-center gap-3 mb-6">
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getStatusBadge(decision.status)}`}>
-                    {decision.status.replace(/_/g, ' ')}
+                    {decision.status.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                 </span>
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getPriorityBadge(decision.priority)}`}>
                     {decision.priority}
@@ -287,7 +287,7 @@ export default function DecisionShow({ decision, employees }: Props) {
                                                             {item.priority}
                                                         </span>
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(item.status || 'draft')}`}>
-                                                            {(item.status || 'draft').replace(/_/g, ' ')}
+                                                            {(item.status || 'draft').replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -354,7 +354,7 @@ export default function DecisionShow({ decision, employees }: Props) {
                             <div className="flex justify-between">
                                 <span className="text-slate-500">Status</span>
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(decision.status)}`}>
-                                    {decision.status.replace(/_/g, ' ')}
+                                    {decision.status.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                 </span>
                             </div>
                             <div className="flex justify-between">

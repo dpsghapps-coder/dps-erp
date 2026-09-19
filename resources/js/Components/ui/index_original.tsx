@@ -110,7 +110,7 @@ export function StatusBadge({
 }) {
   return (
     <span className={`status-badge ${statusClasses[status] || 'bg-slate-100 dark:bg-white/10'} ${className || ''}`}>
-      {status.replace(/_/g, ' ')}
+      {status.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
     </span>
   );
 }

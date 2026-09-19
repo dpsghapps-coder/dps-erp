@@ -3,6 +3,7 @@ import { GlassCard, PageHeader, EmptyState } from '@/Components/ui';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { Package, Wrench, Receipt, Layers, Building2 } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
+import { titleCase } from '@/Utils/text';
 
 const STATUS_COLORS: Record<string, string> = {
     draft: 'bg-slate-500/20 text-slate-400',
@@ -57,8 +58,8 @@ export default function SalesOverview() {
                             const row = proformaStats?.by_status?.[status];
                             return (
                                 <div key={status} className="flex items-center justify-between">
-                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full capitalize ${STATUS_COLORS[status]}`}>
-                                        {status}
+                                    <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${STATUS_COLORS[status]}`}>
+                                        {titleCase(status)}
                                     </span>
                                     <div className="text-right">
                                         <p className="text-sm font-medium text-slate-900 dark:text-white">{row?.count ?? 0}</p>

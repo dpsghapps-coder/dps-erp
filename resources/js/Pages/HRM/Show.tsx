@@ -4,6 +4,7 @@ import { Head, Link } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Mail, Phone, Calendar, Briefcase, DollarSign, Clock, Heart } from 'lucide-react';
 import { usePage } from '@inertiajs/react';
 import { useCurrency } from '@/Utils/currency';
+import { titleCase } from '@/Utils/text';
 import WhatsAppLink from '@/Components/WhatsAppLink';
 
 export default function HrmShow() {
@@ -143,7 +144,7 @@ export default function HrmShow() {
                                                 leave.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
                                                 'bg-red-500/20 text-red-400'
                                             }`}>
-                                                {leave.status}
+                                                {titleCase(leave.status)}
                                             </span>
                                         </div>
                                         <p className="text-sm text-slate-400 mt-1">

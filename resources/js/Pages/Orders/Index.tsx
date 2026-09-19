@@ -4,6 +4,7 @@ import { Head, usePage, Link, router } from '@inertiajs/react';
 import { Plus, Search, ShoppingCart, X } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useCurrency } from '@/Utils/currency';
+import { titleCase } from '@/Utils/text';
 
 export default function OrdersIndex() {
     const { orders, filters } = usePage().props as any;
@@ -222,7 +223,7 @@ export default function OrdersIndex() {
                             <div className="flex justify-between">
                                 <span className="text-slate-400">Payment</span>
                                 <span className={`status-badge ${paymentColors[selectedOrder.payment_status]}`}>
-                                    {selectedOrder.payment_status}
+                                    {titleCase(selectedOrder.payment_status)}
                                 </span>
                             </div>
                             <div className="flex justify-between">

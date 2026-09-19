@@ -4,6 +4,7 @@ import CrmTabs from '@/Components/CrmTabs';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Users, TrendingUp, BarChart3, ArrowRight, DollarSign, Trophy, Medal, Award, Crown, Gem, AlertTriangle, Clock, Megaphone, Calendar, CheckCircle2 } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
+import { titleCase } from '@/Utils/text';
 
 const CAMPAIGN_TYPE_LABELS: Record<string, string> = {
     social: 'Social Media',
@@ -323,7 +324,7 @@ export default function Reports() {
                                             <td className="py-2 px-4 text-slate-400">{CAMPAIGN_TYPE_LABELS[campaign.type] || campaign.type}</td>
                                             <td className="py-2 px-4">
                                                 <span className={`text-xs px-2 py-0.5 rounded-full ${CAMPAIGN_STATUS_COLORS[campaign.status] || 'bg-slate-500/20 text-slate-400'}`}>
-                                                    {campaign.status}
+                                                    {titleCase(campaign.status)}
                                                 </span>
                                             </td>
                                             <td className="py-2 px-4 text-slate-400">{new Date(campaign.start_date).toLocaleDateString()}</td>

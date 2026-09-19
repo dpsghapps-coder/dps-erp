@@ -6,6 +6,7 @@ import { GlassCard, PageHeader, EmptyState, Pagination } from '@/Components/ui';
 import { TeamCalendar, BalanceBar, RequestModal } from '@/Components/HRM';
 import { Head, Link } from '@inertiajs/react';
 import { Plus, Check, X } from 'lucide-react';
+import { titleCase } from '@/Utils/text';
 
 const BALANCE_COLORS = ['bg-indigo-500', 'bg-red-500', 'bg-blue-500', 'bg-amber-500', 'bg-emerald-500', 'bg-purple-500'];
 
@@ -188,7 +189,7 @@ export default function HrmLeaves() {
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className={`text-xs px-3 py-1 rounded-full ${statusColors[leave.status]}`}>
-                                    {leave.status}
+                                    {titleCase(leave.status)}
                                 </span>
                                 {leave.status === 'pending' && (
                                     <div className="flex items-center gap-2">

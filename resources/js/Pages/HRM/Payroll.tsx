@@ -4,8 +4,9 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, Pagination } from '@/Components/ui';
 import { TrendChart } from '@/Components/HRM';
 import { Head, Link } from '@inertiajs/react';
-import { 
-    DollarSign, 
+import { titleCase } from '@/Utils/text';
+import {
+    DollarSign,
     FileText, 
     Download, 
     TrendingUp,
@@ -221,7 +222,7 @@ export default function HrmPayroll() {
                                     <td className="py-3 px-4 text-right font-medium">{formatCurrency(payslip.net_pay)}</td>
                                     <td className="py-3 px-4">
                                         <span className={`text-xs px-2 py-1 rounded-full ${statusColors[payslip.status]}`}>
-                                            {payslip.status}
+                                            {titleCase(payslip.status)}
                                         </span>
                                     </td>
                                     <td className="py-3 px-4 text-right">

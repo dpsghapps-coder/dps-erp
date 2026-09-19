@@ -3,6 +3,7 @@ import { GlassCard } from '@/Components/ui';
 import InventoryTabs from '@/Components/InventoryTabs';
 import { Head, usePage, Link } from '@inertiajs/react';
 import { Truck, Package, Boxes, ClipboardList, Building2, AlertTriangle, Layers, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { titleCase } from '@/Utils/text';
 
 export default function InventoryIndex() {
     const { totalSuppliers, totalBranches, totalMaterials, activeMaterials, disabledMaterials, stockOnHand, pendingRequisitions, categoriesCount, lowStockCount, materialsByCategory, recentStock, recentRequisitions } = usePage().props as any;
@@ -128,7 +129,7 @@ export default function InventoryIndex() {
                                         req.status === 'rejected' ? 'bg-red-100 text-red-700' :
                                         'bg-yellow-100 text-yellow-700'
                                     }`}>
-                                        {req.status}
+                                        {titleCase(req.status)}
                                     </span>
                                 </div>
                             ))}

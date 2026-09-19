@@ -5,6 +5,7 @@ import { Head, usePage, useForm, router } from '@inertiajs/react';
 import { Plus, Search, ClipboardList, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import Swal from 'sweetalert2';
+import { titleCase } from '@/Utils/text';
 
 export default function RequisitionIndex() {
     const { requisitions, products } = usePage().props as any;
@@ -173,7 +174,7 @@ export default function RequisitionIndex() {
                                         </td>
                                         <td className="py-3 px-4">
                                             <span className={`text-xs px-2 py-1 rounded-full ${statusColors[req.status] || 'bg-slate-100 text-slate-600'}`}>
-                                                {req.status}
+                                                {titleCase(req.status)}
                                             </span>
                                         </td>
                                         <td className="py-3 px-4 text-right">
@@ -243,7 +244,7 @@ export default function RequisitionIndex() {
                                         {req.product?.material_id && <p className="text-xs font-mono text-slate-400">{req.product?.material_id}</p>}
                                     </div>
                                     <span className={`text-xs px-2 py-1 rounded-full ${statusColors[req.status] || 'bg-slate-100 text-slate-600'}`}>
-                                        {req.status}
+                                        {titleCase(req.status)}
                                     </span>
                                 </div>
                                 <div className="space-y-1 text-sm text-slate-600">

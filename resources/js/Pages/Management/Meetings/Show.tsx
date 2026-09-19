@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader } from '@/Components/ui';
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, Calendar, Clock, MapPin, Users, FileText, CheckCircle2, Pencil } from 'lucide-react';
+import { titleCase } from '@/Utils/text';
 
 const TYPE_STYLES: Record<string, string> = {
     board: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
@@ -61,7 +62,7 @@ export default function MeetingShow() {
                 </div>
                 <div className="flex items-center gap-2">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${STATUS_STYLES[meeting.status] || 'bg-slate-100 text-slate-800'}`}>
-                        {meeting.status?.replace(/_/g, ' ')}
+                        {meeting.status?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                     </span>
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${TYPE_STYLES[meeting.type] || 'bg-slate-100 text-slate-800'}`}>
                         {meeting.type?.replace(/_/g, ' ')}
@@ -175,7 +176,7 @@ export default function MeetingShow() {
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${DECISION_STATUS_STYLES[decision.status] || 'bg-slate-100 text-slate-800'}`}>
-                                                    {decision.status?.replace(/_/g, ' ')}
+                                                    {decision.status?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                                 </span>
                                                 {decision.category && (
                                                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300">
@@ -208,7 +209,7 @@ export default function MeetingShow() {
                                             <span className="text-sm text-slate-900 dark:text-white">{attendee.user?.name}</span>
                                         </div>
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ATTENDEE_STATUS_STYLES[attendee.status] || 'bg-slate-100 text-slate-800'}`}>
-                                            {attendee.status}
+                                            {titleCase(attendee.status)}
                                         </span>
                                     </div>
                                 ))}

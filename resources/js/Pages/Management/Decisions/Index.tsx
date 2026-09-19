@@ -109,7 +109,7 @@ export default function DecisionsIndex() {
                                         </td>
                                         <td className="py-3 px-4">
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(decision.status)}`}>
-                                                {decision.status.replace(/_/g, ' ')}
+                                                {decision.status.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                             </span>
                                         </td>
                                         <td className="py-3 px-4 text-right">

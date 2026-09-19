@@ -4,6 +4,7 @@ import { Head, Link, usePage, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, FileText, Check, X, Pencil, Plus } from 'lucide-react';
 import { useState } from 'react';
 import { useCurrency } from '@/Utils/currency';
+import { titleCase } from '@/Utils/text';
 import NewJobModal from '@/Components/Production/NewJobModal';
 
 const JOB_STATUS_LABELS: Record<string, string> = {
@@ -464,7 +465,7 @@ export default function OrderShow() {
                             )}
                         </div>
                         <span className={`status-badge ${paymentColors[order?.payment_status]}`}>
-                            {order?.payment_status}
+                            {titleCase(order?.payment_status || '')}
                         </span>
 
                         <div className="space-y-2 text-sm mt-4 pt-4 border-t border-slate-200 dark:border-white/10">

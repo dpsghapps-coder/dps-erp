@@ -69,7 +69,7 @@ export default function MeetingsIndex() {
                                             </td>
                                             <td className="py-3 px-4">
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[meeting.status] || 'bg-slate-100 text-slate-800'}`}>
-                                                    {meeting.status?.replace(/_/g, ' ')}
+                                                    {meeting.status?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                                 </span>
                                             </td>
                                             <td className="py-3 px-4 text-sm text-slate-600 dark:text-slate-400">
@@ -102,7 +102,7 @@ export default function MeetingsIndex() {
                                             <p className="text-sm font-medium text-slate-900 dark:text-white">{meeting.title}</p>
                                         </div>
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[meeting.status] || 'bg-slate-100 text-slate-800'}`}>
-                                            {meeting.status?.replace(/_/g, ' ')}
+                                            {meeting.status?.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}
                                         </span>
                                     </div>
                                     <div className="flex justify-between items-center text-xs text-slate-500">

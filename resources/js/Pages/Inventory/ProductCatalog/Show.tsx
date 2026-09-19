@@ -4,6 +4,7 @@ import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Calendar, Tag, Ruler, Plus, X, Trash2, Building2, User, Mail, Smartphone, MapPin, Map, AlertTriangle, CheckCircle, Package, ImageIcon, DollarSign, Edit2 } from 'lucide-react';
 import { useState } from 'react';
 import WhatsAppLink from '@/Components/WhatsAppLink';
+import { titleCase } from '@/Utils/text';
 
 export default function ProductCatalogShow() {
     const { product, suppliers, users, categories, uoms, attributes, costTypes, categoryAttributes, hasPrices } = usePage().props as any;
@@ -201,7 +202,7 @@ export default function ProductCatalogShow() {
                                 <span className={`text-xs px-2 py-1 rounded-full ${
                                     product.item_status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                 }`}>
-                                    {product.item_status}
+                                    {titleCase(product.item_status)}
                                 </span>
                             </div>
                             {product.attributes && Object.keys(product.attributes).length > 0 && (

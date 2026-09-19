@@ -4,6 +4,7 @@ import { Head, Link, router, usePage, useForm } from '@inertiajs/react';
 import { ArrowLeft, Pencil, Calendar, Tag, Ruler, Plus, X, Trash2, Building2, User, Mail, Smartphone, MapPin, Map } from 'lucide-react';
 import { useState } from 'react';
 import WhatsAppLink from '@/Components/WhatsAppLink';
+import { titleCase } from '@/Utils/text';
 
 export default function GoodsShow() {
     const { good, suppliers, categories, uoms, attributes, categoryAttributes } = usePage().props as any;
@@ -134,7 +135,7 @@ export default function GoodsShow() {
                                 <span className={`text-xs px-2 py-1 rounded-full ${
                                     good.item_status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                                 }`}>
-                                    {good.item_status}
+                                    {titleCase(good.item_status)}
                                 </span>
                             </div>
                             {good.attributes && Object.keys(good.attributes).length > 0 && (
