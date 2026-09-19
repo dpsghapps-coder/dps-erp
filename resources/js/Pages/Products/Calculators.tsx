@@ -24,6 +24,7 @@ interface DimensionService {
     id: number;
     name: string;
     unit: string;
+    default_price: number;
     prices: ServicePrice[];
 }
 
@@ -34,13 +35,16 @@ const SQM_PER_UNIT: Record<'ft' | 'in', number> = {
     in: 0.00064516,
 };
 
+// Matches the pricing logic in Orders Create/Edit exactly: a qty under
+// every tier's min_qty (e.g. a sub-1-sqm piece, since tiers start at 1)
+// falls back to the service's base rate rather than pricing as free.
 function priceForQty(service: DimensionService | undefined, qty: number): number {
     const tiers = service?.prices || [];
     const applicable = tiers
         .filter((p) => qty >= p.min_qty && (p.max_qty === null || qty <= p.max_qty))
         .sort((a, b) => b.min_qty - a.min_qty)[0];
 
-    return applicable ? Number(applicable.unit_price) : 0;
+    return applicable ? Number(applicable.unit_price) : Number(service?.default_price || 0);
 }
 
 function LargeFormatCalculator({ services }: { services: DimensionService[] }) {
