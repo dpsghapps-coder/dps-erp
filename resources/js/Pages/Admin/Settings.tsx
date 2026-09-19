@@ -224,6 +224,31 @@ function LookupListEditor({ type, title, items }: { type: string; title: string;
 type Tab = 'general' | 'uom' | 'categories' | 'attributes' | 'extraCosts' | 'packTypes' | 'serviceCosts'
     | 'departments' | 'employmentTypes' | 'staffLevels' | 'crmLookups' | 'dangerZone';
 
+function TabNavGroup({ label }: { label: string }) {
+    return <p className="px-3 pt-3 pb-1 text-xs font-semibold text-slate-500 uppercase tracking-wide first:pt-0">{label}</p>;
+}
+
+function TabNavButton({ active, onClick, icon: Icon, danger, children }: {
+    active: boolean;
+    onClick: () => void;
+    icon?: React.ComponentType<{ className?: string }>;
+    danger?: boolean;
+    children: React.ReactNode;
+}) {
+    const activeClasses = danger ? 'bg-red-600 text-white' : 'bg-indigo-600 text-white';
+    const inactiveClasses = danger ? 'text-red-400 hover:bg-red-500/10' : 'text-slate-400 hover:bg-white/5 hover:text-white';
+
+    return (
+        <button
+            onClick={onClick}
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left transition-colors ${active ? activeClasses : inactiveClasses}`}
+        >
+            {Icon && <Icon className="w-4 h-4 flex-shrink-0" />}
+            <span className="truncate">{children}</span>
+        </button>
+    );
+}
+
 export default function Settings() {
     const page = usePage().props as any;
     const {
@@ -404,93 +429,44 @@ export default function Settings() {
                 subtitle="System configuration"
             />
 
-            {/* Tabs */}
-            <div className="flex gap-2 mb-6 border-b border-slate-700 pb-2 overflow-x-auto whitespace-nowrap">
-                {access.admin && (
-                    <>
-                        <button
-                            onClick={() => setActiveTab('general')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'general' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            General
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('uom')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'uom' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <Package className="w-4 h-4 inline mr-2" />UOM Options
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('categories')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'categories' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <Tag className="w-4 h-4 inline mr-2" />Categories
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('attributes')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'attributes' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <List className="w-4 h-4 inline mr-2" />Attributes
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('extraCosts')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'extraCosts' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <Receipt className="w-4 h-4 inline mr-2" />Extra Cost Types
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('packTypes')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'packTypes' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <Box className="w-4 h-4 inline mr-2" />Packing Types
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('serviceCosts')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'serviceCosts' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <Wrench className="w-4 h-4 inline mr-2" />Service Cost Types
-                        </button>
-                    </>
-                )}
-                {access.hrm && (
-                    <>
-                        <button
-                            onClick={() => setActiveTab('departments')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'departments' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <Building2 className="w-4 h-4 inline mr-2" />Departments
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('employmentTypes')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'employmentTypes' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <Briefcase className="w-4 h-4 inline mr-2" />Employment Types
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('staffLevels')}
-                            className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'staffLevels' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                        >
-                            <Award className="w-4 h-4 inline mr-2" />Staff Levels
-                        </button>
-                    </>
-                )}
-                {access.crm && (
-                    <button
-                        onClick={() => setActiveTab('crmLookups')}
-                        className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'crmLookups' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'}`}
-                    >
-                        <MapPin className="w-4 h-4 inline mr-2" />CRM Lookups
-                    </button>
-                )}
-                {access.factoryReset && (
-                    <button
-                        onClick={() => setActiveTab('dangerZone')}
-                        className={`px-4 py-2 rounded-lg transition-colors flex-shrink-0 ${activeTab === 'dangerZone' ? 'bg-red-600 text-white' : 'text-red-400 hover:text-red-300'}`}
-                    >
-                        <ShieldAlert className="w-4 h-4 inline mr-2" />Danger Zone
-                    </button>
-                )}
-            </div>
+            <div className="flex flex-col md:flex-row gap-6">
+                {/* Vertical tab nav -- never needs horizontal scroll, wraps naturally on mobile as a stacked list instead */}
+                <nav className="md:w-56 flex-shrink-0 flex flex-col gap-1">
+                    {access.admin && (
+                        <>
+                            <TabNavGroup label="Admin" />
+                            <TabNavButton active={activeTab === 'general'} onClick={() => setActiveTab('general')}>General</TabNavButton>
+                            <TabNavButton active={activeTab === 'uom'} onClick={() => setActiveTab('uom')} icon={Package}>UOM Options</TabNavButton>
+                            <TabNavButton active={activeTab === 'categories'} onClick={() => setActiveTab('categories')} icon={Tag}>Categories</TabNavButton>
+                            <TabNavButton active={activeTab === 'attributes'} onClick={() => setActiveTab('attributes')} icon={List}>Attributes</TabNavButton>
+                            <TabNavButton active={activeTab === 'extraCosts'} onClick={() => setActiveTab('extraCosts')} icon={Receipt}>Extra Cost Types</TabNavButton>
+                            <TabNavButton active={activeTab === 'packTypes'} onClick={() => setActiveTab('packTypes')} icon={Box}>Packing Types</TabNavButton>
+                            <TabNavButton active={activeTab === 'serviceCosts'} onClick={() => setActiveTab('serviceCosts')} icon={Wrench}>Service Cost Types</TabNavButton>
+                        </>
+                    )}
+                    {access.hrm && (
+                        <>
+                            <TabNavGroup label="HRM" />
+                            <TabNavButton active={activeTab === 'departments'} onClick={() => setActiveTab('departments')} icon={Building2}>Departments</TabNavButton>
+                            <TabNavButton active={activeTab === 'employmentTypes'} onClick={() => setActiveTab('employmentTypes')} icon={Briefcase}>Employment Types</TabNavButton>
+                            <TabNavButton active={activeTab === 'staffLevels'} onClick={() => setActiveTab('staffLevels')} icon={Award}>Staff Levels</TabNavButton>
+                        </>
+                    )}
+                    {access.crm && (
+                        <>
+                            <TabNavGroup label="CRM" />
+                            <TabNavButton active={activeTab === 'crmLookups'} onClick={() => setActiveTab('crmLookups')} icon={MapPin}>CRM Lookups</TabNavButton>
+                        </>
+                    )}
+                    {access.factoryReset && (
+                        <>
+                            <TabNavGroup label="Danger Zone" />
+                            <TabNavButton active={activeTab === 'dangerZone'} onClick={() => setActiveTab('dangerZone')} icon={ShieldAlert} danger>Danger Zone</TabNavButton>
+                        </>
+                    )}
+                </nav>
+
+                <div className="flex-1 min-w-0">
 
             {activeTab === 'general' && access.admin && (
                 <div className="max-w-3xl">
@@ -901,6 +877,9 @@ export default function Settings() {
                     </GlassCard>
                 </div>
             )}
+
+                </div>
+            </div>
 
             {selectedCategory && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
