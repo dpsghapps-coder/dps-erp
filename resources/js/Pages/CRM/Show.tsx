@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { GlassCard, PageHeader, StatusChips, StatusBadge } from '@/Components/ui';
 import { Head, Link, useForm, usePage, router } from '@inertiajs/react';
-import { ArrowLeft, Pencil, Plus, Clock, History as HistoryIcon, DollarSign, ShoppingBag, FileText, Calendar, ArrowRight, ShoppingCart, AlertTriangle, Rocket, ShieldAlert, ShieldCheck, Briefcase } from 'lucide-react';
+import { ArrowLeft, Pencil, Plus, Clock, History as HistoryIcon, DollarSign, ShoppingBag, FileText, Calendar, ArrowRight, ShoppingCart, AlertTriangle, Rocket, ShieldAlert, ShieldCheck, Briefcase, X } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 import { useState, useMemo } from 'react';
 import WhatsAppLink from '@/Components/WhatsAppLink';
@@ -144,9 +144,42 @@ export default function ClientShow() {
         return match || 'Details';
     });
     const [interactionTypeFilter, setInteractionTypeFilter] = useState('all');
+    const [showStartCampaignModal, setShowStartCampaignModal] = useState(false);
+    const [campaignEstimatedValue, setCampaignEstimatedValue] = useState('');
+    const [editValueDeal, setEditValueDeal] = useState<any>(null);
+    const [editValueAmount, setEditValueAmount] = useState('');
 
     const deals = client?.deals || [];
     const openDeal = useMemo(() => deals.find((d: any) => OPEN_PIPELINE_STAGES.includes(d.stage)), [deals]);
+
+    const handleStartCampaign = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.post(`/crm/${client?.id}/deals`, {
+            estimated_value: campaignEstimatedValue,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowStartCampaignModal(false);
+                setCampaignEstimatedValue('');
+            },
+        });
+    };
+
+    const openEditValueModal = (deal: any) => {
+        setEditValueAmount(deal.estimated_value > 0 ? String(deal.estimated_value) : '');
+        setEditValueDeal(deal);
+    };
+
+    const handleEditValueSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editValueDeal) return;
+        router.patch(`/deals/${editValueDeal.id}`, {
+            estimated_value: editValueAmount || 0,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => setEditValueDeal(null),
+        });
+    };
 
     const handleGreylistToggle = () => {
         if (client.is_greylisted) {
@@ -228,7 +261,7 @@ export default function ClientShow() {
                     <div className="flex items-center gap-2">
                         {!openDeal && (
                             <button
-                                onClick={() => router.post(`/crm/${client?.id}/deals`, {}, { preserveScroll: true })}
+                                onClick={() => setShowStartCampaignModal(true)}
                                 className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600/10 text-indigo-400 hover:bg-indigo-600/20 border border-indigo-500/20 transition-colors text-sm font-medium"
                             >
                                 <Rocket className="w-4 h-4" /> Start Sale Campaign
@@ -475,7 +508,7 @@ export default function ClientShow() {
                         </div>
                         {!openDeal && (
                             <button
-                                onClick={() => router.post(`/crm/${client?.id}/deals`, {}, { preserveScroll: true })}
+                                onClick={() => setShowStartCampaignModal(true)}
                                 className="glass-button flex items-center gap-2 text-sm"
                             >
                                 <Rocket className="w-4 h-4" /> Start Sale Campaign
@@ -504,9 +537,20 @@ export default function ClientShow() {
                                             </span>
                                         </div>
 
-                                        {deal.estimated_value > 0 && (
-                                            <p className="text-lg font-semibold text-slate-900 dark:text-white mb-2">{formatCurrency(deal.estimated_value)}</p>
-                                        )}
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {deal.estimated_value > 0 ? (
+                                                <p className="text-lg font-semibold text-slate-900 dark:text-white">{formatCurrency(deal.estimated_value)}</p>
+                                            ) : (
+                                                <p className="text-sm text-slate-400">No estimated value</p>
+                                            )}
+                                            <button
+                                                onClick={() => openEditValueModal(deal)}
+                                                className="p-1 rounded hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-indigo-400 transition-colors"
+                                                title="Edit estimated value"
+                                            >
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
 
                                         {deal.stage === 'lost' && deal.lost_reason && (
                                             <div className="flex items-start gap-2 text-red-400 text-sm mb-2">
@@ -853,6 +897,102 @@ export default function ClientShow() {
                         </div>
                     )}
                 </GlassCard>
+            )}
+
+            {/* Start Sale Campaign Modal */}
+            {showStartCampaignModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Start Sale Campaign</h3>
+                                <p className="text-xs text-slate-400">{client?.company_name}</p>
+                            </div>
+                            <button onClick={() => { setShowStartCampaignModal(false); setCampaignEstimatedValue(''); }} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleStartCampaign} className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Estimated Value</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={campaignEstimatedValue}
+                                    onChange={(e) => setCampaignEstimatedValue(e.target.value)}
+                                    className="glass-input w-full text-sm"
+                                    placeholder="e.g. 15000"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowStartCampaignModal(false); setCampaignEstimatedValue(''); }}
+                                    className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 text-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="glass-button text-sm font-medium"
+                                >
+                                    Start Campaign
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Deal Value Modal */}
+            {editValueDeal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Edit Estimated Value</h3>
+                                <p className="text-xs text-slate-400">{STAGE_LABELS[editValueDeal.stage] || editValueDeal.stage}</p>
+                            </div>
+                            <button onClick={() => setEditValueDeal(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEditValueSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Estimated Value</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={editValueAmount}
+                                    onChange={(e) => setEditValueAmount(e.target.value)}
+                                    className="glass-input w-full text-sm"
+                                    placeholder="e.g. 15000"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditValueDeal(null)}
+                                    className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 text-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="glass-button text-sm font-medium"
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
 
         </AppLayout>

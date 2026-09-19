@@ -4,7 +4,7 @@ import { DndContext, closestCenter, DragEndEvent, DragOverlay, DragStartEvent, u
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GlassCard, StatusChips } from '@/Components/ui';
-import { User, Link2, Clock, AlertTriangle, Phone, MessageSquare, Calendar, FileText, X, TrendingUp, ExternalLink } from 'lucide-react';
+import { User, Link2, Clock, AlertTriangle, Phone, MessageSquare, Calendar, FileText, X, TrendingUp, ExternalLink, Pencil } from 'lucide-react';
 import { useCurrency } from '@/Utils/currency';
 
 const COLUMNS = [
@@ -49,7 +49,7 @@ function daysSince(dateStr: string | null): number | null {
     return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
 }
 
-function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal: any, type: string) => void }) {
+function PipelineCard({ deal, onQuickAction, onEditValue }: { deal: any; onQuickAction: (deal: any, type: string) => void; onEditValue: (deal: any) => void }) {
     const formatCurrency = useCurrency();
     const client = deal.client || {};
     const daysAgo = daysSince(client.last_interaction?.occurred_at);
@@ -105,11 +105,20 @@ function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal
                     }`}>
                         {deal.type === 'repeat_business' ? 'Sales Campaign' : 'New Lead'}
                     </span>
-                    {deal.estimated_value > 0 && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                            {formatCurrency(deal.estimated_value)}
-                        </span>
-                    )}
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onEditValue(deal); }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        className={`flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-md border transition-colors ${
+                            deal.estimated_value > 0
+                                ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20 hover:bg-emerald-500/20'
+                                : 'bg-slate-500/10 text-slate-400 border-slate-500/20 hover:bg-slate-500/20'
+                        }`}
+                        title="Edit estimated value"
+                    >
+                        {deal.estimated_value > 0 ? formatCurrency(deal.estimated_value) : 'Add value'}
+                        <Pencil className="w-3 h-3" />
+                    </button>
                 </div>
 
                 {client.primary_contact && (
@@ -172,7 +181,7 @@ function PipelineCard({ deal, onQuickAction }: { deal: any; onQuickAction: (deal
     );
 }
 
-function DroppableColumn({ column, deals, onQuickAction, archiveHours }: { column: typeof COLUMNS[number]; deals: any[]; onQuickAction: (deal: any, type: string) => void; archiveHours?: number }) {
+function DroppableColumn({ column, deals, onQuickAction, onEditValue, archiveHours }: { column: typeof COLUMNS[number]; deals: any[]; onQuickAction: (deal: any, type: string) => void; onEditValue: (deal: any) => void; archiveHours?: number }) {
     const { setNodeRef, isOver } = useDroppable({ id: column.id });
     const formatCurrency = useCurrency();
 
@@ -200,7 +209,7 @@ function DroppableColumn({ column, deals, onQuickAction, archiveHours }: { colum
             <div ref={setNodeRef} className="min-h-[200px] rounded-lg">
                 <SortableContext items={deals.map((d: any) => d.id)} strategy={verticalListSortingStrategy}>
                     {deals.map((deal: any) => (
-                        <PipelineCard key={deal.id} deal={deal} onQuickAction={onQuickAction} />
+                        <PipelineCard key={deal.id} deal={deal} onQuickAction={onQuickAction} onEditValue={onEditValue} />
                     ))}
                 </SortableContext>
             </div>
@@ -223,6 +232,26 @@ export default function PipelineBoard({ deals, terminalVisibleHours }: { deals: 
     const [convertTier, setConvertTier] = useState('bronze');
     const [stageNoteModal, setStageNoteModal] = useState<{ deal: any; newStage: string } | null>(null);
     const [stageNoteText, setStageNoteText] = useState('');
+    const [editValueDeal, setEditValueDeal] = useState<any>(null);
+    const [editValueAmount, setEditValueAmount] = useState('');
+
+    const openEditValueModal = (deal: any) => {
+        setEditValueAmount(deal.estimated_value > 0 ? String(deal.estimated_value) : '');
+        setEditValueDeal(deal);
+    };
+
+    const handleEditValueSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editValueDeal) return;
+        const amount = parseFloat(editValueAmount) || 0;
+        setLocalDeals(prev => prev.map(d => d.id === editValueDeal.id ? { ...d, estimated_value: amount } : d));
+        router.patch(`/deals/${editValueDeal.id}`, { estimated_value: amount }, {
+            preserveScroll: true,
+            preserveState: true,
+            only: [],
+        });
+        setEditValueDeal(null);
+    };
 
     const interactionForm = useForm({
         type: 'call',
@@ -384,7 +413,7 @@ export default function PipelineBoard({ deals, terminalVisibleHours }: { deals: 
             >
                 <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-7 gap-4 min-h-[600px]">
                     {COLUMNS.map((col) => (
-                        <DroppableColumn key={col.id} column={col} deals={dealsByStage[col.id] || []} onQuickAction={openQuickActionModal} archiveHours={terminalVisibleHours} />
+                        <DroppableColumn key={col.id} column={col} deals={dealsByStage[col.id] || []} onQuickAction={openQuickActionModal} onEditValue={openEditValueModal} archiveHours={terminalVisibleHours} />
                     ))}
                 </div>
 
@@ -614,6 +643,54 @@ export default function PipelineBoard({ deals, terminalVisibleHours }: { deals: 
                                     className="glass-button text-sm font-medium bg-emerald-600/80 hover:bg-emerald-600"
                                 >
                                     Convert Client
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Deal Value Modal */}
+            {editValueDeal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                        <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
+                            <div>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Edit Estimated Value</h3>
+                                <p className="text-xs text-slate-400">{editValueDeal.client?.company_name}</p>
+                            </div>
+                            <button onClick={() => setEditValueDeal(null)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEditValueSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Estimated Value</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={editValueAmount}
+                                    onChange={(e) => setEditValueAmount(e.target.value)}
+                                    className="glass-input w-full text-sm"
+                                    placeholder="e.g. 15000"
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/10">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditValueDeal(null)}
+                                    className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 text-sm transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="glass-button text-sm font-medium"
+                                >
+                                    Save
                                 </button>
                             </div>
                         </form>

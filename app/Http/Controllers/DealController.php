@@ -8,8 +8,12 @@ use Illuminate\Http\Request;
 
 class DealController extends Controller
 {
-    public function store(Client $client)
+    public function store(Request $request, Client $client)
     {
+        $validated = $request->validate([
+            'estimated_value' => 'nullable|numeric|min:0',
+        ]);
+
         $type = $client->isExistingClient() ? 'repeat_business' : 'new_business';
 
         if ($client->hasOpenDeal($type)) {
@@ -21,6 +25,7 @@ class DealController extends Controller
         $client->deals()->create([
             'type' => $type,
             'stage' => $stage,
+            'estimated_value' => $validated['estimated_value'] ?? 0,
             'created_by' => auth()->id(),
         ]);
 
@@ -35,6 +40,17 @@ class DealController extends Controller
         ]);
 
         return back()->with('success', 'Sales campaign started');
+    }
+
+    public function update(Request $request, Deal $deal)
+    {
+        $validated = $request->validate([
+            'estimated_value' => 'required|numeric|min:0',
+        ]);
+
+        $deal->update($validated);
+
+        return back()->with('success', 'Deal updated successfully');
     }
 
     public function updateStatus(Request $request, Deal $deal)

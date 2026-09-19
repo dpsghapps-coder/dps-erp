@@ -97,6 +97,7 @@ export default function LeadsIndex() {
     const [showCampaignModal, setShowCampaignModal] = useState(false);
     const [campaignClientId, setCampaignClientId] = useState('');
     const [campaignSearch, setCampaignSearch] = useState('');
+    const [campaignEstimatedValue, setCampaignEstimatedValue] = useState('');
 
     const quickLeadForm = useForm({
         company_name: '',
@@ -125,12 +126,15 @@ export default function LeadsIndex() {
 
     const handleStartCampaign = () => {
         if (!campaignClientId) return;
-        router.post(`/crm/${campaignClientId}/deals`, {}, {
+        router.post(`/crm/${campaignClientId}/deals`, {
+            estimated_value: campaignEstimatedValue,
+        }, {
             preserveScroll: true,
             onSuccess: () => {
                 setShowCampaignModal(false);
                 setCampaignClientId('');
                 setCampaignSearch('');
+                setCampaignEstimatedValue('');
             },
         });
     };
@@ -744,7 +748,7 @@ export default function LeadsIndex() {
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Start Sale Campaign</h3>
                                 <p className="text-xs text-slate-400">Pick an existing client to start a new deal at New Lead</p>
                             </div>
-                            <button onClick={() => { setShowCampaignModal(false); setCampaignClientId(''); setCampaignSearch(''); }} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+                            <button onClick={() => { setShowCampaignModal(false); setCampaignClientId(''); setCampaignSearch(''); setCampaignEstimatedValue(''); }} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
@@ -786,10 +790,23 @@ export default function LeadsIndex() {
                                 )}
                             </div>
 
+                            <div>
+                                <label className="block text-xs text-slate-400 mb-1">Estimated Value</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={campaignEstimatedValue}
+                                    onChange={(e) => setCampaignEstimatedValue(e.target.value)}
+                                    className="glass-input w-full text-sm"
+                                    placeholder="e.g. 15000"
+                                />
+                            </div>
+
                             <div className="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-white/10">
                                 <button
                                     type="button"
-                                    onClick={() => { setShowCampaignModal(false); setCampaignClientId(''); setCampaignSearch(''); }}
+                                    onClick={() => { setShowCampaignModal(false); setCampaignClientId(''); setCampaignSearch(''); setCampaignEstimatedValue(''); }}
                                     className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-300 text-sm transition-colors"
                                 >
                                     Cancel

@@ -137,6 +137,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/crm/{client}/greylist', [CrmController::class, 'toggleGreylist'])->name('crm.toggleGreylist');
         Route::post('/crm/{client}/deals', [DealController::class, 'store'])->name('crm.deals.store');
         Route::patch('/deals/{deal}/status', [DealController::class, 'updateStatus'])->name('deals.updateStatus');
+        Route::patch('/deals/{deal}', [DealController::class, 'update'])->name('deals.update');
         Route::post('/crm/{client}/interactions', [CrmController::class, 'logInteraction'])->name('crm.interactions');
         Route::post('/crm/{client}/contacts', [CrmController::class, 'storeContact'])->name('crm.contacts.store');
         Route::put('/crm/{client}/contacts/{contact}', [CrmController::class, 'updateContact'])->name('crm.contacts.update');
