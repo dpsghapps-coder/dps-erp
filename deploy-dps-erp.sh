@@ -1,24 +1,7 @@
 #!/usr/bin/env bash
 #
 # deploy-dps-erp.sh — clone a new release of dps-erp and point public_html at it
-#
-# Usage:
-#   ./deploy-dps-erp.sh [branch-or-tag] [version-label]
-#   ./deploy-dps-erp.sh fresh-install [branch-or-tag] [version-label]
-#   ./deploy-dps-erp.sh rollback <version-label>
-#   ./deploy-dps-erp.sh list
-#
-# Examples:
-#   ./deploy-dps-erp.sh                       # deploy master, auto version = timestamp
-#   ./deploy-dps-erp.sh v1.4.0                 # clone tag v1.4.0, version label = v1.4.0
-#   ./deploy-dps-erp.sh master hotfix-2026-09  # clone master, label it manually
-#   ./deploy-dps-erp.sh fresh-install v1.4.0   # clone v1.4.0, DROP ALL TABLES, re-migrate
-#   ./deploy-dps-erp.sh rollback dps-erp-v1.3.0
-#   ./deploy-dps-erp.sh list
-#
-# After a successful deploy (run interactively), you're dropped into a
-# shell already cd'd into the new release directory -- run `exit` to
-# leave it and return to your previous shell.
+# Run with --help (or see the usage() function below) for full usage.
 
 set -euo pipefail
 
@@ -37,6 +20,31 @@ FRESH_INSTALL=false   # set by the "fresh-install" subcommand — do not edit he
 
 log() { echo -e "==> $*"; }
 die() { echo "ERROR: $*" >&2; exit 1; }
+
+usage() {
+    cat <<'USAGE'
+deploy-dps-erp.sh — clone a new release of dps-erp and point public_html at it
+
+Usage:
+  ./deploy-dps-erp.sh [branch-or-tag] [version-label]
+  ./deploy-dps-erp.sh fresh-install [branch-or-tag] [version-label]
+  ./deploy-dps-erp.sh rollback <version-label>
+  ./deploy-dps-erp.sh list
+  ./deploy-dps-erp.sh --help
+
+Examples:
+  ./deploy-dps-erp.sh                       # deploy master, auto version = timestamp
+  ./deploy-dps-erp.sh v1.4.0                 # clone tag v1.4.0, version label = v1.4.0
+  ./deploy-dps-erp.sh master hotfix-2026-09  # clone master, label it manually
+  ./deploy-dps-erp.sh fresh-install v1.4.0   # clone v1.4.0, DROP ALL TABLES, re-migrate
+  ./deploy-dps-erp.sh rollback dps-erp-v1.3.0
+  ./deploy-dps-erp.sh list
+
+After a successful deploy (run interactively), you're dropped into a
+shell already cd'd into the new release directory -- run `exit` to
+leave it and return to your previous shell.
+USAGE
+}
 
 list_releases() {
     log "Existing releases in $BASE_DIR:"
@@ -272,6 +280,7 @@ rollback() {
 }
 
 case "${1:-}" in
+    -h|--help|help) usage ;;
     rollback)      rollback "${2:-}" ;;
     list)          list_releases ;;
     fresh-install)
