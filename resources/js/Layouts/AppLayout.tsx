@@ -45,7 +45,8 @@ import {
     Receipt,
     HelpCircle,
     Flag,
-    Network
+    Network,
+    Shield
 } from 'lucide-react';
 import ChatSidebar from '@/Components/Chat/ChatSidebar';
 import OnlineUsersButton from '@/Components/OnlineUsersButton';
@@ -54,6 +55,7 @@ interface NavItem {
     name: string;
     href: string;
     icon: React.ComponentType<{ className?: string }>;
+    permission?: string[];
 }
 
 interface CrmSubItem {
@@ -140,7 +142,8 @@ const decisionHubSubItems: CrmSubItem[] = [
 ];
 
 const systemNav: NavItem[] = [
-    { name: 'Admin & Settings', href: '/admin', icon: Settings },
+    { name: 'Admin', href: '/admin', icon: Shield, permission: ['admin.manage_users', 'admin.manage_roles', 'admin.manage_settings'] },
+    { name: 'Settings', href: '/admin/settings', icon: Settings, permission: ['admin.manage_users', 'admin.manage_roles', 'admin.manage_settings', 'hrm.view', 'crm.manage_settings'] },
 ];
 
 export default function AppLayout({ children }: PropsWithChildren) {
@@ -149,7 +152,12 @@ export default function AppLayout({ children }: PropsWithChildren) {
     const appVersion = (usePage().props as any).appVersion as string | undefined;
     const isAdmin = user?.role?.name === 'admin';
     const can = (perm: string) => isAdmin || permissions.includes('*') || permissions.includes(perm);
+    const canAny = (perms: string[]) => perms.some(can);
     const hasModulePermission = (module: string) => isAdmin || permissions.includes('*') || permissions.some(p => p.startsWith(module + '.'));
+    // SYSTEM section itself: visible to anyone who can reach at least one of
+    // its items (Admin, or the consolidated Settings page, which also
+    // serves HRM- and CRM-only managers who have no admin.* permission).
+    const canSeeSystemSection = canAny(['admin.manage_users', 'admin.manage_roles', 'admin.manage_settings', 'hrm.view', 'crm.manage_settings']);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
         try {
@@ -1035,7 +1043,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 </Link>
                             )}
 
-                            {(can('admin.manage_users') || can('admin.manage_roles') || can('admin.manage_settings')) && (
+                            {canSeeSystemSection && (
                             <div className="px-3 mt-4 pt-4 mb-2 border-t border-slate-200">
                                 <button
                                     onClick={() => toggleSection('system')}
@@ -1046,9 +1054,9 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 </button>
                             </div>
                             )}
-                            {(can('admin.manage_users') || can('admin.manage_roles') || can('admin.manage_settings')) && isSectionExpanded('system') && (
+                            {canSeeSystemSection && isSectionExpanded('system') && (
                             <>
-                                {systemNav.map((item) => (
+                                {systemNav.filter((item) => !item.permission || canAny(item.permission)).map((item) => (
                                     <Link
                                         key={item.name}
                                         href={item.href}
@@ -1592,7 +1600,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     )}
 
                     {/* SYSTEM Section */}
-                    {(can('admin.manage_users') || can('admin.manage_roles') || can('admin.manage_settings')) && <div className="px-3 mt-6 mb-2">
+                    {canSeeSystemSection && <div className="px-3 mt-6 mb-2">
                         {sidebarOpen && (
                             <button
                                 onClick={() => toggleSection('system')}
@@ -1605,7 +1613,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     </div>}
                     {isSectionExpanded('system') && (
                     <div className="space-y-1 px-3">
-                        {(can('admin.manage_users') || can('admin.manage_roles') || can('admin.manage_settings')) && systemNav.map((item) => (
+                        {canSeeSystemSection && systemNav.filter((item) => !item.permission || canAny(item.permission)).map((item) => (
                             <Link
                                 key={item.name}
                                 href={item.href}
