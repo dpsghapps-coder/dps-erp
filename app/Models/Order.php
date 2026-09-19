@@ -162,7 +162,10 @@ class Order extends Model
 
     public function materialRequirements(): Collection
     {
-        $this->loadMissing('items.product.components');
+        $this->loadMissing(['items.product' => fn (MorphTo $morphTo) => $morphTo->morphWith([
+            Product::class => ['components'],
+            Service::class => [],
+        ])]);
 
         return $this->items
             ->filter(fn (OrderItem $item) => $item->product_type === Product::class && $item->product)
