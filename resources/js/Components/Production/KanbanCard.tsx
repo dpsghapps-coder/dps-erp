@@ -68,7 +68,10 @@ export default function KanbanCard({
 
             {job.order && (
                 <div className="mb-1.5">
-                    <p className="text-xs text-slate-400">Order: {job.order.order_number}</p>
+                    <p className="text-xs text-slate-400">
+                        Order: {job.order.order_number}
+                        {job.order.client?.company_name && ` — ${job.order.client.company_name}`}
+                    </p>
                     {job.order.items?.length > 0 && (
                         <ul className="mt-0.5 text-xs text-slate-500 space-y-0.5">
                             {job.order.items.slice(0, 2).map((item: any) => (
