@@ -58,7 +58,7 @@ class Order extends Model
     protected $casts = [
         'status' => 'string',
         'payment_status' => 'string',
-        'delivery_date' => 'date',
+        'delivery_date' => 'datetime',
         'total_amount' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'tax_amount' => 'decimal:2',

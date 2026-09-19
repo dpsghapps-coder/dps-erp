@@ -764,7 +764,7 @@ export default function ClientShow() {
                                                 {o.delivery_date && (
                                                     <div className="flex items-center gap-1 text-xs text-slate-400 mb-3">
                                                         <Calendar className="w-3.5 h-3.5" />
-                                                        <span>Delivery: {new Date(o.delivery_date).toLocaleDateString()}</span>
+                                                        <span>Delivery: {new Date(o.delivery_date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</span>
                                                     </div>
                                                 )}
                                             </div>

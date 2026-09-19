@@ -420,8 +420,8 @@ export default function OrderShow() {
 
                     {order?.delivery_date && (
                         <GlassCard>
-                            <h3 className="text-sm font-medium text-slate-400 mb-3">Delivery Date</h3>
-                            <p>{new Date(order.delivery_date).toLocaleDateString()}</p>
+                            <h3 className="text-sm font-medium text-slate-400 mb-3">Delivery Date/Time</h3>
+                            <p>{new Date(order.delivery_date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}</p>
                         </GlassCard>
                     )}
                 </div>

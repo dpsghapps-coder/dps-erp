@@ -190,9 +190,9 @@ export default function OrderCreate() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Delivery Date</label>
+                                    <label className="block text-sm font-medium mb-2">Delivery Date/Time</label>
                                     <input
-                                        type="date"
+                                        type="datetime-local"
                                         value={data.delivery_date}
                                         onChange={(e) => setData('delivery_date', e.target.value)}
                                         className="glass-input w-full"

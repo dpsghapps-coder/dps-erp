@@ -36,6 +36,12 @@ function findPickable(products: any[], services: any[], type: string, id: string
     return null;
 }
 
+// Backend sends an ISO datetime string; <input type="datetime-local"> needs "YYYY-MM-DDTHH:mm".
+function toDatetimeLocal(value: string | null | undefined): string {
+    if (!value) return '';
+    return value.slice(0, 16);
+}
+
 export default function OrderEdit() {
     const page = usePage().props as any;
     const { order, clients, products, services } = page;
@@ -45,7 +51,7 @@ export default function OrderEdit() {
     const canApplyDiscount = isAdmin || permissions.includes('*') || permissions.includes('orders.apply_discount');
     const { data, setData, put, processing, errors } = useForm({
         contact_id: order.contact_id ? String(order.contact_id) : '',
-        delivery_date: order.delivery_date || '',
+        delivery_date: toDatetimeLocal(order.delivery_date),
         notes: order.notes || '',
         vat_applicable: Boolean(order.vat_applicable),
         items: (order.items || []).map((item: any) => ({
@@ -165,9 +171,9 @@ export default function OrderEdit() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Delivery Date</label>
+                                    <label className="block text-sm font-medium mb-2">Delivery Date/Time</label>
                                     <input
-                                        type="date"
+                                        type="datetime-local"
                                         value={data.delivery_date}
                                         onChange={(e) => setData('delivery_date', e.target.value)}
                                         className="glass-input w-full"
