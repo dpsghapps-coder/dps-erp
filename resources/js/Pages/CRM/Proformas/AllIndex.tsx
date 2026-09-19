@@ -57,10 +57,10 @@ export default function ProformaAllIndex() {
 
     return (
         <AppLayout>
-            <Head title="Proformas" />
+            <Head title="Proforma and Proposals" />
 
             <PageHeader
-                title="Proformas / Estimates"
+                title="Proforma and Proposals"
                 subtitle={`${proformas?.length || 0} proformas across all clients`}
                 action={
                     <button onClick={() => setShowClientPicker(true)} className="glass-button flex items-center gap-2">
