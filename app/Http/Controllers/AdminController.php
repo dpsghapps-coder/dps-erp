@@ -3,10 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\City;
+use App\Models\ClientSource;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\EmploymentType;
+use App\Models\Industry;
+use App\Models\LeaveType;
+use App\Models\Neighbourhood;
 use App\Models\Permission;
 use App\Models\ProductCategory;
+use App\Models\Region;
 use App\Models\Role;
 use App\Models\Setting;
 use App\Models\StaffLevel;
@@ -238,29 +245,59 @@ class AdminController extends Controller
         return redirect()->route('admin.roles')->with('success', 'Role deleted successfully');
     }
 
+    /**
+     * SYSTEM > Settings -- consolidates what used to be three separate
+     * pages (Admin, HRM, CRM). Each section's data is only queried and
+     * sent when the visiting user actually has the permission that used
+     * to gate that section's own page, so the page never leaks data (or
+     * does needless queries) for tabs it isn't going to render for them.
+     */
     public function settings()
     {
-        $uoms = Setting::where('key', 'like', 'uom_%')->get();
-        $categories = ProductCategory::with('attributes')->orderBy('name')->get();
-        $attributes = Setting::where('key', 'like', 'attr_%')->get();
-        $extraCostTypes = Setting::where('key', 'like', 'extra_cost_%')->get();
-        $packTypes = Setting::where('key', 'like', 'pack_type_%')->get();
-        $serviceCostTypes = Setting::where('key', 'like', 'service_cost_%')->get();
-        $departments = Department::orderBy('name')->get();
-        $currency = Setting::get('currency', 'GHS');
-        $companyLogo = Setting::get('company_logo');
+        $user = auth()->user();
+        $canAdmin = $user->hasPermission('admin.manage_settings')
+            || $user->hasPermission('admin.manage_users')
+            || $user->hasPermission('admin.manage_roles');
+        $canHrm = $user->hasPermission('hrm.view');
+        $canCrm = $user->hasPermission('crm.manage_settings');
 
-        return inertia('Admin/Settings', [
-            'uoms' => $uoms,
-            'categories' => $categories,
-            'attributes' => $attributes,
-            'extraCostTypes' => $extraCostTypes,
-            'packTypes' => $packTypes,
-            'serviceCostTypes' => $serviceCostTypes,
-            'departments' => $departments,
-            'currency' => $currency,
-            'companyLogo' => $companyLogo ? Storage::url($companyLogo) : null,
-        ]);
+        $data = [
+            'currency' => Setting::get('currency', 'GHS'),
+            'companyLogo' => ($logo = Setting::get('company_logo')) ? Storage::url($logo) : null,
+            'sectionAccess' => [
+                'admin' => $canAdmin,
+                'hrm' => $canHrm,
+                'crm' => $canCrm,
+                'factoryReset' => $user->hasPermission('admin.factory_reset'),
+            ],
+        ];
+
+        if ($canAdmin) {
+            $data['uoms'] = Setting::where('key', 'like', 'uom_%')->get();
+            $data['categories'] = ProductCategory::with('attributes')->orderBy('name')->get();
+            $data['attributes'] = Setting::where('key', 'like', 'attr_%')->get();
+            $data['extraCostTypes'] = Setting::where('key', 'like', 'extra_cost_%')->get();
+            $data['packTypes'] = Setting::where('key', 'like', 'pack_type_%')->get();
+            $data['serviceCostTypes'] = Setting::where('key', 'like', 'service_cost_%')->get();
+        }
+
+        if ($canHrm) {
+            $data['departments'] = Department::orderBy('name')->get();
+            $data['employmentTypes'] = EmploymentType::all();
+            $data['leaveTypes'] = LeaveType::with('staffLevel')->get();
+            $data['leaveTypeNames'] = LeaveType::TYPES;
+            $data['staffLevels'] = StaffLevel::orderBy('sort_order')->get();
+        }
+
+        if ($canCrm) {
+            $data['sources'] = ClientSource::ordered()->get();
+            $data['industries'] = Industry::ordered()->get();
+            $data['regions'] = Region::ordered()->get();
+            $data['cities'] = City::ordered()->get();
+            $data['neighbourhoods'] = Neighbourhood::ordered()->get();
+        }
+
+        return inertia('Admin/Settings', $data);
     }
 
     /**

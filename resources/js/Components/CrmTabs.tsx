@@ -1,12 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { LayoutDashboard, Users, UserPlus, Globe, Settings } from 'lucide-react';
+import { LayoutDashboard, Users, UserPlus, Globe } from 'lucide-react';
 
 const tabs = [
     { name: 'Dashboard', href: '/crm/reports', icon: LayoutDashboard, key: 'dashboard' },
     { name: 'Clients & Accounts', href: '/crm', icon: Users, key: 'clients' },
     { name: 'Sales Management', href: '/crm/leads', icon: UserPlus, key: 'sales' },
     { name: 'Marketing', href: '/marketing', icon: Globe, key: 'marketing', permission: 'marketing' },
-    { name: 'Settings', href: '/crm/settings', icon: Settings, key: 'settings', exactPermission: 'crm.manage_settings' },
 ];
 
 export default function CrmTabs({ activeTab }: { activeTab: string }) {
@@ -14,14 +13,11 @@ export default function CrmTabs({ activeTab }: { activeTab: string }) {
     const permissions: string[] = auth?.permissions || [];
     const hasModulePermission = (module: string) =>
         permissions.includes('*') || permissions.some((p) => p.startsWith(module + '.'));
-    const hasPermission = (perm: string) =>
-        permissions.includes('*') || permissions.includes(perm);
 
     return (
         <div className="flex flex-wrap items-center gap-2 mb-6">
             {tabs
                 .filter((tab) => !tab.permission || hasModulePermission(tab.permission))
-                .filter((tab) => !tab.exactPermission || hasPermission(tab.exactPermission))
                 .map((tab) => (
                     <Link
                         key={tab.key}

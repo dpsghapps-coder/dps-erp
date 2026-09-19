@@ -645,8 +645,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/admin/roles/{role}', [AdminController::class, 'roleUpdate'])->name('admin.roles.update');
         Route::delete('/admin/roles/{role}', [AdminController::class, 'roleDestroy'])->name('admin.roles.destroy');
 
-        // Settings
-        Route::get('/admin/settings', [AdminController::class, 'settings'])->name('admin.settings');
         Route::put('/admin/settings', [AdminController::class, 'settingsUpdate'])->name('admin.settings.update');
         Route::post('/admin/settings/uom', [AdminController::class, 'storeUom']);
         Route::delete('/admin/settings/uom/{setting}', [AdminController::class, 'deleteUom']);
@@ -663,6 +661,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/admin/settings/pack-type/{setting}', [AdminController::class, 'deletePackType']);
         Route::post('/admin/settings/service-cost-type', [AdminController::class, 'storeServiceCostType']);
         Route::delete('/admin/settings/service-cost-type/{setting}', [AdminController::class, 'deleteServiceCostType']);
+    });
+
+    // Consolidated SYSTEM > Settings page -- reachable by anyone who could
+    // reach one of the module settings screens it now folds in (Admin, HRM,
+    // CRM), not just admins. The page itself only renders the tabs the
+    // visiting user actually has permission for. The underlying write
+    // routes above/elsewhere keep their original, stricter gates.
+    Route::middleware('permission:admin.manage_users,admin.manage_roles,admin.manage_settings,hrm.view,crm.manage_settings')->group(function () {
+        Route::get('/admin/settings', [AdminController::class, 'settings'])->name('admin.settings');
     });
 
     // Factory reset — deliberately gated behind its own dedicated permission,

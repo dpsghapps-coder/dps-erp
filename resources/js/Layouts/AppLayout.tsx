@@ -131,7 +131,6 @@ const hrmSubItems: CrmSubItem[] = [
     { name: 'Noticeboard', href: '/hrm/noticeboard', icon: BellIcon },
     { name: 'Training', href: '/hrm/training', icon: GraduationCap },
     { name: 'Issue Reports', href: '/hrm/issue-reports', icon: Flag },
-    { name: 'Settings', href: '/hrm/settings', icon: Settings },
 ];
 
 const decisionHubSubItems: CrmSubItem[] = [
@@ -629,20 +628,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 >
                                     <Globe className="w-5 h-5" />
                                     Marketing
-                                </Link>
-                                )}
-                                {can('crm.manage_settings') && (
-                                <Link
-                                    href="/crm/settings"
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors mb-2 ${
-                                        currentPath === '/crm/settings'
-                                            ? 'bg-slate-900 text-white'
-                                            : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                    onClick={() => setMobileMenuOpen(false)}
-                                >
-                                    <Settings className="w-5 h-5" />
-                                    CRM Settings
                                 </Link>
                                 )}
                             </>
@@ -1207,22 +1192,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     {sidebarOpen && <span>Marketing</span>}
                                 </Link>
                             </div>}
-                            {/* CRM Settings Link - part of INTERACTION */}
-                            {can('crm.manage_settings') && (
-                                <div className="px-3 mb-1">
-                                    <Link
-                                        href="/crm/settings"
-                                        className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                                            currentPath === '/crm/settings'
-                                                ? 'bg-slate-900 text-white'
-                                                : 'text-slate-600 hover:bg-slate-100'
-                                        }`}
-                                    >
-                                        <Settings className="w-5 h-5 flex-shrink-0" />
-                                        {sidebarOpen && <span>Settings</span>}
-                                    </Link>
-                                </div>
-                            )}
                         </>
                     )}
 
@@ -2001,24 +1970,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                             <Globe className="w-5 h-5" />
                                         </div>
                                         <span className="font-medium">Marketing</span>
-                                    </Link>
-                                )}
-                                {can('crm.manage_settings') && (
-                                    <Link
-                                        href="/crm/settings"
-                                        onClick={() => setCrmSlideUpOpen(false)}
-                                        className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all ${
-                                            currentPath === '/crm/settings'
-                                                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo/25'
-                                                : 'text-slate-600 hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                                            currentPath === '/crm/settings' ? 'bg-white/20' : 'bg-slate-100'
-                                        }`}>
-                                            <Settings className="w-5 h-5" />
-                                        </div>
-                                        <span className="font-medium">Settings</span>
                                     </Link>
                                 )}
                             </div>
