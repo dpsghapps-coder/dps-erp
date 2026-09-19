@@ -392,7 +392,12 @@ export default function OrderShow() {
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold">Production Jobs</h2>
                             {order?.status !== 'draft' && order?.status !== 'cancelled' && (
-                                <button onClick={() => setShowNewJobModal(true)} className="glass-button text-sm py-1.5 px-3 flex items-center gap-2">
+                                <button
+                                    onClick={() => setShowNewJobModal(true)}
+                                    disabled={currentStep < statusSteps.indexOf('payment_received')}
+                                    title={currentStep < statusSteps.indexOf('payment_received') ? 'Mark payment received before creating a production job' : undefined}
+                                    className="glass-button text-sm py-1.5 px-3 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
                                     <Plus className="w-4 h-4" /> Create Production Job
                                 </button>
                             )}
