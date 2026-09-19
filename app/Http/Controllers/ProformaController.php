@@ -6,6 +6,7 @@ use App\Models\Client;
 use App\Models\Deal;
 use App\Models\Product;
 use App\Models\Proforma;
+use App\Models\Proposal;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -26,10 +27,13 @@ class ProformaController extends Controller
     {
         $proformas = Proforma::with(['client:id,company_name', 'deal:id,type,stage'])->latest()->get();
 
+        $proposals = Proposal::with(['client:id,company_name', 'deal:id,type,stage'])->withCount('files')->latest()->get();
+
         $clients = Client::orderBy('company_name')->get(['id', 'company_name']);
 
         return inertia('CRM/Proformas/AllIndex', [
             'proformas' => $proformas,
+            'proposals' => $proposals,
             'clients' => $clients,
         ]);
     }

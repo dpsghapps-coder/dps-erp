@@ -72,6 +72,11 @@ class Client extends Model
         return $this->hasMany(Proforma::class);
     }
 
+    public function proposals(): HasMany
+    {
+        return $this->hasMany(Proposal::class);
+    }
+
     public function deals(): HasMany
     {
         return $this->hasMany(Deal::class);

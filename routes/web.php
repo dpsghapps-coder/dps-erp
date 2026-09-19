@@ -52,6 +52,7 @@ use App\Http\Controllers\ProductionController;
 use App\Http\Controllers\ProductionReportController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProformaController;
+use App\Http\Controllers\ProposalController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\SalesOverviewController;
 use App\Http\Controllers\SearchController;
@@ -127,6 +128,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('crm.proformas.create')
             ->middleware('permission:crm.edit_clients');
         Route::get('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'show'])->name('crm.proformas.show');
+
+        // Proposal Routes (must be before {client} wildcard, same reasoning as Proforma above)
+        Route::get('/crm/{client}/proposals', [ProposalController::class, 'index'])->name('crm.proposals.index');
+        Route::get('/crm/{client}/proposals/create', [ProposalController::class, 'create'])
+            ->name('crm.proposals.create')
+            ->middleware('permission:crm.edit_clients');
+        Route::get('/crm/{client}/proposals/{proposal}', [ProposalController::class, 'show'])->name('crm.proposals.show');
     });
 
     Route::middleware('permission:crm.edit_clients')->group(function () {
@@ -146,11 +154,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/crm/{client}/proformas', [ProformaController::class, 'store'])->name('crm.proformas.store');
         Route::get('/crm/{client}/proformas/{proforma}/edit', [ProformaController::class, 'edit'])->name('crm.proformas.edit');
         Route::put('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'update'])->name('crm.proformas.update');
+
+        Route::post('/crm/{client}/proposals', [ProposalController::class, 'store'])->name('crm.proposals.store');
+        Route::get('/crm/{client}/proposals/{proposal}/edit', [ProposalController::class, 'edit'])->name('crm.proposals.edit');
+        Route::put('/crm/{client}/proposals/{proposal}', [ProposalController::class, 'update'])->name('crm.proposals.update');
+        Route::post('/crm/{client}/proposals/{proposal}/files', [ProposalController::class, 'storeFile'])->name('crm.proposals.files.store');
+        Route::delete('/crm/{client}/proposals/{proposal}/files/{file}', [ProposalController::class, 'destroyFile'])->name('crm.proposals.files.destroy');
     });
 
     Route::middleware('permission:crm.delete_clients')->group(function () {
         Route::delete('/crm/{client}', [CrmController::class, 'destroy'])->name('crm.destroy');
         Route::delete('/crm/{client}/proformas/{proforma}', [ProformaController::class, 'destroy'])->name('crm.proformas.destroy');
+        Route::delete('/crm/{client}/proposals/{proposal}', [ProposalController::class, 'destroy'])->name('crm.proposals.destroy');
     });
 
 

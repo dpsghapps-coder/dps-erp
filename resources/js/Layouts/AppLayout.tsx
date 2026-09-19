@@ -776,7 +776,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 onClick={() => setMobileMenuOpen(false)}
                             >
                                 <Receipt className="w-5 h-5" />
-                                Proforma and Proposals
+                                Proforma & Proposals
                             </Link>
                             )}
                             </>
@@ -1361,7 +1361,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     }`}
                                 >
                                     <Receipt className="w-5 h-5 flex-shrink-0" />
-                                    {sidebarOpen && <span>Proforma and Proposals</span>}
+                                    {sidebarOpen && <span>Proforma & Proposals</span>}
                                 </Link>
                             </div>}
                         </>
@@ -2167,7 +2167,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     }`}>
                                         <Receipt className="w-5 h-5" />
                                     </div>
-                                    <span className="font-medium">Proforma and Proposals</span>
+                                    <span className="font-medium">Proforma & Proposals</span>
                                 </Link>
                             </div>
                             <div className="pb-8"></div>

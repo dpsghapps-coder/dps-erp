@@ -1,7 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { GlassCard, PageHeader } from '@/Components/ui';
+import { GlassCard, PageHeader, StatusBadge } from '@/Components/ui';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Plus, Pencil, Trash2, Printer, Search, X, Building2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Printer, Search, X, Building2, Paperclip } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useCurrency } from '@/Utils/currency';
 import Swal from 'sweetalert2';
@@ -16,9 +16,10 @@ const STATUS_COLORS: Record<string, string> = {
 const STATUSES = ['all', 'draft', 'sent', 'accepted', 'rejected'];
 
 export default function ProformaAllIndex() {
-    const { proformas, clients } = usePage().props as any;
+    const { proformas, proposals, clients } = usePage().props as any;
     const formatCurrency = useCurrency();
 
+    const [activeTab, setActiveTab] = useState<'proforma' | 'proposals'>('proforma');
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [showClientPicker, setShowClientPicker] = useState(false);
@@ -34,6 +35,17 @@ export default function ProformaAllIndex() {
             return matchStatus && matchSearch;
         });
     }, [proformas, search, statusFilter]);
+
+    const filteredProposals = useMemo(() => {
+        const list = proposals || [];
+        return list.filter((p: any) => {
+            const matchStatus = statusFilter === 'all' || p.status === statusFilter;
+            const matchSearch = !search ||
+                p.title?.toLowerCase().includes(search.toLowerCase()) ||
+                p.client?.company_name?.toLowerCase().includes(search.toLowerCase());
+            return matchStatus && matchSearch;
+        });
+    }, [proposals, search, statusFilter]);
 
     const filteredClients = useMemo(() => {
         const list = clients || [];
@@ -55,19 +67,63 @@ export default function ProformaAllIndex() {
         });
     };
 
+    const handleDeleteProposal = (clientId: number, id: number, title: string) => {
+        Swal.fire({
+            title: `Delete "${title}"?`,
+            text: 'This permanently deletes the proposal and its attached files.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Delete',
+        }).then((res) => {
+            if (res.isConfirmed) {
+                router.delete(`/crm/${clientId}/proposals/${id}`, { preserveScroll: true });
+            }
+        });
+    };
+
     return (
         <AppLayout>
-            <Head title="Proforma and Proposals" />
+            <Head title="Proforma & Proposals" />
 
             <PageHeader
-                title="Proforma and Proposals"
-                subtitle={`${proformas?.length || 0} proformas across all clients`}
+                title="Proforma & Proposals"
+                subtitle={activeTab === 'proforma' ? `${proformas?.length || 0} proformas across all clients` : `${proposals?.length || 0} proposals across all clients`}
                 action={
-                    <button onClick={() => setShowClientPicker(true)} className="glass-button flex items-center gap-2">
-                        <Plus className="w-4 h-4" /> New Proforma
-                    </button>
+                    activeTab === 'proforma' ? (
+                        <button onClick={() => setShowClientPicker(true)} className="glass-button flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> New Proforma
+                        </button>
+                    ) : (
+                        <button onClick={() => setShowClientPicker(true)} className="glass-button flex items-center gap-2">
+                            <Plus className="w-4 h-4" /> New Proposal
+                        </button>
+                    )
                 }
             />
+
+            <div className="flex gap-1 mb-6 p-1 bg-slate-100 dark:bg-white/[0.04] rounded-lg w-fit">
+                <button
+                    onClick={() => setActiveTab('proforma')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'proforma'
+                            ? 'bg-white dark:bg-[#1a1e2a] text-slate-900 dark:text-slate-100 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                >
+                    Proforma
+                </button>
+                <button
+                    onClick={() => setActiveTab('proposals')}
+                    className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                        activeTab === 'proposals'
+                            ? 'bg-white dark:bg-[#1a1e2a] text-slate-900 dark:text-slate-100 shadow-sm'
+                            : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
+                    }`}
+                >
+                    Proposals
+                </button>
+            </div>
 
             <GlassCard className="mb-6">
                 <div className="flex flex-wrap gap-4 items-center">
@@ -76,7 +132,7 @@ export default function ProformaAllIndex() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="Search by client or proforma number..."
+                                placeholder={activeTab === 'proforma' ? 'Search by client or proforma number...' : 'Search by client or proposal title...'}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="glass-input w-full pl-10"
@@ -101,7 +157,7 @@ export default function ProformaAllIndex() {
                 </div>
             </GlassCard>
 
-            {filteredProformas.length > 0 ? (
+            {activeTab === 'proforma' && (filteredProformas.length > 0 ? (
                 <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {filteredProformas.map((p: any) => (
                         <Link key={p.id} href={`/crm/${p.client_id}/proformas/${p.id}`} className="block group">
@@ -169,7 +225,67 @@ export default function ProformaAllIndex() {
                         </p>
                     </div>
                 </GlassCard>
-            )}
+            ))}
+
+            {activeTab === 'proposals' && (filteredProposals.length > 0 ? (
+                <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {filteredProposals.map((p: any) => (
+                        <Link key={p.id} href={`/crm/${p.client_id}/proposals/${p.id}`} className="block group">
+                            <GlassCard variant="interactive" className="h-full">
+                                <div className="flex items-start justify-between gap-3 mb-2">
+                                    <h3 className="font-semibold group-hover:text-indigo-400 transition-colors truncate min-w-0">{p.title}</h3>
+                                    <StatusBadge status={p.status} />
+                                </div>
+
+                                <div className="flex items-center gap-2 text-sm text-slate-400 mb-2 min-w-0">
+                                    <Building2 className="w-3.5 h-3.5 shrink-0" />
+                                    <span className="truncate">{p.client?.company_name || 'Unknown client'}</span>
+                                </div>
+
+                                <p className="text-xs text-slate-400 mb-2">{new Date(p.created_at).toLocaleDateString()}</p>
+
+                                <p className="text-xs mb-2">
+                                    {p.deal ? (
+                                        <span className="text-indigo-400">{p.deal.type === 'repeat_business' ? 'Sales Campaign' : 'New Lead'} · {p.deal.stage.replace(/_/g, ' ')}</span>
+                                    ) : (
+                                        <span className="text-slate-500">Standalone</span>
+                                    )}
+                                </p>
+
+                                {p.files_count > 0 && (
+                                    <p className="text-xs text-slate-400 flex items-center gap-1 mb-2">
+                                        <Paperclip className="w-3 h-3" /> {p.files_count} file{p.files_count !== 1 ? 's' : ''}
+                                    </p>
+                                )}
+
+                                <div className="pt-3 border-t border-slate-200 dark:border-white/10 flex items-center justify-end gap-2">
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.visit(`/crm/${p.client_id}/proposals/${p.id}/edit`); }}
+                                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+                                    >
+                                        <Pencil className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteProposal(p.client_id, p.id, p.title); }}
+                                        className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 hover:text-red-400 transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            </GlassCard>
+                        </Link>
+                    ))}
+                </div>
+            ) : (
+                <GlassCard>
+                    <div className="text-center py-12">
+                        <p className="text-slate-400 text-lg">No proposals found</p>
+                        <p className="text-slate-500 text-sm mt-1">
+                            {proposals?.length ? 'Try adjusting your filters' : 'Create your first proposal to get started'}
+                        </p>
+                    </div>
+                </GlassCard>
+            ))}
 
             {/* Client Picker Modal */}
             {showClientPicker && (
@@ -177,8 +293,8 @@ export default function ProformaAllIndex() {
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-lg shadow-2xl">
                         <div className="flex justify-between items-center mb-4 pb-3 border-b border-slate-200 dark:border-white/10">
                             <div>
-                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">New Proforma</h3>
-                                <p className="text-xs text-slate-400">Select the client this proforma is for</p>
+                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{activeTab === 'proforma' ? 'New Proforma' : 'New Proposal'}</h3>
+                                <p className="text-xs text-slate-400">Select the client this {activeTab === 'proforma' ? 'proforma' : 'proposal'} is for</p>
                             </div>
                             <button onClick={() => { setShowClientPicker(false); setClientSearch(''); }} className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
                                 <X className="w-5 h-5" />
@@ -203,7 +319,7 @@ export default function ProformaAllIndex() {
                                     filteredClients.map((c: any) => (
                                         <button
                                             key={c.id}
-                                            onClick={() => router.visit(`/crm/${c.id}/proformas/create`)}
+                                            onClick={() => router.visit(`/crm/${c.id}/${activeTab === 'proforma' ? 'proformas' : 'proposals'}/create`)}
                                             className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300"
                                         >
                                             {c.company_name}
