@@ -22,19 +22,19 @@ interface LineItem {
     dimension_unit?: 'ft' | 'in';
 }
 
-// Dimension-based services (LFP prints etc.) are priced per square meter --
+// Dimension-based services (LFP prints etc.) are priced per square foot --
 // staff enter Length x Breadth in whichever unit they measured in, so convert
-// to sqm before it becomes the priced qty.
-const SQM_PER_UNIT: Record<'ft' | 'in', number> = {
-    ft: 0.09290304,
-    in: 0.00064516,
+// to sqft before it becomes the priced qty.
+const SQFT_PER_UNIT: Record<'ft' | 'in', number> = {
+    ft: 1,
+    in: 1 / 144,
 };
 
-function areaInSqm(length: string | number | undefined, breadth: string | number | undefined, unit: 'ft' | 'in' = 'ft'): number {
+function areaInSqft(length: string | number | undefined, breadth: string | number | undefined, unit: 'ft' | 'in' = 'ft'): number {
     const l = Number(length);
     const b = Number(breadth);
     if (!(l > 0) || !(b > 0)) return 0;
-    return l * b * SQM_PER_UNIT[unit];
+    return l * b * SQFT_PER_UNIT[unit];
 }
 
 function priceForQuantity(item: any, qty: number): number {
@@ -118,7 +118,7 @@ export default function OrderEdit() {
             const length = field === 'length' ? value : newItems[index].length;
             const breadth = field === 'breadth' ? value : newItems[index].breadth;
             const unit = field === 'dimension_unit' ? value : (newItems[index].dimension_unit || 'ft');
-            const qty = areaInSqm(length, breadth, unit);
+            const qty = areaInSqft(length, breadth, unit);
             if (qty > 0) {
                 newItems[index].qty = qty;
                 const picked = findPickable(products, services, newItems[index].product_type, newItems[index].product_id);

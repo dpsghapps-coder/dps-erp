@@ -28,15 +28,15 @@ interface DimensionService {
     prices: ServicePrice[];
 }
 
-// Large-format print materials are priced per square meter -- convert
+// Large-format print materials are priced per square foot -- convert
 // whatever unit the piece was measured in before looking up a price tier.
-const SQM_PER_UNIT: Record<'ft' | 'in', number> = {
-    ft: 0.09290304,
-    in: 0.00064516,
+const SQFT_PER_UNIT: Record<'ft' | 'in', number> = {
+    ft: 1,
+    in: 1 / 144,
 };
 
 // Matches the pricing logic in Orders Create/Edit exactly: a qty under
-// every tier's min_qty (e.g. a sub-1-sqm piece, since tiers start at 1)
+// every tier's min_qty (e.g. a sub-1-sqft piece, since tiers start at 1)
 // falls back to the service's base rate rather than pricing as free.
 function priceForQty(service: DimensionService | undefined, qty: number): number {
     const tiers = service?.prices || [];
@@ -64,7 +64,7 @@ function LargeFormatCalculator({ services }: { services: DimensionService[] }) {
 
         if (!(l > 0) || !(b > 0) || !selected) return null;
 
-        const areaPerPiece = l * b * SQM_PER_UNIT[unit];
+        const areaPerPiece = l * b * SQFT_PER_UNIT[unit];
         const totalArea = areaPerPiece * qty;
         const unitPrice = priceForQty(selected, totalArea);
 
@@ -89,7 +89,7 @@ function LargeFormatCalculator({ services }: { services: DimensionService[] }) {
     }
 
     return (
-        <div className="max-w-lg mx-auto space-y-4">
+        <div className="space-y-4">
             <div>
                 <label className="block text-sm font-medium mb-2">Material</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -175,15 +175,15 @@ function LargeFormatCalculator({ services }: { services: DimensionService[] }) {
                 <div className="bg-indigo-600 rounded-lg p-4 text-white space-y-2">
                     <div className="flex justify-between text-sm">
                         <span className="text-indigo-100">Area per piece</span>
-                        <span className="font-medium">{result.areaPerPiece.toFixed(4)} sqm</span>
+                        <span className="font-medium">{result.areaPerPiece.toFixed(2)} {selected?.unit}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-indigo-100">Total area ({pieces || 1} pc)</span>
-                        <span className="font-medium">{result.totalArea.toFixed(4)} sqm</span>
+                        <span className="font-medium">{result.totalArea.toFixed(2)} {selected?.unit}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                         <span className="text-indigo-100">Rate at this volume</span>
-                        <span className="font-medium">{formatCurrency(result.unitPrice)}/sqm</span>
+                        <span className="font-medium">{formatCurrency(result.unitPrice)}/{selected?.unit}</span>
                     </div>
                     <div className="flex justify-between pt-2 border-t border-indigo-500 text-base">
                         <span className="font-semibold text-indigo-100">Total</span>
@@ -238,7 +238,7 @@ export default function Calculators() {
             </div>
 
             {/* Tab Content */}
-            <GlassCard>
+            <GlassCard className={activeTab === 'largeformat' ? 'max-w-lg' : undefined}>
                 {activeTab === 'offset' && (
                     <div className="text-center py-16">
                         <Printer className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
