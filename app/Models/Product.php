@@ -108,7 +108,7 @@ class Product extends Model
         return $this->calculateCost();
     }
 
-    public function getPriceForQuantity(int $quantity): ?float
+    public function getPriceForQuantity(float $quantity): ?float
     {
         $price = $this->prices()
             ->where('min_qty', '<=', $quantity)

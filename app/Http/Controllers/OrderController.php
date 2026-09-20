@@ -61,7 +61,7 @@ class OrderController extends Controller
                 'status' => Order::STATUS_DRAFT,
             ]);
 
-            foreach ($validated['items'] as $item) {
+            foreach ($this->resolveItemPricing($validated['items']) as $item) {
                 $order->items()->create($item);
             }
 
@@ -129,7 +129,7 @@ class OrderController extends Controller
             ]);
 
             $order->items()->delete();
-            foreach ($validated['items'] as $item) {
+            foreach ($this->resolveItemPricing($validated['items']) as $item) {
                 $order->items()->create($item);
             }
 
@@ -305,6 +305,9 @@ class OrderController extends Controller
             'items.*.qty' => 'required|numeric|min:0.01',
             'items.*.unit_price' => 'required|numeric|min:0',
             'items.*.discount_pct' => 'nullable|numeric|min:0|max:100',
+            'items.*.length' => 'nullable|numeric|min:0.01',
+            'items.*.breadth' => 'nullable|numeric|min:0.01',
+            'items.*.dimension_unit' => 'nullable|in:ft,in',
         ];
 
         if ($requireClient) {
@@ -356,11 +359,49 @@ class OrderController extends Controller
                 continue;
             }
 
-            $exists = $type::where('id', $id)->where('is_active', true)->exists();
+            $model = $type::where('id', $id)->where('is_active', true)->first();
 
-            if (! $exists) {
+            if (! $model) {
                 $validator->errors()->add("items.$i.product_id", 'This item is not available and cannot be added to an order.');
+                continue;
+            }
+
+            if ($model->requires_dimensions && (empty($item['length']) || empty($item['breadth']))) {
+                $validator->errors()->add("items.$i.length", 'Length and breadth are required for this item.');
             }
         }
+    }
+
+    // Dimension-priced items (e.g. LFP prints) are priced per unit area, not
+    // by a quantity the user types in directly. The client sends the raw
+    // length/breadth so the area -> price lookup happens here, authoritatively,
+    // rather than trusting whatever qty/unit_price the browser computed.
+    private function resolveItemPricing(array $items): array
+    {
+        return array_map(function (array $item) {
+            $type = $item['product_type'];
+            $model = $type::find($item['product_id']);
+
+            if (! $model || ! $model->requires_dimensions) {
+                $item['length'] = null;
+                $item['breadth'] = null;
+                $item['dimension_unit'] = null;
+
+                return $item;
+            }
+
+            $unit = $item['dimension_unit'] ?? 'ft';
+            $length = (float) $item['length'];
+            $breadth = (float) $item['breadth'];
+            $area = $unit === 'in' ? ($length * $breadth) / 144 : $length * $breadth;
+
+            $item['qty'] = round($area, 2);
+            $item['unit_price'] = $model->getPriceForQuantity($area) ?? (float) $model->default_price;
+            $item['length'] = $length;
+            $item['breadth'] = $breadth;
+            $item['dimension_unit'] = $unit;
+
+            return $item;
+        }, $items);
     }
 }

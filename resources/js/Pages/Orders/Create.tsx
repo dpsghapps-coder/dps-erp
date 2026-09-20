@@ -15,9 +15,9 @@ interface LineItem {
     qty: number;
     unit_price: number;
     discount_pct: number;
-    // Client-only calculator inputs, shown when the picked product/service
-    // has requires_dimensions set -- dropped by backend validation, only
-    // their product (qty) is actually saved.
+    // Shown when the picked product/service has requires_dimensions set.
+    // qty/unit_price below are only a live preview -- the backend recomputes
+    // both from length/breadth/dimension_unit authoritatively on submit.
     length?: string;
     breadth?: string;
     dimension_unit?: 'ft' | 'in';

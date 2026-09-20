@@ -307,6 +307,11 @@ export default function OrderShow() {
                                             <td className="py-3 px-2">
                                                 <p className="font-medium">{item.product?.name}</p>
                                                 {item.description && <p className="text-sm text-slate-400">{item.description}</p>}
+                                                {item.length != null && item.breadth != null && (
+                                                    <p className="text-xs text-slate-400">
+                                                        {item.length} × {item.breadth} {item.dimension_unit || 'ft'}
+                                                    </p>
+                                                )}
                                             </td>
                                             <td className="py-3 px-2 text-right">{item.qty}</td>
                                             <td className="py-3 px-2 text-right">{formatCurrency(item.unit_price)}</td>

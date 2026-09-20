@@ -212,6 +212,9 @@ class OrderItem extends Model
         'unit_price',
         'discount_pct',
         'line_total',
+        'length',
+        'breadth',
+        'dimension_unit',
     ];
 
     protected $casts = [
@@ -219,6 +222,8 @@ class OrderItem extends Model
         'unit_price' => 'decimal:2',
         'discount_pct' => 'decimal:2',
         'line_total' => 'decimal:2',
+        'length' => 'decimal:2',
+        'breadth' => 'decimal:2',
     ];
 
     public function order(): BelongsTo

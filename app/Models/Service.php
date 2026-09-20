@@ -80,7 +80,7 @@ class Service extends Model
             ->first()?->unit_price ?? 0;
     }
 
-    public function getPriceForQuantity(int $quantity): ?float
+    public function getPriceForQuantity(float $quantity): ?float
     {
         $price = $this->prices()
             ->where('min_qty', '<=', $quantity)

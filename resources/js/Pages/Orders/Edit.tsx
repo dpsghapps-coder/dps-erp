@@ -14,9 +14,9 @@ interface LineItem {
     qty: number;
     unit_price: number;
     discount_pct: number;
-    // Client-only calculator inputs, shown when the picked product/service
-    // has requires_dimensions set -- dropped by backend validation, only
-    // their product (qty) is actually saved.
+    // Shown when the picked product/service has requires_dimensions set.
+    // qty/unit_price below are only a live preview -- the backend recomputes
+    // both from length/breadth/dimension_unit authoritatively on submit.
     length?: string;
     breadth?: string;
     dimension_unit?: 'ft' | 'in';
@@ -77,6 +77,9 @@ export default function OrderEdit() {
             qty: Number(item.qty),
             unit_price: Number(item.unit_price),
             discount_pct: Number(item.discount_pct ?? 0),
+            length: item.length != null ? String(item.length) : undefined,
+            breadth: item.breadth != null ? String(item.breadth) : undefined,
+            dimension_unit: item.dimension_unit || 'ft',
         })) as LineItem[],
     });
 
