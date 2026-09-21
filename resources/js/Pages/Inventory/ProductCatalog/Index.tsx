@@ -331,19 +331,6 @@ export default function ProductCatalogIndex() {
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium mb-2">Source *</label>
-                                    <select
-                                        value={data.source}
-                                        onChange={(e) => setData('source', e.target.value)}
-                                        className="glass-input w-full"
-                                        required
-                                    >
-                                        <option value="Purchased">Purchased</option>
-                                        <option value="Manufactured">Manufactured</option>
-                                        <option value="Customized">Customized</option>
-                                    </select>
-                                </div>
-                                <div>
                                     <label className="block text-sm font-medium mb-2">Pack Type</label>
                                     <select
                                         value={data.pack_type}
