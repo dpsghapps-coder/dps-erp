@@ -14,6 +14,30 @@ interface ClientContactsProps {
     neighbourhoods: string[];
 }
 
+const POSITIONS = [
+    'Owner',
+    'Managing Director',
+    'Chief Executive Officer',
+    'General Manager',
+    'Operations Manager',
+    'Office Manager',
+    'Administrator',
+    'Executive Assistant',
+    'Marketing Manager',
+    'Marketing Officer',
+    'Sales Manager',
+    'Sales Officer',
+    'Procurement Manager',
+    'Procurement Officer',
+    'Purchasing Officer',
+    'Finance Manager',
+    'Accountant',
+    'Human Resources Manager',
+    'IT Manager',
+    'Receptionist',
+    'Other',
+];
+
 export default function ClientContacts({ clientId, contacts, regions, cities, neighbourhoods }: ClientContactsProps) {
     const [showContactForm, setShowContactForm] = useState(false);
     const [showGpsModal, setShowGpsModal] = useState(false);
@@ -169,12 +193,12 @@ export default function ClientContacts({ clientId, contacts, regions, cities, ne
                             <MapPin className="w-4 h-4" />
                         </button>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Position"
+                    <SearchableSelect
                         value={contactForm.data.job_title}
-                        onChange={(e) => contactForm.setData('job_title', e.target.value)}
-                        className="glass-input text-sm"
+                        onChange={(value) => contactForm.setData('job_title', value)}
+                        options={POSITIONS}
+                        placeholder="Position"
+                        className="glass-input text-sm w-full"
                     />
                     <PhoneInput
                         value={contactForm.data.phone}
